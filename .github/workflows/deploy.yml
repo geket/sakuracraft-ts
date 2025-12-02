@@ -1,0 +1,44 @@
+name: Deploy Game Build
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to GitHub Pages (same repo)
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          branch: gh-pages
+          clean: true
+
+      # Uncomment below to deploy to a separate site repository
+      # - name: Deploy to main site
+      #   uses: JamesIves/github-pages-deploy-action@v4
+      #   with:
+      #     repository-name: yourusername/yourusername.github.io
+      #     folder: dist
+      #     target-folder: games/sakuracraft
+      #     token: ${{ secrets.DEPLOY_TOKEN }}

@@ -1,0 +1,157 @@
+<!-- SakuraCraft Game HTML Template -->
+<!-- This file is inserted into the DOM when the game initializes -->
+
+<div class="minecraft-overlay" id="minecraftGame">
+  <div class="minecraft-title">🌸 SakuraCraft 🌸</div>
+  <div class="minecraft-container">
+    <button class="minecraft-close" id="closeMinecraft">✕ Close</button>
+    <canvas id="gameCanvas" class="minecraft-canvas" width="800" height="500"></canvas>
+    
+    <!-- Click to Play Overlay (required for pointer lock) -->
+    <div class="click-to-play active" id="clickToPlay">
+      <div class="click-to-play-text">🎮 Click to Play</div>
+      <div class="click-to-play-hint">Mouse will be captured • Press ESC to pause</div>
+    </div>
+    
+    <!-- Pause Menu -->
+    <div class="pause-menu" id="pauseMenu">
+      <!-- Main Menu -->
+      <div class="pause-submenu active" id="menuMain">
+        <div class="pause-title">⏸ Paused</div>
+        <div class="pause-buttons">
+          <button class="pause-btn resume" id="btnResume">Resume</button>
+          <button class="pause-btn fullscreen" id="btnFullscreen">Fullscreen</button>
+          <button class="pause-btn disabled" id="btnAccount">Sign In</button>
+          <button class="pause-btn" id="btnStats">Stats</button>
+          <button class="pause-btn" id="btnOptions">Options</button>
+          <button class="pause-btn quit" id="btnQuit">Quit Game</button>
+        </div>
+      </div>
+      
+      <!-- Stats Menu -->
+      <div class="pause-submenu" id="menuStats">
+        <div class="submenu-title">📊 Statistics</div>
+        <div class="submenu-content">
+          <div class="stat-row">
+            <span>Blocks Placed</span>
+            <span class="stat-value" id="statPlaced">0</span>
+          </div>
+          <div class="stat-row">
+            <span>Blocks Broken</span>
+            <span class="stat-value" id="statBroken">0</span>
+          </div>
+          <div class="stat-row">
+            <span>Distance Walked</span>
+            <span class="stat-value" id="statDistance">0m</span>
+          </div>
+          <div class="stat-row">
+            <span>Jumps</span>
+            <span class="stat-value" id="statJumps">0</span>
+          </div>
+          <div class="stat-row">
+            <span>Play Time</span>
+            <span class="stat-value" id="statTime">0:00</span>
+          </div>
+        </div>
+        <button class="back-btn" id="statsBack">← Back</button>
+      </div>
+      
+      <!-- Options Menu -->
+      <div class="pause-submenu" id="menuOptions">
+        <div class="submenu-title">⚙️ Options</div>
+        <div class="submenu-content">
+          <div class="option-row">
+            <span>Brightness</span>
+            <input type="range" class="option-slider" id="optBrightness" min="50" max="150" value="100">
+          </div>
+          <div class="option-row">
+            <span>Color Filter</span>
+            <select class="option-select" id="optFilter">
+              <option value="none">Normal</option>
+              <option value="sepia">Sepia</option>
+              <option value="grayscale">Black & White</option>
+              <option value="trippy">Trippy Hyperbolic</option>
+            </select>
+          </div>
+          <div class="option-row">
+            <span>Render Distance</span>
+            <select class="option-select" id="optRenderDist">
+              <option value="12">Near (Fast)</option>
+              <option value="18">Medium</option>
+              <option value="25" selected>Far</option>
+              <option value="35">Ultra</option>
+            </select>
+          </div>
+          <div class="option-row">
+            <span>Shadows</span>
+            <div class="option-toggle on" id="optShadows" data-on="true"></div>
+          </div>
+          <div class="option-row">
+            <span>Enhanced Lighting</span>
+            <div class="option-toggle on" id="optLighting" data-on="true"></div>
+          </div>
+          <div class="option-row">
+            <span>Anti-Aliasing</span>
+            <div class="option-toggle" id="optAA" data-on="false"></div>
+          </div>
+          <div class="option-row">
+            <span>Show FPS</span>
+            <div class="option-toggle on" id="optShowFps" data-on="true"></div>
+          </div>
+          <div class="option-row">
+            <span>Target FPS: <span id="targetFpsValue">60</span></span>
+            <input type="range" min="15" max="240" value="60" class="option-slider" id="optTargetFps">
+          </div>
+        </div>
+        <button class="back-btn" id="optionsBack">← Back</button>
+      </div>
+    </div>
+    
+    <!-- Inventory Screen -->
+    <div class="inventory-screen" id="inventoryScreen">
+      <!-- Content populated by JavaScript -->
+    </div>
+    
+    <div class="minecraft-ui" id="gameUI">
+      <div class="hotbar-slot selected" data-block="grass"></div>
+      <div class="hotbar-slot" data-block="dirt"></div>
+      <div class="hotbar-slot" data-block="stone"></div>
+      <div class="hotbar-slot" data-block="wood"></div>
+      <div class="hotbar-slot" data-block="brick"></div>
+      <div class="hotbar-slot" data-item="water_bucket"></div>
+      <div class="hotbar-slot" data-item="lava_bucket"></div>
+      <div class="hotbar-slot" data-item="ak47"></div>
+      <div class="hotbar-slot" data-empty="true"></div>
+    </div>
+    <div class="pickup-notification" id="pickupNotification"></div>
+    
+    <!-- Survival HUD -->
+    <div id="survivalHUD" style="position:absolute;top:10px;left:10px;color:#fff;font-family:monospace;font-size:14px;text-shadow:1px 1px 2px #000;pointer-events:none;">
+      <div id="scoreDisplay">Score: 0</div>
+      <div id="waveDisplay">Wave: 1</div>
+      <div id="objectiveDisplay"></div>
+    </div>
+    
+    <!-- Debug Console -->
+    <div class="debug-console" id="debugConsole">
+      <div class="debug-console-header">
+        <span>Debug Console (` to toggle)</span>
+        <span id="debugFps">0 FPS</span>
+      </div>
+      <div class="debug-console-output" id="debugOutput"></div>
+      <div class="debug-console-input">
+        <span>&gt;</span>
+        <input type="text" id="debugInput" placeholder="Type command...">
+      </div>
+    </div>
+    
+    <!-- Block Tooltip -->
+    <div class="block-tooltip" id="blockTooltip">
+      <div class="tooltip-title"></div>
+      <div class="tooltip-desc"></div>
+    </div>
+  </div>
+  <div class="minecraft-instructions">
+    WASD move | SPACE jump/swim | SHIFT swim down | Q drop | R ritual | SCROLL hotbar | LEFT break | RIGHT use/place | E inventory | ` debug
+  </div>
+</div>
