@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SakuraCraft (TypeScript) - Demo</title>
+  <title>SakuraCraft - A Voxel Adventure</title>
   <style>
     * {
       margin: 0;
@@ -13,128 +13,203 @@
     
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
-      color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      color: white;
+    }
+    
+    .landing {
+      text-align: center;
+      max-width: 600px;
+      padding: 2rem;
     }
     
     h1 {
-      font-size: 3rem;
+      font-size: 3.5rem;
       margin-bottom: 1rem;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-      color: #ffb7c5;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      animation: float 3s ease-in-out infinite;
     }
     
-    .badge {
-      background: rgba(0, 122, 204, 0.3);
-      color: #3b82f6;
-      padding: 4px 12px;
-      border-radius: 4px;
-      font-size: 0.8rem;
-      margin-left: 10px;
-      vertical-align: middle;
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
     }
     
-    p {
+    .tagline {
+      font-size: 1.3rem;
       margin-bottom: 2rem;
-      opacity: 0.8;
-      max-width: 600px;
-      text-align: center;
-      line-height: 1.6;
+      opacity: 0.9;
+    }
+    
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+    
+    .feature {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1rem;
+      border-radius: 10px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
     }
     
     .play-button {
-      padding: 20px 60px;
-      font-size: 1.5rem;
-      background: linear-gradient(135deg, #ffb7c5 0%, #e891a0 100%);
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
       border: none;
+      padding: 1.2rem 3rem;
+      font-size: 1.5rem;
       border-radius: 50px;
-      color: #1a1a2e;
       cursor: pointer;
-      font-weight: bold;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(255, 183, 197, 0.4);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      margin-top: 2rem;
+      font-weight: bold;
     }
     
     .play-button:hover {
       transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(255, 183, 197, 0.5);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.4);
     }
     
     .play-button:active {
       transform: translateY(-1px);
     }
     
-    .features {
-      margin-top: 3rem;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      max-width: 800px;
-    }
-    
-    .feature {
-      background: rgba(255, 183, 197, 0.1);
-      padding: 20px;
+    .controls {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: rgba(255, 255, 255, 0.1);
       border-radius: 10px;
-      border: 1px solid rgba(255, 183, 197, 0.2);
+      backdrop-filter: blur(10px);
+      text-align: left;
     }
     
-    .feature h3 {
-      color: #ffb7c5;
-      margin-bottom: 0.5rem;
+    .controls h3 {
+      margin-bottom: 1rem;
+      text-align: center;
     }
     
-    .feature p {
-      font-size: 0.9rem;
-      margin-bottom: 0;
+    .control-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.8rem;
+      font-size: 0.95rem;
+    }
+    
+    .control-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .key {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 0.3rem 0.6rem;
+      border-radius: 5px;
+      font-weight: bold;
+      min-width: 60px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <h1>🌸 SakuraCraft 🌸 <span class="badge">TypeScript</span></h1>
-  <p>
-    A voxel-based browser game with cherry blossom aesthetics. 
-    This is the TypeScript version with full type safety and IntelliSense support.
-  </p>
-  
-  <button class="play-button" id="playGame">▶ Play Game</button>
-  
-  <div class="features">
-    <div class="feature">
-      <h3>📘 Type Safe</h3>
-      <p>Full TypeScript support with strict type checking</p>
+  <div class="landing">
+    <h1>🌸 SakuraCraft</h1>
+    <p class="tagline">Build, Explore, Create in a Beautiful Voxel World</p>
+    
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">⛏️</div>
+        <strong>Mine & Build</strong>
+        <p>Break blocks, gather resources</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🎨</div>
+        <strong>Creative Freedom</strong>
+        <p>Build anything you imagine</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🌸</div>
+        <strong>Cherry Blossoms</strong>
+        <p>Beautiful Japanese aesthetics</p>
+      </div>
     </div>
-    <div class="feature">
-      <h3>🔍 IntelliSense</h3>
-      <p>Rich autocomplete and documentation in your IDE</p>
-    </div>
-    <div class="feature">
-      <h3>🏗️ Build</h3>
-      <p>Place and break blocks to create structures</p>
-    </div>
-    <div class="feature">
-      <h3>🐦 Survive</h3>
-      <p>Defend against birds and complete rituals</p>
+    
+    <button class="play-button" id="playGame">▶ Play Game</button>
+    
+    <div class="controls">
+      <h3>Controls</h3>
+      <div class="control-grid">
+        <div class="control-item">
+          <span class="key">WASD</span>
+          <span>Move</span>
+        </div>
+        <div class="control-item">
+          <span class="key">Space</span>
+          <span>Jump</span>
+        </div>
+        <div class="control-item">
+          <span class="key">Mouse</span>
+          <span>Look Around</span>
+        </div>
+        <div class="control-item">
+          <span class="key">Click</span>
+          <span>Break/Place</span>
+        </div>
+        <div class="control-item">
+          <span class="key">1-9</span>
+          <span>Select Item</span>
+        </div>
+        <div class="control-item">
+          <span class="key">E</span>
+          <span>Inventory</span>
+        </div>
+      </div>
     </div>
   </div>
 
   <script type="module">
     import SakuraCraft from './src/index.ts';
     
-    // Initialize the game with the play button as trigger
-    const game = new SakuraCraft();
-    game.init({
-      trigger: '#playGame'
+    // Wait for DOM to be fully loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM loaded, initializing game...');
+      
+      try {
+        // Initialize the game with the play button as trigger
+        const game = new SakuraCraft();
+        console.log('Game instance created:', game);
+        
+        game.init({
+          trigger: '#playGame'
+        });
+        console.log('Game initialized successfully');
+        
+        // Store game instance globally for debugging
+        window.sakuraCraft = game;
+        
+        // Verify button was set up
+        const playBtn = document.getElementById('playGame');
+        console.log('Play button found:', playBtn);
+        
+      } catch (error) {
+        console.error('Failed to initialize game:', error);
+        alert('Failed to initialize game. Check console for details.');
+      }
     });
-    
-    // TypeScript provides full type safety
-    console.log('Game settings:', game.settings);
   </script>
 </body>
 </html>
