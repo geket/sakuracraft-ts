@@ -591,11 +591,15 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         if (height > waterLevel + 1 && !isDesert && !isBeach) {
                             const treeNoise = this.noise2D(x * 0.4 + 300, z * 0.4 + 300);
                             if (treeNoise > 0.5 && Math.random() < 0.12) {
-                                // 25% chance for cherry blossom tree
-                                if (Math.random() < 0.25) {
-                                    this.generateCherryTree(x, height + 1, z);
-                                } else {
-                                    this.generateTree(x, height + 1, z);
+                                // Check if area is clear (no overlapping structures)
+                                const treeSize = 5; // Trees are roughly 5x5
+                                if (!this.checkStructureCollision(x - 2, height + 1, z - 2, treeSize, 8, treeSize)) {
+                                    // 25% chance for cherry blossom tree
+                                    if (Math.random() < 0.25) {
+                                        this.generateCherryTree(x, height + 1, z);
+                                    } else {
+                                        this.generateTree(x, height + 1, z);
+                                    }
                                 }
                             }
                         }
@@ -1076,6 +1080,90 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 return null;
             },
             
+
+            
+            // Check if bird would collide with blocks
+            checkBirdCollision(x, y, z, radius = 0.5) {
+                // Check blocks around bird position
+                const bx = Math.floor(x);
+                const by = Math.floor(y);
+                const bz = Math.floor(z);
+                
+                // Check 3x3x3 area around bird
+                for (let dx = -1; dx <= 1; dx++) {
+                    for (let dy = -1; dy <= 1; dy++) {
+                        for (let dz = -1; dz <= 1; dz++) {
+                            const block = this.getBlock(bx + dx, by + dy, bz + dz);
+                            // getBlock returns undefined for air, so check if block exists and is solid
+                            if (block && block !== 'water') {
+                                // Calculate distance to block center
+                                const blockX = bx + dx + 0.5;
+                                const blockY = by + dy + 0.5;
+                                const blockZ = bz + dz + 0.5;
+                                const dist = Math.sqrt(
+                                    (x - blockX) ** 2 + 
+                                    (y - blockY) ** 2 + 
+                                    (z - blockZ) ** 2
+                                );
+                                if (dist < radius + 0.7) return true; // Collision
+                            }
+                        }
+                    }
+                }
+                return false; // No collision
+            },
+            
+            // Check if area is clear for structure placement
+            checkStructureCollision(x, y, z, width, height, depth) {
+                // Check if this area overlaps with any existing structures
+                for (let dx = 0; dx < width; dx++) {
+                    for (let dy = 0; dy < height; dy++) {
+                        for (let dz = 0; dz < depth; dz++) {
+                            const block = this.getBlock(x + dx, y + dy, z + dz);
+                            // If there's already a block here (not air), area is occupied
+                            if (block) {
+                                return true; // Collision detected
+                            }
+                        }
+                    }
+                }
+                return false; // Area is clear
+            },
+            
+            // Find nearest clear spot for structure
+            findClearSpot(centerX, centerZ, width, depth, searchRadius = 20) {
+                // Try to find a clear spot near the center
+                for (let radius = 0; radius < searchRadius; radius++) {
+                    // Try positions in a circle around center
+                    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8) {
+                        const testX = Math.floor(centerX + Math.cos(angle) * radius);
+                        const testZ = Math.floor(centerZ + Math.sin(angle) * radius);
+                        const groundY = this.getGroundHeight(testX, testZ);
+                        
+                        // Check if this spot is clear
+                        if (!this.checkStructureCollision(testX, groundY, testZ, width, 10, depth)) {
+                            return { x: testX, y: groundY, z: testZ };
+                        }
+                    }
+                }
+                
+                // Fallback: return original position
+                const groundY = this.getGroundHeight(centerX, centerZ);
+                return { x: centerX, y: groundY, z: centerZ };
+            },
+
+            
+            // Toggle sneak mode
+            toggleSneak() {
+                this.camera.sneaking = !this.camera.sneaking;
+                console.log('Sneaking:', this.camera.sneaking);
+            },
+            
+            // Get current eye height based on sneak state
+            getEyeHeight() {
+                if (!this.camera.sneaking) return 1.6; // Default height
+                return 1.3; // Sneak height
+            },
             initBirds() {
                 this.birds = [];
                 const numBirds = 12; // Good number for small world
@@ -1452,9 +1540,31 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
                         
                         if (dist > 3) {
-                            bird.x += (dx / dist) * 0.15;
-                            bird.y += (dy / dist) * 0.1;
-                            bird.z += (dz / dist) * 0.15;
+                            // Try to move, but check for collisions
+                            const newX = bird.x + (dx / dist) * 0.15;
+                            const newY = bird.y + (dy / dist) * 0.1;
+                            const newZ = bird.z + (dz / dist) * 0.15;
+                            
+                            // Move in X if no collision
+                            if (!this.checkBirdCollision(newX, bird.y, bird.z, 0.3)) {
+                                bird.x = newX;
+                            } else {
+                                // Try going around - move perpendicular
+                                bird.x += (dz / dist) * 0.1; // Move sideways
+                            }
+                            
+                            // Move in Y if no collision
+                            if (!this.checkBirdCollision(bird.x, newY, bird.z, 0.3)) {
+                                bird.y = newY;
+                            }
+                            
+                            // Move in Z if no collision
+                            if (!this.checkBirdCollision(bird.x, bird.y, newZ, 0.3)) {
+                                bird.z = newZ;
+                            } else {
+                                // Try going around - move perpendicular
+                                bird.z += (dx / dist) * 0.1; // Move sideways
+                            }
                         } else {
                             // Circle close to player
                             bird.angle += 0.1;
@@ -1533,10 +1643,28 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         bird.vz += (dz / dist) * 0.02;
                     }
                     
-                    // Apply velocity with drag
-                    bird.x += bird.vx;
-                    bird.y += bird.vy;
-                    bird.z += bird.vz;
+                    // Apply velocity with drag - check collisions
+                    const newX = bird.x + bird.vx;
+                    const newY = bird.y + bird.vy;
+                    const newZ = bird.z + bird.vz;
+                    
+                    if (!this.checkBirdCollision(newX, bird.y, bird.z, 0.3)) {
+                        bird.x = newX;
+                    } else {
+                        bird.vx *= -0.5; // Bounce off walls
+                    }
+                    
+                    if (!this.checkBirdCollision(bird.x, newY, bird.z, 0.3)) {
+                        bird.y = newY;
+                    } else {
+                        bird.vy *= -0.5; // Bounce off ceiling/floor
+                    }
+                    
+                    if (!this.checkBirdCollision(bird.x, bird.y, newZ, 0.3)) {
+                        bird.z = newZ;
+                    } else {
+                        bird.vz *= -0.5; // Bounce off walls
+                    }
                     bird.vx *= 0.9;
                     bird.vy *= 0.9;
                     bird.vz *= 0.9;
@@ -5553,6 +5681,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 const width = this.canvas.width;
                 const height = this.canvas.height;
                 
+                // Calculate eye height for sneaking
+                const renderCamY = this.camera.y + this.getEyeHeight();
+                
                 // Sky gradient (cached when dimensions match)
                 if (!this.cachedSky || this.cachedSky.w !== width || this.cachedSky.h !== height || this.cachedSky.lighting !== this.settings.lighting) {
                     const skyGrad = ctx.createLinearGradient(0, 0, 0, height);
@@ -5571,7 +5702,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 
                 // Cache camera values for this frame
                 const camX = this.camera.x;
-                const camY = this.camera.y;
+                const camY = renderCamY; // Use adjusted height for sneaking
                 const camZ = this.camera.z;
                 const cosY = Math.cos(-this.camera.rotY);
                 const sinY = Math.sin(-this.camera.rotY);
@@ -5977,8 +6108,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         
                         if (distToWall > renderDist * 1.5) continue;  // Skip walls too far away
                         
-                        // Generate forcefield segments for this wall
-                        for (let y = bounds.minY; y < bounds.maxY; y += segmentSize) {
+                        // Generate forcefield segments for this wall - skip segments way below player
+                        const minRenderY = Math.max(bounds.minY, camY - 10); // Don't render too far below player
+                        for (let y = minRenderY; y < bounds.maxY; y += segmentSize) {
                             const perpStart = wall.axis === 'x' ? bounds.minZ : bounds.minX;
                             const perpEnd = wall.axis === 'x' ? bounds.maxZ : bounds.maxX;
                             
@@ -6050,9 +6182,12 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         }
                     }
                     
-                    // Bottom forcefield (floor at minY)
+                    // Bottom forcefield (floor at minY) - only if player can see it
                     const bottomY = bounds.minY;
-                    for (let x = bounds.minX; x < bounds.maxX; x += segmentSize) {
+                    const canSeeFloor = camY > bottomY + 3; // Player must be above floor to see it
+                    
+                    if (canSeeFloor) {
+                        for (let x = bounds.minX; x < bounds.maxX; x += segmentSize) {
                         for (let z = bounds.minZ; z < bounds.maxZ; z += segmentSize) {
                             const segDist = Math.sqrt((x + segmentSize/2 - camX) ** 2 + (z + segmentSize/2 - camZ) ** 2);
                             if (segDist > renderDist) continue;
@@ -6093,6 +6228,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                             ctx.stroke();
                         }
                     }
+                    } // End canSeeFloor check
                 }
                 
                 // Render birds
