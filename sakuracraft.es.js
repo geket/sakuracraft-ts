@@ -1,7 +1,7 @@
-var Ut = Object.defineProperty;
-var Kt = (t, e, i) => e in t ? Ut(t, e, { enumerable: !0, configurable: !0, writable: !0, value: i }) : t[e] = i;
-var Tt = (t, e, i) => Kt(t, typeof e != "symbol" ? e + "" : e, i);
-const Qt = `
+var Kt = Object.defineProperty;
+var Qt = (t, e, i) => e in t ? Kt(t, e, { enumerable: !0, configurable: !0, writable: !0, value: i }) : t[e] = i;
+var Tt = (t, e, i) => Qt(t, typeof e != "symbol" ? e + "" : e, i);
+const Jt = `
 <!-- SakuraCraft Game HTML Template -->
 <!-- This file is inserted into the DOM when the game initializes -->
 
@@ -160,12 +160,12 @@ const Qt = `
   </div>
 </div>
 `;
-function Jt(t = document.body) {
+function Vt(t = document.body) {
   const e = document.createElement("div");
-  for (e.innerHTML = Qt; e.firstChild; )
+  for (e.innerHTML = Jt; e.firstChild; )
     t.appendChild(e.firstChild);
 }
-const Vt = {
+const te = {
   canvas: null,
   ctx: null,
   isActive: !1,
@@ -307,30 +307,30 @@ const Vt = {
     function e(s) {
       return s * s * s * (s * (s * 6 - 15) + 10);
     }
-    function i(s, c, f) {
-      return s + f * (c - s);
+    function i(s, c, d) {
+      return s + d * (c - s);
     }
-    function a(s, c, f) {
-      const h = s & 3, n = h < 2 ? c : f, d = h < 2 ? f : c;
-      return (h & 1 ? -n : n) + (h & 2 ? -d : d);
+    function a(s, c, d) {
+      const r = s & 3, o = r < 2 ? c : d, f = r < 2 ? d : c;
+      return (r & 1 ? -o : o) + (r & 2 ? -f : f);
     }
     return function(s, c) {
-      const f = Math.floor(s) & 255, h = Math.floor(c) & 255;
+      const d = Math.floor(s) & 255, r = Math.floor(c) & 255;
       s -= Math.floor(s), c -= Math.floor(c);
-      const n = e(s), d = e(c), m = t[f] + h, u = t[f + 1] + h;
+      const o = e(s), f = e(c), m = t[d] + r, u = t[d + 1] + r;
       return i(
-        i(a(t[m], s, c), a(t[u], s - 1, c), n),
-        i(a(t[m + 1], s, c - 1), a(t[u + 1], s - 1, c - 1), n),
-        d
+        i(a(t[m], s, c), a(t[u], s - 1, c), o),
+        i(a(t[m + 1], s, c - 1), a(t[u + 1], s - 1, c - 1), o),
+        f
       );
     };
   }(),
   // Fractal Brownian Motion for more natural terrain
   fbm(t, e, i = 4) {
-    let a = 0, s = 1, c = 1, f = 0;
-    for (let h = 0; h < i; h++)
-      a += this.noise2D(t * c, e * c) * s, f += s, s *= 0.5, c *= 2;
-    return a / f;
+    let a = 0, s = 1, c = 1, d = 0;
+    for (let r = 0; r < i; r++)
+      a += this.noise2D(t * c, e * c) * s, d += s, s *= 0.5, c *= 2;
+    return a / d;
   },
   blockColors: {
     grass: { top: "#7cba5f", side: "#8b6b4a", bottom: "#6b4423" },
@@ -442,42 +442,42 @@ const Vt = {
     const a = {}, s = {};
     for (let m = -t; m <= t; m++)
       for (let u = -t; u <= t; u++) {
-        const y = this.fbm(m * 0.03, u * 0.03, 2) * 10, b = this.fbm(m * 0.05 + 100, u * 0.05 + 100, 2) * 5, T = Math.sqrt(m * m + u * u) / t, P = Math.max(0, 1 - T * 0.5);
-        let L = Math.floor(i + (y + b) * P);
+        const y = this.fbm(m * 0.03, u * 0.03, 2) * 10, b = this.fbm(m * 0.05 + 100, u * 0.05 + 100, 2) * 5, B = Math.sqrt(m * m + u * u) / t, C = Math.max(0, 1 - B * 0.5);
+        let L = Math.floor(i + (y + b) * C);
         L = Math.max(1, Math.min(22, L));
-        const z = `${m},${u}`;
-        a[z] = L, s[z] = this.noise2D(m * 0.03 + 500, u * 0.03 + 500);
+        const I = `${m},${u}`;
+        a[I] = L, s[I] = this.noise2D(m * 0.03 + 500, u * 0.03 + 500);
       }
     for (let m = -t; m <= t; m++)
       for (let u = -t; u <= t; u++) {
-        const y = `${m},${u}`, b = a[y], T = s[y], P = b <= e + 1 && b >= e - 1, L = T > 0.3 && b > e + 2;
-        for (let z = Math.max(0, b - 3); z < b - 1; z++)
-          this.setBlock(m, z, u, "stone");
-        if (P || b <= e ? (this.setBlock(m, b - 1, u, "sand"), this.setBlock(m, b, u, "sand")) : L ? (this.setBlock(m, b - 1, u, "sand"), this.setBlock(m, b, u, "sand")) : (this.setBlock(m, b - 1, u, "dirt"), this.setBlock(m, b, u, "grass")), b < e)
-          for (let z = b + 1; z <= e; z++)
-            this.setBlock(m, z, u, "water"), this.setFluidLevel(m, z, u, 8);
+        const y = `${m},${u}`, b = a[y], B = s[y], C = b <= e + 1 && b >= e - 1, L = B > 0.3 && b > e + 2;
+        for (let I = Math.max(0, b - 3); I < b - 1; I++)
+          this.setBlock(m, I, u, "stone");
+        if (C || b <= e ? (this.setBlock(m, b - 1, u, "sand"), this.setBlock(m, b, u, "sand")) : L ? (this.setBlock(m, b - 1, u, "sand"), this.setBlock(m, b, u, "sand")) : (this.setBlock(m, b - 1, u, "dirt"), this.setBlock(m, b, u, "grass")), b < e)
+          for (let I = b + 1; I <= e; I++)
+            this.setBlock(m, I, u, "water"), this.setFluidLevel(m, I, u, 8);
       }
     for (let m = -t; m <= t; m += 2)
       for (let u = -t; u <= t; u += 2) {
-        const y = `${m},${u}`, b = a[y], T = s[y], P = b <= e + 1, L = T > 0.3;
-        b > e + 1 && !L && !P && this.noise2D(m * 0.4 + 300, u * 0.4 + 300) > 0.5 && Math.random() < 0.12 && (Math.random() < 0.25 ? this.generateCherryTree(m, b + 1, u) : this.generateTree(m, b + 1, u));
+        const y = `${m},${u}`, b = a[y], B = s[y], C = b <= e + 1, L = B > 0.3;
+        b > e + 1 && !L && !C && this.noise2D(m * 0.4 + 300, u * 0.4 + 300) > 0.5 && Math.random() < 0.12 && (this.checkStructureCollision(m - 2, b + 1, u - 2, 5, 8, 5) || (Math.random() < 0.25 ? this.generateCherryTree(m, b + 1, u) : this.generateTree(m, b + 1, u)));
       }
     const c = 5;
     for (let m = 0; m < c; m++) {
-      const u = Math.floor(Math.random() * t * 2) - t, y = Math.floor(Math.random() * t * 2) - t, b = `${u},${y}`, T = a[b] || i;
-      if (T > e) {
-        this.setBlock(u, T + 1, y, "ritualChest");
-        const P = this.ritualItems[m % this.ritualItems.length];
-        this.chestContents = this.chestContents || {}, this.chestContents[`${u},${T + 1},${y}`] = [
-          { type: P, count: 1 }
+      const u = Math.floor(Math.random() * t * 2) - t, y = Math.floor(Math.random() * t * 2) - t, b = `${u},${y}`, B = a[b] || i;
+      if (B > e) {
+        this.setBlock(u, B + 1, y, "ritualChest");
+        const C = this.ritualItems[m % this.ritualItems.length];
+        this.chestContents = this.chestContents || {}, this.chestContents[`${u},${B + 1},${y}`] = [
+          { type: C, count: 1 }
         ];
       }
     }
     for (let m = 0; m < 30; m++) {
-      const u = Math.floor(Math.random() * t * 2) - t, y = Math.floor(Math.random() * t * 2) - t, b = `${u},${y}`, T = a[b] || i;
-      T > e && this.droppedItems.push({
+      const u = Math.floor(Math.random() * t * 2) - t, y = Math.floor(Math.random() * t * 2) - t, b = `${u},${y}`, B = a[b] || i;
+      B > e && this.droppedItems.push({
         x: u + 0.5,
-        y: T + 1.2,
+        y: B + 1.2,
         z: y + 0.5,
         type: "seeds",
         count: 1 + Math.floor(Math.random() * 3),
@@ -500,12 +500,12 @@ const Vt = {
         }
     }
     this.generateBuildings(t);
-    let f, h;
+    let d, r;
     do
-      f = Math.floor(Math.random() * (t - 20)) + 15, h = Math.floor(Math.random() * (t - 20)) + 15, Math.random() < 0.5 && (f = -f), Math.random() < 0.5 && (h = -h);
-    while (Math.abs(f) < 20 || Math.abs(h) < 20);
-    const n = `${f},${h}`, d = a[n] || i;
-    this.generateRitualTemple(f, d + 1, h), this.initBirds(), this.initPestBirds();
+      d = Math.floor(Math.random() * (t - 20)) + 15, r = Math.floor(Math.random() * (t - 20)) + 15, Math.random() < 0.5 && (d = -d), Math.random() < 0.5 && (r = -r);
+    while (Math.abs(d) < 20 || Math.abs(r) < 20);
+    const o = `${d},${r}`, f = a[o] || i;
+    this.generateRitualTemple(d, f + 1, r), this.initBirds(), this.initPestBirds();
   },
   generateBuildings(t) {
     const e = ["church", "house1", "house2", "house3", "grocery", "wcdonalds"];
@@ -513,9 +513,9 @@ const Vt = {
     for (let s = -Math.floor(t / 25); s <= Math.floor(t / 25); s++)
       for (let c = -Math.floor(t / 25); c <= Math.floor(t / 25); c++) {
         if (s === 0 && c === 0) continue;
-        const f = s * 25, h = c * 25, n = 2 + Math.floor(Math.random() * 5);
-        for (let d = 0; d < n; d++) {
-          const m = f + 3 + Math.floor(Math.random() * 19), u = h + 3 + Math.floor(Math.random() * 19);
+        const d = s * 25, r = c * 25, o = 2 + Math.floor(Math.random() * 5);
+        for (let f = 0; f < o; f++) {
+          const m = d + 3 + Math.floor(Math.random() * 19), u = r + 3 + Math.floor(Math.random() * 19);
           if (!a && Math.random() < 0.3 && this.tryPlaceBuilding(m, u, ["wcdonalds"])) {
             a = !0;
             continue;
@@ -525,8 +525,8 @@ const Vt = {
       }
     if (!a)
       for (let s = 0; s < 50; s++) {
-        const c = 25 + Math.floor(Math.random() * 20), f = 25 + Math.floor(Math.random() * 20);
-        if (this.tryPlaceBuilding(c, f, ["wcdonalds"]))
+        const c = 25 + Math.floor(Math.random() * 20), d = 25 + Math.floor(Math.random() * 20);
+        if (this.tryPlaceBuilding(c, d, ["wcdonalds"]))
           break;
       }
   },
@@ -535,12 +535,12 @@ const Vt = {
     if (!a || a < 7) return !1;
     const s = this.getBlock(t, a, e);
     if (s === "water" || s === "sand") return !1;
-    const c = this.getHighestBlock(t + 3, e) || a, f = this.getHighestBlock(t - 3, e) || a, h = this.getHighestBlock(t, e + 3) || a, n = this.getHighestBlock(t, e - 3) || a;
-    if (Math.max(Math.abs(c - a), Math.abs(f - a), Math.abs(h - a), Math.abs(n - a)) > 2) return !1;
+    const c = this.getHighestBlock(t + 3, e) || a, d = this.getHighestBlock(t - 3, e) || a, r = this.getHighestBlock(t, e + 3) || a, o = this.getHighestBlock(t, e - 3) || a;
+    if (Math.max(Math.abs(c - a), Math.abs(d - a), Math.abs(r - a), Math.abs(o - a)) > 2) return !1;
     for (const u of this.buildings)
       if (Math.sqrt((t - u.x) ** 2 + (e - u.z) ** 2) < 15) return !1;
-    const d = i[Math.floor(Math.random() * i.length)], m = a + 1;
-    switch (this.buildings.push({ x: t, z: e, type: d, y: m }), d) {
+    const f = i[Math.floor(Math.random() * i.length)], m = a + 1;
+    switch (this.buildings.push({ x: t, z: e, type: f, y: m }), f) {
       case "church":
         this.generateChurch(t, m, e);
         break;
@@ -574,87 +574,87 @@ const Vt = {
             if (u === 11 && m >= 2 && m <= 4 && y < 3 || (m === 0 || m === 6) && y >= 2 && y <= 4 && (u === 3 || u === 8)) continue;
             this.setBlock(t + m, e + y, i + u, "stone");
           }
-    const h = t + 3, n = i + 2;
+    const r = t + 3, o = i + 2;
     for (let m = 8; m < 13; m++)
-      this.setBlock(h, e + m, n, "stone"), m < 11 && (Math.random() > 0.3 && this.setBlock(h + 1, e + m, n, "stone"), Math.random() > 0.3 && this.setBlock(h - 1, e + m, n, "stone"));
-    const d = e + 8 + 5;
-    this.setBlock(h, d, n, "stone"), this.setBlock(h, d + 1, n, "stone"), this.setBlock(h, d + 2, n, "stone"), this.setBlock(h - 1, d + 1, n, "stone"), this.setBlock(h + 1, d + 1, n, "stone");
+      this.setBlock(r, e + m, o, "stone"), m < 11 && (Math.random() > 0.3 && this.setBlock(r + 1, e + m, o, "stone"), Math.random() > 0.3 && this.setBlock(r - 1, e + m, o, "stone"));
+    const f = e + 8 + 5;
+    this.setBlock(r, f, o, "stone"), this.setBlock(r, f + 1, o, "stone"), this.setBlock(r, f + 2, o, "stone"), this.setBlock(r - 1, f + 1, o, "stone"), this.setBlock(r + 1, f + 1, o, "stone");
   },
   // Small cottage house
   generateHouse1(t, e, i) {
-    for (let h = 0; h < 5; h++)
-      for (let n = 0; n < 6; n++)
-        this.setBlock(t + h, e - 1, i + n, "wood");
-    for (let h = 0; h < 5; h++)
-      for (let n = 0; n < 6; n++)
-        for (let d = 0; d < 4; d++)
-          if ((h === 0 || h === 4 || n === 0 || n === 5) && Math.random() > 0.25) {
-            if (n === 5 && h === 2 && d < 2 || h === 0 && d === 1 && n === 2) continue;
-            this.setBlock(t + h, e + d, i + n, "wood");
+    for (let r = 0; r < 5; r++)
+      for (let o = 0; o < 6; o++)
+        this.setBlock(t + r, e - 1, i + o, "wood");
+    for (let r = 0; r < 5; r++)
+      for (let o = 0; o < 6; o++)
+        for (let f = 0; f < 4; f++)
+          if ((r === 0 || r === 4 || o === 0 || o === 5) && Math.random() > 0.25) {
+            if (o === 5 && r === 2 && f < 2 || r === 0 && f === 1 && o === 2) continue;
+            this.setBlock(t + r, e + f, i + o, "wood");
           }
-    for (let h = -1; h <= 5; h++)
-      for (let n = 0; n < 6; n++)
-        Math.random() > 0.25 && this.setBlock(t + h, e + 4, i + n, "leaves");
+    for (let r = -1; r <= 5; r++)
+      for (let o = 0; o < 6; o++)
+        Math.random() > 0.25 && this.setBlock(t + r, e + 4, i + o, "leaves");
   },
   // Two-story house
   generateHouse2(t, e, i) {
-    for (let h = 0; h < 6; h++)
-      for (let n = 0; n < 7; n++)
-        this.setBlock(t + h, e - 1, i + n, "stone");
-    for (let h = 0; h < 6; h++)
-      for (let n = 0; n < 7; n++)
-        for (let d = 0; d < 6; d++)
-          if ((h === 0 || h === 5 || n === 0 || n === 6) && Math.random() > 0.3) {
-            if (n === 6 && h >= 2 && h <= 3 && d < 2 || (h === 0 || h === 5) && (d === 1 || d === 4) && (n === 2 || n === 4)) continue;
-            this.setBlock(t + h, e + d, i + n, "brick");
+    for (let r = 0; r < 6; r++)
+      for (let o = 0; o < 7; o++)
+        this.setBlock(t + r, e - 1, i + o, "stone");
+    for (let r = 0; r < 6; r++)
+      for (let o = 0; o < 7; o++)
+        for (let f = 0; f < 6; f++)
+          if ((r === 0 || r === 5 || o === 0 || o === 6) && Math.random() > 0.3) {
+            if (o === 6 && r >= 2 && r <= 3 && f < 2 || (r === 0 || r === 5) && (f === 1 || f === 4) && (o === 2 || o === 4)) continue;
+            this.setBlock(t + r, e + f, i + o, "brick");
           }
-    for (let h = 1; h < 5; h++)
-      for (let n = 1; n < 6; n++)
-        Math.random() > 0.3 * 2 && this.setBlock(t + h, e + 3, i + n, "wood");
+    for (let r = 1; r < 5; r++)
+      for (let o = 1; o < 6; o++)
+        Math.random() > 0.3 * 2 && this.setBlock(t + r, e + 3, i + o, "wood");
   },
   // L-shaped house
   generateHouse3(t, e, i) {
     for (let s = 0; s < 5; s++)
       for (let c = 0; c < 8; c++) {
         this.setBlock(t + s, e - 1, i + c, "stone");
-        for (let f = 0; f < 4; f++)
+        for (let d = 0; d < 4; d++)
           if ((s === 0 || s === 4 || c === 0 || c === 7) && Math.random() > 0.35) {
-            if (c === 7 && s === 2 && f < 2) continue;
-            this.setBlock(t + s, e + f, i + c, "brick");
+            if (c === 7 && s === 2 && d < 2) continue;
+            this.setBlock(t + s, e + d, i + c, "brick");
           }
       }
     for (let s = 5; s < 9; s++)
       for (let c = 0; c < 5; c++) {
         this.setBlock(t + s, e - 1, i + c, "stone");
-        for (let f = 0; f < 4; f++)
-          (s === 8 || c === 0 || c === 4 || s === 5 && c > 4) && Math.random() > 0.35 && this.setBlock(t + s, e + f, i + c, "brick");
+        for (let d = 0; d < 4; d++)
+          (s === 8 || c === 0 || c === 4 || s === 5 && c > 4) && Math.random() > 0.35 && this.setBlock(t + s, e + d, i + c, "brick");
       }
   },
   // Abandoned grocery store
   generateGrocery(t, e, i) {
-    for (let h = 0; h < 10; h++)
-      for (let n = 0; n < 8; n++)
-        this.setBlock(t + h, e - 1, i + n, "stone");
-    for (let h = 0; h < 10; h++)
-      for (let n = 0; n < 8; n++)
-        for (let d = 0; d < 4; d++)
-          if ((h === 0 || h === 9 || n === 0 || n === 7) && Math.random() > 0.25) {
-            if (n === 7 && h >= 3 && h <= 6 && d < 3 || n === 7 && (h === 1 || h === 8) && d >= 1 && d <= 2) continue;
-            this.setBlock(t + h, e + d, i + n, "stone");
+    for (let r = 0; r < 10; r++)
+      for (let o = 0; o < 8; o++)
+        this.setBlock(t + r, e - 1, i + o, "stone");
+    for (let r = 0; r < 10; r++)
+      for (let o = 0; o < 8; o++)
+        for (let f = 0; f < 4; f++)
+          if ((r === 0 || r === 9 || o === 0 || o === 7) && Math.random() > 0.25) {
+            if (o === 7 && r >= 3 && r <= 6 && f < 3 || o === 7 && (r === 1 || r === 8) && f >= 1 && f <= 2) continue;
+            this.setBlock(t + r, e + f, i + o, "stone");
           }
-    for (let h = 0; h < 2; h++)
-      for (let n = 2; n < 6; n++)
-        Math.random() > 0.4 && (this.setBlock(t + 3 + h * 3, e, i + n, "wood"), Math.random() > 0.5 && this.setBlock(t + 3 + h * 3, e + 1, i + n, "wood"));
-    for (let h = 2; h < 8; h++)
-      Math.random() > 0.3 && this.setBlock(t + h, e + 4, i + 8 - 1, "stone");
+    for (let r = 0; r < 2; r++)
+      for (let o = 2; o < 6; o++)
+        Math.random() > 0.4 && (this.setBlock(t + 3 + r * 3, e, i + o, "wood"), Math.random() > 0.5 && this.setBlock(t + 3 + r * 3, e + 1, i + o, "wood"));
+    for (let r = 2; r < 8; r++)
+      Math.random() > 0.3 && this.setBlock(t + r, e + 4, i + 8 - 1, "stone");
   },
   // WcDonald's - the knockoff! (W instead of M, same colors)
   generateWcDonalds(t, e, i) {
     for (let u = 1; u < 8; u++)
       for (let y = 1; y < 8; y++)
         for (let b = 0; b < 6; b++) {
-          const T = this.getBlock(t + u, e + b, i + y);
-          T && T !== "water" && T !== "lava" && this.setBlock(t + u, e + b, i + y, null);
+          const B = this.getBlock(t + u, e + b, i + y);
+          B && B !== "water" && B !== "lava" && this.setBlock(t + u, e + b, i + y, null);
         }
     for (let u = 0; u < 9; u++)
       for (let y = 0; y < 9; y++)
@@ -666,8 +666,8 @@ const Vt = {
             if (y === 8 && u >= 3 && u <= 5 && b < 3 || u === 8 && y >= 2 && y <= 4 && b === 1) continue;
             this.setBlock(t + u, e + b, i + y, b < 2 ? "brick" : "stone");
           }
-    const h = t + 4, n = i + 9, d = e + 4;
-    this.setBlock(h - 2, d, n, "sand"), this.setBlock(h - 2, d + 1, n, "sand"), this.setBlock(h - 2, d + 2, n, "sand"), this.setBlock(h - 2, d + 3, n, "sand"), this.setBlock(h - 1, d, n, "sand"), this.setBlock(h - 1, d + 1, n, "sand"), this.setBlock(h, d, n, "sand"), this.setBlock(h + 1, d, n, "sand"), this.setBlock(h + 1, d + 1, n, "sand"), this.setBlock(h + 2, d, n, "sand"), this.setBlock(h + 2, d + 1, n, "sand"), this.setBlock(h + 2, d + 2, n, "sand"), this.setBlock(h + 2, d + 3, n, "sand");
+    const r = t + 4, o = i + 9, f = e + 4;
+    this.setBlock(r - 2, f, o, "sand"), this.setBlock(r - 2, f + 1, o, "sand"), this.setBlock(r - 2, f + 2, o, "sand"), this.setBlock(r - 2, f + 3, o, "sand"), this.setBlock(r - 1, f, o, "sand"), this.setBlock(r - 1, f + 1, o, "sand"), this.setBlock(r, f, o, "sand"), this.setBlock(r + 1, f, o, "sand"), this.setBlock(r + 1, f + 1, o, "sand"), this.setBlock(r + 2, f, o, "sand"), this.setBlock(r + 2, f + 1, o, "sand"), this.setBlock(r + 2, f + 2, o, "sand"), this.setBlock(r + 2, f + 3, o, "sand");
     for (let u = 2; u < 7; u++)
       Math.random() > 0.3 && this.setBlock(t + u, e, i + 2, "brick");
     Math.random() > 0.4 && this.setBlock(t + 2, e, i + 5, "wood"), Math.random() > 0.4 && this.setBlock(t + 6, e, i + 5, "wood"), Math.random() > 0.4 && this.setBlock(t + 4, e, i + 6, "wood"), this.setBlock(t + 4, e, i + 1, "buildingChest"), this.chestContents = this.chestContents || {};
@@ -678,6 +678,50 @@ const Vt = {
     for (let i = 30; i >= 0; i--)
       if (this.getBlock(t, i, e)) return i;
     return null;
+  },
+  // Check if bird would collide with blocks
+  checkBirdCollision(t, e, i, a = 0.5) {
+    const s = Math.floor(t), c = Math.floor(e), d = Math.floor(i);
+    for (let r = -1; r <= 1; r++)
+      for (let o = -1; o <= 1; o++)
+        for (let f = -1; f <= 1; f++) {
+          const m = this.getBlock(s + r, c + o, d + f);
+          if (m && m !== "water") {
+            const u = s + r + 0.5, y = c + o + 0.5, b = d + f + 0.5;
+            if (Math.sqrt(
+              (t - u) ** 2 + (e - y) ** 2 + (i - b) ** 2
+            ) < a + 0.7) return !0;
+          }
+        }
+    return !1;
+  },
+  // Check if area is clear for structure placement
+  checkStructureCollision(t, e, i, a, s, c) {
+    for (let d = 0; d < a; d++)
+      for (let r = 0; r < s; r++)
+        for (let o = 0; o < c; o++)
+          if (this.getBlock(t + d, e + r, i + o))
+            return !0;
+    return !1;
+  },
+  // Find nearest clear spot for structure
+  findClearSpot(t, e, i, a, s = 20) {
+    for (let d = 0; d < s; d++)
+      for (let r = 0; r < Math.PI * 2; r += Math.PI / 8) {
+        const o = Math.floor(t + Math.cos(r) * d), f = Math.floor(e + Math.sin(r) * d), m = this.getGroundHeight(o, f);
+        if (!this.checkStructureCollision(o, m, f, i, 10, a))
+          return { x: o, y: m, z: f };
+      }
+    const c = this.getGroundHeight(t, e);
+    return { x: t, y: c, z: e };
+  },
+  // Toggle sneak mode
+  toggleSneak() {
+    this.camera.sneaking = !this.camera.sneaking, console.log("Sneaking:", this.camera.sneaking);
+  },
+  // Get current eye height based on sneak state
+  getEyeHeight() {
+    return this.camera.sneaking ? 1.3 : 1.6;
   },
   initBirds() {
     this.birds = [];
@@ -751,17 +795,17 @@ const Vt = {
       s.rageMode && s.rageTimer && (s.rageTimer--, s.rageTimer <= 0 && (s.rageMode = !1, s.speed = 0.06)), this.wind && s.state !== "knockback" && (s.x += this.wind.x * 0.5, s.z += this.wind.z * 0.5), a && s.state !== "knockback" && (s.state = "retreating", s.stateTimer = Math.max(s.stateTimer, 60), s.anger = Math.max(0, s.anger - 0.01)), s.stateTimer--;
       const c = s.anger * 0.1;
       s.wingPhase += (s.state === "knockback" ? 0.8 : 0.5) + c, s.chirpTimer--;
-      const f = 1 + s.anger * 0.3, h = 1 - s.anger * 0.1, n = 0.3 + s.anger * 0.15;
+      const d = 1 + s.anger * 0.3, r = 1 - s.anger * 0.1, o = 0.3 + s.anger * 0.15;
       if (s.state === "knockback") {
-        const I = s.x, E = s.y, H = s.z;
+        const z = s.x, $ = s.y, R = s.z;
         s.x += s.vx, s.y += s.vy, s.z += s.vz;
-        const D = this.getBlock(Math.floor(s.x), Math.floor(s.y), Math.floor(s.z));
-        if (D && D !== "water" && D !== "lava")
-          if (D.includes("Leaves") || D.includes("leaves"))
+        const E = this.getBlock(Math.floor(s.x), Math.floor(s.y), Math.floor(s.z));
+        if (E && E !== "water" && E !== "lava")
+          if (E.includes("Leaves") || E.includes("leaves"))
             s.vx *= 0.4, s.vy *= 0.4, s.vz *= 0.4, s.stateTimer = Math.min(s.stateTimer, 90), s.caughtInLeaves = !0;
           else {
-            const Z = Math.floor(s.x), Y = Math.floor(s.y), q = Math.floor(s.z);
-            this.getBlock(Z, Math.floor(E), Math.floor(H)) ? this.getBlock(Math.floor(I), Y, Math.floor(H)) ? this.getBlock(Math.floor(I), Math.floor(E), q) ? (s.vx *= -0.5, s.vy *= -0.5, s.vz *= -0.5, s.x = I, s.y = E, s.z = H) : (s.vz *= -0.7, s.z = H) : (s.vy *= -0.7, s.y = E) : (s.vx *= -0.7, s.x = I), this.particles.push({
+            const O = Math.floor(s.x), X = Math.floor(s.y), H = Math.floor(s.z);
+            this.getBlock(O, Math.floor($), Math.floor(R)) ? this.getBlock(Math.floor(z), X, Math.floor(R)) ? this.getBlock(Math.floor(z), Math.floor($), H) ? (s.vx *= -0.5, s.vy *= -0.5, s.vz *= -0.5, s.x = z, s.y = $, s.z = R) : (s.vz *= -0.7, s.z = R) : (s.vy *= -0.7, s.y = $) : (s.vx *= -0.7, s.x = z), this.particles.push({
               x: s.x,
               y: s.y,
               z: s.z,
@@ -774,16 +818,16 @@ const Vt = {
             });
           }
         s.caughtInLeaves ? (s.vx *= 0.9, s.vy *= 0.9, s.vz *= 0.9, s.vy += 0.01, Math.abs(s.vx) < 0.01 && Math.abs(s.vz) < 0.01 && (s.caughtInLeaves = !1)) : (s.vx *= 0.95, s.vy *= 0.95, s.vy -= 0.01, s.vz *= 0.95), s.knockbackSpin += 0.3;
-        const U = Math.sqrt(s.vx * s.vx + s.vy * s.vy + s.vz * s.vz), _ = 0.05 + s.anger * 0.02;
-        if (U < _ || s.stateTimer <= 0) {
+        const j = Math.sqrt(s.vx * s.vx + s.vy * s.vy + s.vz * s.vz), Q = 0.05 + s.anger * 0.02;
+        if (j < Q || s.stateTimer <= 0) {
           if (s.anger = Math.min(5, s.anger + 1), s.timesShot++, s.timesShot === s.spawnThreshold && this.pestBirds.length < 15) {
-            const X = 2 + Math.floor(Math.random() * 2);
-            for (let Z = 0; Z < X; Z++) {
-              const Y = Math.random() * Math.PI * 2, q = 3 + Math.random() * 2;
+            const Y = 2 + Math.floor(Math.random() * 2);
+            for (let O = 0; O < Y; O++) {
+              const X = Math.random() * Math.PI * 2, H = 3 + Math.random() * 2;
               this.pestBirds.push({
-                x: this.camera.x + Math.cos(Y) * q,
+                x: this.camera.x + Math.cos(X) * H,
                 y: this.camera.y + 1 + Math.random(),
-                z: this.camera.z + Math.sin(Y) * q,
+                z: this.camera.z + Math.sin(X) * H,
                 vx: 0,
                 vy: 0,
                 vz: 0,
@@ -792,9 +836,9 @@ const Vt = {
                 targetOffsetZ: 0,
                 state: "circling",
                 stateTimer: 20 + Math.random() * 30,
-                angle: Y,
-                circleRadius: q,
-                baseCircleRadius: q,
+                angle: X,
+                circleRadius: H,
+                baseCircleRadius: H,
                 circleSpeed: 0.06 + Math.random() * 0.04,
                 swoopProgress: 0,
                 wingPhase: Math.random() * Math.PI * 2,
@@ -808,50 +852,55 @@ const Vt = {
               });
             }
           }
-          s.state = "retreating", s.stateTimer = Math.max(30, 120 - s.anger * 20), s.circleRadius = (s.baseCircleRadius + 4) * h, s.vx = s.vy = s.vz = 0, s.knockbackSpin = 0, s.caughtInLeaves = !1;
+          s.state = "retreating", s.stateTimer = Math.max(30, 120 - s.anger * 20), s.circleRadius = (s.baseCircleRadius + 4) * r, s.vx = s.vy = s.vz = 0, s.knockbackSpin = 0, s.caughtInLeaves = !1;
         }
         continue;
       }
       switch (s.state) {
         case "circling":
-          s.angle += s.circleSpeed * f, s.targetOffsetX = Math.cos(s.angle) * s.circleRadius * h, s.targetOffsetZ = Math.sin(s.angle) * s.circleRadius * h, s.targetOffsetY = 0.5 + Math.sin(s.angle * 2) * 0.3, s.circleRadius += (s.baseCircleRadius - s.circleRadius) * 0.01, s.stateTimer <= 0 && (Math.random() < n ? (s.state = "swooping", s.swoopProgress = 0, s.stateTimer = 60) : Math.random() < 0.2 ? (s.state = "hovering", s.stateTimer = Math.max(20, 40 - s.anger * 5) + Math.random() * 40) : s.stateTimer = Math.max(15, 30 - s.anger * 5) + Math.random() * 60);
+          s.angle += s.circleSpeed * d, s.targetOffsetX = Math.cos(s.angle) * s.circleRadius * r, s.targetOffsetZ = Math.sin(s.angle) * s.circleRadius * r, s.targetOffsetY = 0.5 + Math.sin(s.angle * 2) * 0.3, s.circleRadius += (s.baseCircleRadius - s.circleRadius) * 0.01, s.stateTimer <= 0 && (Math.random() < o ? (s.state = "swooping", s.swoopProgress = 0, s.stateTimer = 60) : Math.random() < 0.2 ? (s.state = "hovering", s.stateTimer = Math.max(20, 40 - s.anger * 5) + Math.random() * 40) : s.stateTimer = Math.max(15, 30 - s.anger * 5) + Math.random() * 60);
           break;
         case "swooping":
-          s.swoopProgress += 0.05 * f;
-          const I = s.swoopProgress;
-          if (I < 0.5)
-            s.targetOffsetX = Math.cos(s.angle) * s.circleRadius * (1 - I * 2), s.targetOffsetZ = Math.sin(s.angle) * s.circleRadius * (1 - I * 2), s.targetOffsetY = 0.5 - I;
+          s.swoopProgress += 0.05 * d;
+          const z = s.swoopProgress;
+          if (z < 0.5)
+            s.targetOffsetX = Math.cos(s.angle) * s.circleRadius * (1 - z * 2), s.targetOffsetZ = Math.sin(s.angle) * s.circleRadius * (1 - z * 2), s.targetOffsetY = 0.5 - z;
           else {
-            const D = (I - 0.5) * 2;
-            s.targetOffsetX = Math.cos(s.angle) * s.circleRadius * D, s.targetOffsetZ = Math.sin(s.angle) * s.circleRadius * D, s.targetOffsetY = -0.5 + D;
+            const E = (z - 0.5) * 2;
+            s.targetOffsetX = Math.cos(s.angle) * s.circleRadius * E, s.targetOffsetZ = Math.sin(s.angle) * s.circleRadius * E, s.targetOffsetY = -0.5 + E;
           }
           s.swoopProgress >= 1 && (s.state = "retreating", s.stateTimer = 30);
           break;
         case "retreating":
           s.angle += s.circleSpeed * 0.5;
-          const E = s.circleRadius + 2;
-          s.targetOffsetX = Math.cos(s.angle) * E, s.targetOffsetZ = Math.sin(s.angle) * E, s.targetOffsetY = 1 + Math.sin(s.angle * 3) * 0.2, s.circleRadius += (s.baseCircleRadius - s.circleRadius) * 0.02, s.stateTimer <= 0 && (s.state = "circling", s.stateTimer = 60 + Math.random() * 60);
+          const $ = s.circleRadius + 2;
+          s.targetOffsetX = Math.cos(s.angle) * $, s.targetOffsetZ = Math.sin(s.angle) * $, s.targetOffsetY = 1 + Math.sin(s.angle * 3) * 0.2, s.circleRadius += (s.baseCircleRadius - s.circleRadius) * 0.02, s.stateTimer <= 0 && (s.state = "circling", s.stateTimer = 60 + Math.random() * 60);
           break;
         case "hovering":
-          const H = Math.sin(Date.now() * 0.01) * 0.3;
-          s.targetOffsetX = Math.sin(this.camera.rotY + H) * -1.5, s.targetOffsetZ = Math.cos(this.camera.rotY + H) * -1.5, s.targetOffsetY = 0.2 + Math.sin(Date.now() * 0.02) * 0.1, s.stateTimer <= 0 && (s.state = "circling", s.stateTimer = 80 + Math.random() * 40);
+          const R = Math.sin(Date.now() * 0.01) * 0.3;
+          s.targetOffsetX = Math.sin(this.camera.rotY + R) * -1.5, s.targetOffsetZ = Math.cos(this.camera.rotY + R) * -1.5, s.targetOffsetY = 0.2 + Math.sin(Date.now() * 0.02) * 0.1, s.stateTimer <= 0 && (s.state = "circling", s.stateTimer = 80 + Math.random() * 40);
           break;
       }
-      const d = t + s.targetOffsetX, m = e + s.targetOffsetY, u = i + s.targetOffsetZ, y = s.state === "swooping" ? 0.15 : 0.08;
-      let b = (d - s.x) * y, T = (m - s.y) * y, P = (u - s.z) * y;
-      const z = s.rageMode ? 0.12 : 0.08, R = Math.sqrt(b * b + T * T + P * P);
-      if (R > z) {
-        const I = z / R;
-        b *= I, T *= I, P *= I;
+      const f = t + s.targetOffsetX, m = e + s.targetOffsetY, u = i + s.targetOffsetZ, y = s.state === "swooping" ? 0.15 : 0.08;
+      let b = (f - s.x) * y, B = (m - s.y) * y, C = (u - s.z) * y;
+      const I = s.rageMode ? 0.12 : 0.08, F = Math.sqrt(b * b + B * B + C * C);
+      if (F > I) {
+        const z = I / F;
+        b *= z, B *= z, C *= z;
       }
-      s.x += b, s.y += T, s.z += P;
+      s.x += b, s.y += B, s.z += C;
     }
   },
   updateBirds() {
     for (const t of this.birds)
       if (t.swarmMode && t.swarmTimer && (t.swarmTimer--, t.swarmTimer <= 0 && (t.swarmMode = !1)), t.swarmMode) {
         const e = this.camera.x - t.x, i = this.camera.y - t.y, a = this.camera.z - t.z, s = Math.sqrt(e * e + i * i + a * a);
-        s > 3 ? (t.x += e / s * 0.15, t.y += i / s * 0.1, t.z += a / s * 0.15) : (t.angle += 0.1, t.x = this.camera.x + Math.cos(t.angle) * 3, t.z = this.camera.z + Math.sin(t.angle) * 3, t.y = this.camera.y + Math.sin(t.wobble) * 0.5), t.wobble += t.wobbleSpeed * 2, t.wingPhase += 0.5;
+        if (s > 3) {
+          const c = t.x + e / s * 0.15, d = t.y + i / s * 0.1, r = t.z + a / s * 0.15;
+          this.checkBirdCollision(c, t.y, t.z, 0.3) ? t.x += a / s * 0.1 : t.x = c, this.checkBirdCollision(t.x, d, t.z, 0.3) || (t.y = d), this.checkBirdCollision(t.x, t.y, r, 0.3) ? t.z += e / s * 0.1 : t.z = r;
+        } else
+          t.angle += 0.1, t.x = this.camera.x + Math.cos(t.angle) * 3, t.z = this.camera.z + Math.sin(t.angle) * 3, t.y = this.camera.y + Math.sin(t.wobble) * 0.5;
+        t.wobble += t.wobbleSpeed * 2, t.wingPhase += 0.5;
       } else {
         t.angle += t.speed, t.wobble += t.wobbleSpeed;
         const e = Math.sin(t.angle * 0.1) * 20, i = Math.cos(t.angle * 0.1) * 20;
@@ -867,7 +916,9 @@ const Vt = {
       const e = this.blueBirds[t];
       e.wingPhase += 0.6, e.attackCooldown > 0 && e.attackCooldown--;
       const i = this.camera.x - e.x, a = this.camera.y - e.y, s = this.camera.z - e.z, c = Math.sqrt(i * i + a * a + s * s);
-      c > 1.5 && (e.vx += i / c * 0.02, e.vy += a / c * 0.015, e.vz += s / c * 0.02), e.x += e.vx, e.y += e.vy, e.z += e.vz, e.vx *= 0.9, e.vy *= 0.9, e.vz *= 0.9, c < 2 && e.attackCooldown <= 0 && (this.velocity.x += (this.camera.x - e.x) * 0.1, this.velocity.y += 0.15, this.velocity.z += (this.camera.z - e.z) * 0.1, e.attackCooldown = 60), c > 60 && this.blueBirds.splice(t, 1);
+      c > 1.5 && (e.vx += i / c * 0.02, e.vy += a / c * 0.015, e.vz += s / c * 0.02);
+      const d = e.x + e.vx, r = e.y + e.vy, o = e.z + e.vz;
+      this.checkBirdCollision(d, e.y, e.z, 0.3) ? e.vx *= -0.5 : e.x = d, this.checkBirdCollision(e.x, r, e.z, 0.3) ? e.vy *= -0.5 : e.y = r, this.checkBirdCollision(e.x, e.y, o, 0.3) ? e.vz *= -0.5 : e.z = o, e.vx *= 0.9, e.vy *= 0.9, e.vz *= 0.9, c < 2 && e.attackCooldown <= 0 && (this.velocity.x += (this.camera.x - e.x) * 0.1, this.velocity.y += 0.15, this.velocity.z += (this.camera.z - e.z) * 0.1, e.attackCooldown = 60), c > 60 && this.blueBirds.splice(t, 1);
     }
   },
   // Fish in water
@@ -1114,24 +1165,24 @@ const Vt = {
   // Generate Ritual Temple - only one per world
   generateRitualTemple(t, e, i) {
     this.ritualTempleLocation = { x: t, y: e, z: i };
-    for (let n = 0; n < 11; n++)
-      for (let d = 0; d < 11; d++)
+    for (let o = 0; o < 11; o++)
+      for (let f = 0; f < 11; f++)
         for (let m = 0; m < 10; m++)
-          this.setBlock(t + n, e + m, i + d, null);
-    for (let n = 0; n < 11; n++)
-      for (let d = 0; d < 11; d++)
-        this.setBlock(t + n, e, i + d, "ritualStone");
-    for (let n = 1; n < 8; n++) {
-      for (let d = 0; d < 11; d++)
-        this.setBlock(t + d, e + n, i, "ritualStone"), this.setBlock(t + d, e + n, i + 11 - 1, "ritualStone");
-      for (let d = 0; d < 11; d++)
-        this.setBlock(t, e + n, i + d, "ritualStone"), this.setBlock(t + 11 - 1, e + n, i + d, "ritualStone");
+          this.setBlock(t + o, e + m, i + f, null);
+    for (let o = 0; o < 11; o++)
+      for (let f = 0; f < 11; f++)
+        this.setBlock(t + o, e, i + f, "ritualStone");
+    for (let o = 1; o < 8; o++) {
+      for (let f = 0; f < 11; f++)
+        this.setBlock(t + f, e + o, i, "ritualStone"), this.setBlock(t + f, e + o, i + 11 - 1, "ritualStone");
+      for (let f = 0; f < 11; f++)
+        this.setBlock(t, e + o, i + f, "ritualStone"), this.setBlock(t + 11 - 1, e + o, i + f, "ritualStone");
     }
     this.setBlock(t + 11 / 2 | 0, e + 1, i, null), this.setBlock(t + 11 / 2 | 0, e + 2, i, null), this.setBlock(t + 11 / 2 | 0, e + 3, i, null);
-    const f = t + 11 / 2 | 0, h = i + 11 / 2 | 0;
-    this.setBlock(f, e + 1, h, "charmSocket"), this.setBlock(f - 2, e + 1, h, "petalSocket"), this.setBlock(f + 2, e + 1, h, "ropeSocket"), this.setBlock(f, e + 1, h - 2, "plaqueSocket"), this.setBlock(f, e + 1, h + 2, "incenseSocket");
-    for (let n = 1; n <= 4; n++)
-      this.setBlock(t + 2, e + n, i + 2, "glowstone"), this.setBlock(t + 11 - 3, e + n, i + 2, "glowstone"), this.setBlock(t + 2, e + n, i + 11 - 3, "glowstone"), this.setBlock(t + 11 - 3, e + n, i + 11 - 3, "glowstone");
+    const d = t + 11 / 2 | 0, r = i + 11 / 2 | 0;
+    this.setBlock(d, e + 1, r, "charmSocket"), this.setBlock(d - 2, e + 1, r, "petalSocket"), this.setBlock(d + 2, e + 1, r, "ropeSocket"), this.setBlock(d, e + 1, r - 2, "plaqueSocket"), this.setBlock(d, e + 1, r + 2, "incenseSocket");
+    for (let o = 1; o <= 4; o++)
+      this.setBlock(t + 2, e + o, i + 2, "glowstone"), this.setBlock(t + 11 - 3, e + o, i + 2, "glowstone"), this.setBlock(t + 2, e + o, i + 11 - 3, "glowstone"), this.setBlock(t + 11 - 3, e + o, i + 11 - 3, "glowstone");
   },
   // Generate apple tree with green leaves and chance to drop apples
   generateTree(t, e, i) {
@@ -1202,17 +1253,17 @@ const Vt = {
             const a = this.getBlock(i.hit.x, i.hit.y, i.hit.z);
             if (a === "water" || a === "lava")
               return;
-            const s = (f) => f && (f === "chest" || f === "ritualChest" || f === "buildingChest" || f.toLowerCase().includes("chest"));
-            if (((f) => f && f.includes("Socket"))(a))
+            const s = (d) => d && (d === "chest" || d === "ritualChest" || d === "buildingChest" || d.toLowerCase().includes("chest"));
+            if (((d) => d && d.includes("Socket"))(a))
               return;
             if (this.setBlock(i.hit.x, i.hit.y, i.hit.z, null), this.stats.blocksBroken++, this.survivalStats && (this.survivalStats.score += 1, this.updateSurvivalHUD()), a && !s(a))
               a === "appleLeaves" ? (this.dropItem(i.hit.x + 0.5, i.hit.y + 0.5, i.hit.z + 0.5, "appleLeaves", 1), Math.random() < 0.15 && this.dropItem(i.hit.x + 0.5, i.hit.y + 0.5, i.hit.z + 0.5, "apple", 1)) : a === "cherryLeaves" ? (this.dropItem(i.hit.x + 0.5, i.hit.y + 0.5, i.hit.z + 0.5, "cherryLeaves", 1), Math.random() < 0.1 && this.dropItem(i.hit.x + 0.5, i.hit.y + 0.5, i.hit.z + 0.5, "sakuraPetal", 1)) : this.dropItem(i.hit.x + 0.5, i.hit.y + 0.5, i.hit.z + 0.5, a, 1);
             else if (s(a)) {
-              const f = `${i.hit.x},${i.hit.y},${i.hit.z}`, h = this.chestContents && this.chestContents[f];
-              if (h && Array.isArray(h)) {
-                for (const n of h)
-                  n && n.type && this.dropItem(i.hit.x + 0.5, i.hit.y + 0.5, i.hit.z + 0.5, n.type, n.count || 1);
-                delete this.chestContents[f];
+              const d = `${i.hit.x},${i.hit.y},${i.hit.z}`, r = this.chestContents && this.chestContents[d];
+              if (r && Array.isArray(r)) {
+                for (const o of r)
+                  o && o.type && this.dropItem(i.hit.x + 0.5, i.hit.y + 0.5, i.hit.z + 0.5, o.type, o.count || 1);
+                delete this.chestContents[d];
               }
               this.dropItem(i.hit.x + 0.5, i.hit.y + 0.5, i.hit.z + 0.5, "chest", 1);
             }
@@ -1242,19 +1293,19 @@ const Vt = {
           else if (this.selectedItem === "water_bucket" || this.selectedItem === "lava_bucket") {
             const c = this.raycast();
             if (c && c.place) {
-              const f = this.selectedItem === "water_bucket" ? "water" : "lava", h = c.place, n = Math.floor(this.camera.x), d = Math.floor(this.camera.z), m = Math.floor(this.camera.y - this.playerEyeHeight), u = Math.floor(this.camera.y - this.playerEyeHeight + this.playerHeight);
+              const d = this.selectedItem === "water_bucket" ? "water" : "lava", r = c.place, o = Math.floor(this.camera.x), f = Math.floor(this.camera.z), m = Math.floor(this.camera.y - this.playerEyeHeight), u = Math.floor(this.camera.y - this.playerEyeHeight + this.playerHeight);
               let y = !1;
               for (let b = m; b <= u; b++)
-                if (n === h.x && b === h.y && d === h.z) {
+                if (o === r.x && b === r.y && f === r.z) {
                   y = !0;
                   break;
                 }
               if (!y) {
-                this.setBlock(h.x, h.y, h.z, f), this.setFluidLevel(h.x, h.y, h.z, 8), this.fluidUpdates.push({
-                  x: h.x,
-                  y: h.y,
-                  z: h.z,
-                  type: f,
+                this.setBlock(r.x, r.y, r.z, d), this.setFluidLevel(r.x, r.y, r.z, 8), this.fluidUpdates.push({
+                  x: r.x,
+                  y: r.y,
+                  z: r.z,
+                  type: d,
                   level: 8
                   // Source block has max level
                 });
@@ -1265,15 +1316,15 @@ const Vt = {
           } else if (this.selectedBlock) {
             const c = this.raycast();
             if (c && c.place) {
-              const f = Math.floor(this.camera.x), h = Math.floor(this.camera.z), n = c.place, d = Math.floor(this.camera.y - this.playerEyeHeight), m = Math.floor(this.camera.y - this.playerEyeHeight + this.playerHeight);
+              const d = Math.floor(this.camera.x), r = Math.floor(this.camera.z), o = c.place, f = Math.floor(this.camera.y - this.playerEyeHeight), m = Math.floor(this.camera.y - this.playerEyeHeight + this.playerHeight);
               let u = !1;
-              for (let y = d; y <= m; y++)
-                if (f === n.x && y === n.y && h === n.z) {
+              for (let y = f; y <= m; y++)
+                if (d === o.x && y === o.y && r === o.z) {
                   u = !0;
                   break;
                 }
               if (!u) {
-                this.setBlock(n.x, n.y, n.z, this.selectedBlock), this.stats.blocksPlaced++;
+                this.setBlock(o.x, o.y, o.z, this.selectedBlock), this.stats.blocksPlaced++;
                 const y = this.inventory.hotbar[this.selectedSlot];
                 y && y.count > 0 && (y.count--, y.count <= 0 && (this.inventory.hotbar[this.selectedSlot] = null, this.selectedBlock = null), this.updateHotbarDisplay());
               }
@@ -1368,16 +1419,16 @@ const Vt = {
       let c = e.querySelector("canvas");
       if (c || (c = document.createElement("canvas"), c.width = 32, c.height = 32, c.style.width = "100%", c.style.height = "100%", c.style.position = "absolute", c.style.top = "2px", c.style.left = "2px", e.appendChild(c)), a) {
         this.drawMiniBlock(c, a.id);
-        let f = e.querySelector(".durability-bar");
+        let d = e.querySelector(".durability-bar");
         if (a.durability !== void 0 && a.maxDurability) {
-          f || (f = document.createElement("div"), f.className = "durability-bar", f.innerHTML = '<div class="durability-fill"></div>', e.appendChild(f));
-          const h = f.querySelector(".durability-fill"), n = a.durability / a.maxDurability * 100;
-          h.style.width = n + "%", h.style.backgroundColor = n > 50 ? "#4a4" : n > 25 ? "#aa4" : "#a44", f.style.display = "block";
-        } else f && (f.style.display = "none");
+          d || (d = document.createElement("div"), d.className = "durability-bar", d.innerHTML = '<div class="durability-fill"></div>', e.appendChild(d));
+          const r = d.querySelector(".durability-fill"), o = a.durability / a.maxDurability * 100;
+          r.style.width = o + "%", r.style.backgroundColor = o > 50 ? "#4a4" : o > 25 ? "#aa4" : "#a44", d.style.display = "block";
+        } else d && (d.style.display = "none");
       } else {
         c.getContext("2d").clearRect(0, 0, c.width, c.height);
-        const h = e.querySelector(".durability-bar");
-        h && (h.style.display = "none");
+        const r = e.querySelector(".durability-bar");
+        r && (r.style.display = "none");
       }
     });
   },
@@ -1391,48 +1442,48 @@ const Vt = {
       t.durability !== void 0 && (t.durability--, t.durability <= 0 && (this.inventory.hotbar[this.selectedSlot] = null, this.selectedItem = null, this.showPickupNotification("ak47", -1)), this.updateHotbarDisplay());
     }
     this.shootCooldown = 8, this.muzzleFlash = 5;
-    const e = this.camera.rotX, i = this.camera.rotY, a = -Math.sin(i) * Math.cos(e), s = -Math.sin(e), c = Math.cos(i) * Math.cos(e), f = 2.5, h = {
+    const e = this.camera.rotX, i = this.camera.rotY, a = -Math.sin(i) * Math.cos(e), s = -Math.sin(e), c = Math.cos(i) * Math.cos(e), d = 2.5, r = {
       x: this.camera.x + a * 0.5,
       y: this.camera.y + s * 0.5,
       z: this.camera.z + c * 0.5,
-      vx: a * f,
-      vy: s * f,
-      vz: c * f,
+      vx: a * d,
+      vy: s * d,
+      vz: c * d,
       life: 60,
       type: "bullet",
       trail: []
     };
-    this.particles.push(h);
-    const n = 0.8;
-    let d = null, m = 1 / 0;
+    this.particles.push(r);
+    const o = 0.8;
+    let f = null, m = 1 / 0;
     for (const u of this.pestBirds) {
-      const y = u.x - this.camera.x, b = u.y - this.camera.y, T = u.z - this.camera.z, P = Math.sqrt(y * y + b * b + T * T);
-      if (P < 15 && P < m) {
-        const L = y / P, z = b / P, R = T / P;
-        a * L + s * z + c * R > 0.9 && (d = u, m = P);
+      const y = u.x - this.camera.x, b = u.y - this.camera.y, B = u.z - this.camera.z, C = Math.sqrt(y * y + b * b + B * B);
+      if (C < 15 && C < m) {
+        const L = y / C, I = b / C, F = B / C;
+        a * L + s * I + c * F > 0.9 && (f = u, m = C);
       }
     }
-    if (d) {
-      d.vx = a * n + (Math.random() - 0.5) * 0.2, d.vy = s * n + 0.3 + Math.random() * 0.2, d.vz = c * n + (Math.random() - 0.5) * 0.2, d.state = "knockback", d.stateTimer = 90;
-      for (let z = 0; z < 8; z++) {
-        const R = 0.15 + Math.random() * 0.2, I = -a * 0.5 + (Math.random() - 0.5) * 1.5, E = Math.random() * 0.8 + 0.2, H = -c * 0.5 + (Math.random() - 0.5) * 1.5, D = Math.sqrt(I * I + E * E + H * H);
+    if (f) {
+      f.vx = a * o + (Math.random() - 0.5) * 0.2, f.vy = s * o + 0.3 + Math.random() * 0.2, f.vz = c * o + (Math.random() - 0.5) * 0.2, f.state = "knockback", f.stateTimer = 90;
+      for (let I = 0; I < 8; I++) {
+        const F = 0.15 + Math.random() * 0.2, z = -a * 0.5 + (Math.random() - 0.5) * 1.5, $ = Math.random() * 0.8 + 0.2, R = -c * 0.5 + (Math.random() - 0.5) * 1.5, E = Math.sqrt(z * z + $ * $ + R * R);
         this.particles.push({
-          x: d.x,
-          y: d.y,
-          z: d.z,
-          vx: I / D * R,
-          vy: E / D * R,
-          vz: H / D * R,
+          x: f.x,
+          y: f.y,
+          z: f.z,
+          vx: z / E * F,
+          vy: $ / E * F,
+          vz: R / E * F,
           life: 25 + Math.random() * 20,
           type: "ricochet",
           size: 2 + Math.random() * 3
         });
       }
-      for (let z = 0; z < 5; z++)
+      for (let I = 0; I < 5; I++)
         this.particles.push({
-          x: d.x + (Math.random() - 0.5) * 0.3,
-          y: d.y + (Math.random() - 0.5) * 0.3,
-          z: d.z + (Math.random() - 0.5) * 0.3,
+          x: f.x + (Math.random() - 0.5) * 0.3,
+          y: f.y + (Math.random() - 0.5) * 0.3,
+          z: f.z + (Math.random() - 0.5) * 0.3,
           vx: (Math.random() - 0.5) * 0.1,
           vy: 0.05 + Math.random() * 0.05,
           vz: (Math.random() - 0.5) * 0.1,
@@ -1443,17 +1494,17 @@ const Vt = {
         });
       const u = 0.08 + Math.random() * 0.05;
       this.velocity.y += 0.05 + Math.random() * 0.03;
-      const y = d.x - this.camera.x, b = d.z - this.camera.z, T = Math.sqrt(y * y + b * b);
-      T > 0.1 && (this.camera.x -= y / T * u * 0.3 + (Math.random() - 0.5) * u, this.camera.z -= b / T * u * 0.3 + (Math.random() - 0.5) * u);
-      const P = Math.random();
+      const y = f.x - this.camera.x, b = f.z - this.camera.z, B = Math.sqrt(y * y + b * b);
+      B > 0.1 && (this.camera.x -= y / B * u * 0.3 + (Math.random() - 0.5) * u, this.camera.z -= b / B * u * 0.3 + (Math.random() - 0.5) * u);
+      const C = Math.random();
       let L = 0;
-      P < 0.01 ? L = 20 : P < 0.1 && (L = 5);
-      for (let z = 0; z < L; z++) {
-        const R = Math.random() * Math.PI * 2, I = 2 + Math.random() * 3;
+      C < 0.01 ? L = 20 : C < 0.1 && (L = 5);
+      for (let I = 0; I < L; I++) {
+        const F = Math.random() * Math.PI * 2, z = 2 + Math.random() * 3;
         this.pestBirds.push({
-          x: d.x + Math.cos(R) * I,
-          y: d.y + (Math.random() - 0.5) * 2,
-          z: d.z + Math.sin(R) * I,
+          x: f.x + Math.cos(F) * z,
+          y: f.y + (Math.random() - 0.5) * 2,
+          z: f.z + Math.sin(F) * z,
           vx: 0,
           vy: 0,
           vz: 0,
@@ -1462,9 +1513,9 @@ const Vt = {
           targetOffsetZ: 0,
           state: "circling",
           stateTimer: 10 + Math.random() * 20,
-          angle: R,
-          circleRadius: I,
-          baseCircleRadius: I,
+          angle: F,
+          circleRadius: z,
+          baseCircleRadius: z,
           circleSpeed: 0.07 + Math.random() * 0.05,
           swoopProgress: 0,
           wingPhase: Math.random() * Math.PI * 2,
@@ -1479,12 +1530,12 @@ const Vt = {
       }
     }
     for (const u of this.birds) {
-      const y = u.x - this.camera.x, b = u.y - this.camera.y, T = u.z - this.camera.z, P = Math.sqrt(y * y + b * b + T * T);
-      if (P < 25) {
-        const L = y / P, z = b / P, R = T / P;
-        if (a * L + s * z + c * R > 0.85) {
+      const y = u.x - this.camera.x, b = u.y - this.camera.y, B = u.z - this.camera.z, C = Math.sqrt(y * y + b * b + B * B);
+      if (C < 25) {
+        const L = y / C, I = b / C, F = B / C;
+        if (a * L + s * I + c * F > 0.85) {
           u.radius += 8, u.baseY += 5;
-          for (let E = 0; E < 5; E++)
+          for (let $ = 0; $ < 5; $++)
             this.particles.push({
               x: u.x,
               y: u.y,
@@ -1533,10 +1584,10 @@ const Vt = {
       else if (e.type === "burger") {
         e.vy -= 3e-3;
         for (const i of this.pestBirds) {
-          const a = i.x - e.x, s = i.y - e.y, c = i.z - e.z, f = Math.sqrt(a * a + s * s + c * c);
-          if (f < 1.5) {
-            i.vx = e.vx * 0.5 + a / f * 2.5, i.vy = Math.abs(e.vy) + 0.5, i.vz = e.vz * 0.5 + c / f * 2.5, i.state = "knockback", i.stateTimer = 120, i.anger = Math.min(5, i.anger + 2), e.life = 0;
-            for (let n = 0; n < 8; n++)
+          const a = i.x - e.x, s = i.y - e.y, c = i.z - e.z, d = Math.sqrt(a * a + s * s + c * c);
+          if (d < 1.5) {
+            i.vx = e.vx * 0.5 + a / d * 2.5, i.vy = Math.abs(e.vy) + 0.5, i.vz = e.vz * 0.5 + c / d * 2.5, i.state = "knockback", i.stateTimer = 120, i.anger = Math.min(5, i.anger + 2), e.life = 0;
+            for (let o = 0; o < 8; o++)
               this.particles.push({
                 x: e.x,
                 y: e.y,
@@ -1555,10 +1606,10 @@ const Vt = {
       else if (e.type === "apple") {
         e.vy += e.gravity || -8e-3;
         for (const a of this.pestBirds) {
-          const s = a.x - e.x, c = a.y - e.y, f = a.z - e.z, h = Math.sqrt(s * s + c * c + f * f);
-          if (h < 1.5) {
-            a.vx = e.vx * 0.5 + s / h * 3, a.vy = 0.8, a.vz = e.vz * 0.5 + f / h * 3, a.state = "knockback", a.stateTimer = 180, a.anger = Math.max(0, a.anger - 0.5), e.life = 0, this.survivalStats && (this.survivalStats.score += 50, this.updateSurvivalHUD());
-            for (let d = 0; d < 6; d++)
+          const s = a.x - e.x, c = a.y - e.y, d = a.z - e.z, r = Math.sqrt(s * s + c * c + d * d);
+          if (r < 1.5) {
+            a.vx = e.vx * 0.5 + s / r * 3, a.vy = 0.8, a.vz = e.vz * 0.5 + d / r * 3, a.state = "knockback", a.stateTimer = 180, a.anger = Math.max(0, a.anger - 0.5), e.life = 0, this.survivalStats && (this.survivalStats.score += 50, this.updateSurvivalHUD());
+            for (let f = 0; f < 6; f++)
               this.particles.push({
                 x: e.x,
                 y: e.y,
@@ -1574,8 +1625,8 @@ const Vt = {
         }
         for (const a of this.birds)
           if (a.swarmMode) {
-            const s = a.x - e.x, c = a.y - e.y, f = a.z - e.z;
-            Math.sqrt(s * s + c * c + f * f) < 2 && (a.swarmMode = !1, a.swarmTimer = 0, e.life = 0, this.survivalStats && (this.survivalStats.score += 25, this.updateSurvivalHUD()));
+            const s = a.x - e.x, c = a.y - e.y, d = a.z - e.z;
+            Math.sqrt(s * s + c * c + d * d) < 2 && (a.swarmMode = !1, a.swarmTimer = 0, e.life = 0, this.survivalStats && (this.survivalStats.score += 25, this.updateSurvivalHUD()));
           }
         const i = this.getGroundHeightBelow(e.x, e.z, e.y + 10);
         e.y <= i + 0.5 && (e.life = 0);
@@ -1597,15 +1648,15 @@ const Vt = {
     const t = this.particles.filter((a) => a.type === "petal").length, e = 150, i = Math.min(5, e - t);
     for (let a = 0; a < i; a++) {
       if (Math.random() > 0.6) continue;
-      const s = this.cherryTrees[Math.floor(Math.random() * this.cherryTrees.length)], c = Math.sqrt((s.x - this.camera.x) ** 2 + (s.z - this.camera.z) ** 2), f = 40;
-      if (c < f) {
-        const h = 1 - c / f * 0.5;
-        if (Math.random() < h) {
-          const n = (Math.random() - 0.5) * 10, d = (Math.random() - 0.5) * 10, m = Math.random() < 0.3 ? Math.random() * 8 : 0;
+      const s = this.cherryTrees[Math.floor(Math.random() * this.cherryTrees.length)], c = Math.sqrt((s.x - this.camera.x) ** 2 + (s.z - this.camera.z) ** 2), d = 40;
+      if (c < d) {
+        const r = 1 - c / d * 0.5;
+        if (Math.random() < r) {
+          const o = (Math.random() - 0.5) * 10, f = (Math.random() - 0.5) * 10, m = Math.random() < 0.3 ? Math.random() * 8 : 0;
           this.particles.push({
-            x: s.x + n,
+            x: s.x + o,
             y: s.y + Math.random() * 3 + m,
-            z: s.z + d,
+            z: s.z + f,
             vx: this.wind.x * 1.5 + (Math.random() - 0.5) * 0.03,
             vy: -8e-3 - Math.random() * 0.015,
             // Slower fall for more graceful effect
@@ -1760,49 +1811,49 @@ const Vt = {
   drawMiniBlock(t, e) {
     const i = t.getContext("2d"), a = this.blockColors[e], s = t.width, c = t.height;
     i.clearRect(0, 0, s, c);
-    const f = s / 2, h = c / 2, n = Math.min(s, c) * 0.35;
+    const d = s / 2, r = c / 2, o = Math.min(s, c) * 0.35;
     if (!a) {
-      if (i.save(), i.translate(f, h), e === "apple")
-        i.fillStyle = "#dc143c", i.beginPath(), i.arc(0, 0, n * 0.7, 0, Math.PI * 2), i.fill(), i.fillStyle = "rgba(255,255,255,0.3)", i.beginPath(), i.arc(-n * 0.2, -n * 0.2, n * 0.25, 0, Math.PI * 2), i.fill(), i.fillStyle = "#654321", i.fillRect(-1, -n * 0.8, 3, n * 0.3), i.fillStyle = "#228b22", i.beginPath(), i.ellipse(3, -n * 0.7, 4, 2, 0.3, 0, Math.PI * 2), i.fill();
+      if (i.save(), i.translate(d, r), e === "apple")
+        i.fillStyle = "#dc143c", i.beginPath(), i.arc(0, 0, o * 0.7, 0, Math.PI * 2), i.fill(), i.fillStyle = "rgba(255,255,255,0.3)", i.beginPath(), i.arc(-o * 0.2, -o * 0.2, o * 0.25, 0, Math.PI * 2), i.fill(), i.fillStyle = "#654321", i.fillRect(-1, -o * 0.8, 3, o * 0.3), i.fillStyle = "#228b22", i.beginPath(), i.ellipse(3, -o * 0.7, 4, 2, 0.3, 0, Math.PI * 2), i.fill();
       else if (e === "seeds") {
         i.fillStyle = "#daa520";
         for (let b = 0; b < 5; b++) {
-          const T = b / 5 * Math.PI * 2, P = Math.cos(T) * n * 0.4, L = Math.sin(T) * n * 0.3;
-          i.beginPath(), i.ellipse(P, L, 3, 5, T, 0, Math.PI * 2), i.fill();
+          const B = b / 5 * Math.PI * 2, C = Math.cos(B) * o * 0.4, L = Math.sin(B) * o * 0.3;
+          i.beginPath(), i.ellipse(C, L, 3, 5, B, 0, Math.PI * 2), i.fill();
         }
-      } else e === "ak47" ? (i.fillStyle = "#333", i.fillRect(-n * 0.6, -n * 0.1, n * 1.2, n * 0.25), i.fillStyle = "#8b4513", i.fillRect(-n * 0.3, n * 0.1, n * 0.4, n * 0.4), i.fillStyle = "#222", i.fillRect(n * 0.1, n * 0.1, n * 0.15, n * 0.35)) : e === "berdger" ? (i.fillStyle = "#daa520", i.beginPath(), i.ellipse(0, -n * 0.3, n * 0.5, n * 0.25, 0, 0, Math.PI * 2), i.fill(), i.fillStyle = "#8b4513", i.fillRect(-n * 0.4, -n * 0.15, n * 0.8, n * 0.2), i.fillStyle = "#228b22", i.fillRect(-n * 0.35, -n * 0.05, n * 0.7, n * 0.1), i.fillStyle = "#daa520", i.beginPath(), i.ellipse(0, n * 0.2, n * 0.55, n * 0.3, 0, 0, Math.PI * 2), i.fill()) : e === "water_bucket" || e === "lava_bucket" ? (i.fillStyle = "#888", i.beginPath(), i.moveTo(-n * 0.4, -n * 0.3), i.lineTo(n * 0.4, -n * 0.3), i.lineTo(n * 0.3, n * 0.5), i.lineTo(-n * 0.3, n * 0.5), i.closePath(), i.fill(), i.fillStyle = e === "water_bucket" ? "#4a90d9" : "#ff6600", i.beginPath(), i.moveTo(-n * 0.3, -n * 0.1), i.lineTo(n * 0.3, -n * 0.1), i.lineTo(n * 0.25, n * 0.4), i.lineTo(-n * 0.25, n * 0.4), i.closePath(), i.fill()) : e === "sakuraPetal" ? (i.fillStyle = "#ffb7c5", i.beginPath(), i.ellipse(0, 0, n * 0.6, n * 0.3, 0.3, 0, Math.PI * 2), i.fill()) : e === "shimenawa" ? (i.strokeStyle = "#daa520", i.lineWidth = 4, i.beginPath(), i.moveTo(-n * 0.5, 0), i.quadraticCurveTo(0, -n * 0.4, n * 0.5, 0), i.stroke()) : e === "omamori" ? (i.fillStyle = "#cc0000", i.fillRect(-n * 0.3, -n * 0.5, n * 0.6, n), i.fillStyle = "#ffd700", i.fillRect(-n * 0.25, -n * 0.35, n * 0.5, n * 0.15)) : e === "ema" ? (i.fillStyle = "#deb887", i.beginPath(), i.moveTo(0, -n * 0.5), i.lineTo(n * 0.4, -n * 0.2), i.lineTo(n * 0.4, n * 0.4), i.lineTo(-n * 0.4, n * 0.4), i.lineTo(-n * 0.4, -n * 0.2), i.closePath(), i.fill()) : e === "incense" ? (i.fillStyle = "#8b4513", i.fillRect(-1, -n * 0.6, 3, n * 1.2), i.fillStyle = "#ff6600", i.beginPath(), i.arc(0.5, -n * 0.6, 3, 0, Math.PI * 2), i.fill()) : (i.fillStyle = "#888", i.fillRect(-n * 0.4, -n * 0.4, n * 0.8, n * 0.8), i.fillStyle = "#444", i.font = "8px monospace", i.textAlign = "center", i.fillText("?", 0, 3));
+      } else e === "ak47" ? (i.fillStyle = "#333", i.fillRect(-o * 0.6, -o * 0.1, o * 1.2, o * 0.25), i.fillStyle = "#8b4513", i.fillRect(-o * 0.3, o * 0.1, o * 0.4, o * 0.4), i.fillStyle = "#222", i.fillRect(o * 0.1, o * 0.1, o * 0.15, o * 0.35)) : e === "berdger" ? (i.fillStyle = "#daa520", i.beginPath(), i.ellipse(0, -o * 0.3, o * 0.5, o * 0.25, 0, 0, Math.PI * 2), i.fill(), i.fillStyle = "#8b4513", i.fillRect(-o * 0.4, -o * 0.15, o * 0.8, o * 0.2), i.fillStyle = "#228b22", i.fillRect(-o * 0.35, -o * 0.05, o * 0.7, o * 0.1), i.fillStyle = "#daa520", i.beginPath(), i.ellipse(0, o * 0.2, o * 0.55, o * 0.3, 0, 0, Math.PI * 2), i.fill()) : e === "water_bucket" || e === "lava_bucket" ? (i.fillStyle = "#888", i.beginPath(), i.moveTo(-o * 0.4, -o * 0.3), i.lineTo(o * 0.4, -o * 0.3), i.lineTo(o * 0.3, o * 0.5), i.lineTo(-o * 0.3, o * 0.5), i.closePath(), i.fill(), i.fillStyle = e === "water_bucket" ? "#4a90d9" : "#ff6600", i.beginPath(), i.moveTo(-o * 0.3, -o * 0.1), i.lineTo(o * 0.3, -o * 0.1), i.lineTo(o * 0.25, o * 0.4), i.lineTo(-o * 0.25, o * 0.4), i.closePath(), i.fill()) : e === "sakuraPetal" ? (i.fillStyle = "#ffb7c5", i.beginPath(), i.ellipse(0, 0, o * 0.6, o * 0.3, 0.3, 0, Math.PI * 2), i.fill()) : e === "shimenawa" ? (i.strokeStyle = "#daa520", i.lineWidth = 4, i.beginPath(), i.moveTo(-o * 0.5, 0), i.quadraticCurveTo(0, -o * 0.4, o * 0.5, 0), i.stroke()) : e === "omamori" ? (i.fillStyle = "#cc0000", i.fillRect(-o * 0.3, -o * 0.5, o * 0.6, o), i.fillStyle = "#ffd700", i.fillRect(-o * 0.25, -o * 0.35, o * 0.5, o * 0.15)) : e === "ema" ? (i.fillStyle = "#deb887", i.beginPath(), i.moveTo(0, -o * 0.5), i.lineTo(o * 0.4, -o * 0.2), i.lineTo(o * 0.4, o * 0.4), i.lineTo(-o * 0.4, o * 0.4), i.lineTo(-o * 0.4, -o * 0.2), i.closePath(), i.fill()) : e === "incense" ? (i.fillStyle = "#8b4513", i.fillRect(-1, -o * 0.6, 3, o * 1.2), i.fillStyle = "#ff6600", i.beginPath(), i.arc(0.5, -o * 0.6, 3, 0, Math.PI * 2), i.fill()) : (i.fillStyle = "#888", i.fillRect(-o * 0.4, -o * 0.4, o * 0.8, o * 0.8), i.fillStyle = "#444", i.font = "8px monospace", i.textAlign = "center", i.fillText("?", 0, 3));
       i.restore();
       return;
     }
-    const d = Math.min(s, c) * 0.25;
+    const f = Math.min(s, c) * 0.25;
     let m = a.top, u = a.side;
-    typeof m == "string" && m.includes("rgba") && (m = m.replace(/[\d.]+\)$/, "1)"), u = u.replace(/[\d.]+\)$/, "1)")), i.fillStyle = m, i.beginPath(), i.moveTo(f, h - d), i.lineTo(f + d, h - d / 2), i.lineTo(f, h), i.lineTo(f - d, h - d / 2), i.closePath(), i.fill(), i.fillStyle = u, i.beginPath(), i.moveTo(f - d, h - d / 2), i.lineTo(f, h), i.lineTo(f, h + d), i.lineTo(f - d, h + d / 2), i.closePath(), i.fill();
+    typeof m == "string" && m.includes("rgba") && (m = m.replace(/[\d.]+\)$/, "1)"), u = u.replace(/[\d.]+\)$/, "1)")), i.fillStyle = m, i.beginPath(), i.moveTo(d, r - f), i.lineTo(d + f, r - f / 2), i.lineTo(d, r), i.lineTo(d - f, r - f / 2), i.closePath(), i.fill(), i.fillStyle = u, i.beginPath(), i.moveTo(d - f, r - f / 2), i.lineTo(d, r), i.lineTo(d, r + f), i.lineTo(d - f, r + f / 2), i.closePath(), i.fill();
     let y;
     try {
       y = this.darkenColor(u.replace(/rgba?\([^)]+\)/, "#888888"), 0.7);
     } catch {
       y = this.darkenColor(u, 0.7);
     }
-    i.fillStyle = y, i.beginPath(), i.moveTo(f, h), i.lineTo(f + d, h - d / 2), i.lineTo(f + d, h + d / 2), i.lineTo(f, h + d), i.closePath(), i.fill(), i.strokeStyle = "rgba(0,0,0,0.3)", i.lineWidth = 0.5, i.beginPath(), i.moveTo(f, h - n), i.lineTo(f + n, h - n / 2), i.lineTo(f + n, h + n / 2), i.lineTo(f, h + n), i.lineTo(f - n, h + n / 2), i.lineTo(f - n, h - n / 2), i.closePath(), i.stroke();
+    i.fillStyle = y, i.beginPath(), i.moveTo(d, r), i.lineTo(d + f, r - f / 2), i.lineTo(d + f, r + f / 2), i.lineTo(d, r + f), i.closePath(), i.fill(), i.strokeStyle = "rgba(0,0,0,0.3)", i.lineWidth = 0.5, i.beginPath(), i.moveTo(d, r - o), i.lineTo(d + o, r - o / 2), i.lineTo(d + o, r + o / 2), i.lineTo(d, r + o), i.lineTo(d - o, r + o / 2), i.lineTo(d - o, r - o / 2), i.closePath(), i.stroke();
   },
   // Draw 3D item for dropped items in the world
   drawDroppedItem3D(t, e, i, a, s, c) {
-    const f = this.blockColors[s], h = (c || 0) * 0.5;
-    if (t.save(), t.translate(e, i), !f) {
+    const d = this.blockColors[s], r = (c || 0) * 0.5;
+    if (t.save(), t.translate(e, i), !d) {
       if (s === "apple")
         t.fillStyle = "#dc143c", t.beginPath(), t.arc(0, 0, a * 0.8, 0, Math.PI * 2), t.fill(), t.fillStyle = "rgba(255,255,255,0.3)", t.beginPath(), t.arc(-a * 0.2, -a * 0.2, a * 0.3, 0, Math.PI * 2), t.fill(), t.fillStyle = "#654321", t.fillRect(-1, -a * 0.9, 2, a * 0.3), t.fillStyle = "#228b22", t.beginPath(), t.ellipse(2, -a * 0.8, 3, 2, 0.3, 0, Math.PI * 2), t.fill();
       else if (s === "seeds") {
         t.fillStyle = "#daa520";
-        for (let d = 0; d < 5; d++) {
-          const m = d / 5 * Math.PI * 2 + h, u = Math.cos(m) * a * 0.4, y = Math.sin(m) * a * 0.3;
+        for (let f = 0; f < 5; f++) {
+          const m = f / 5 * Math.PI * 2 + r, u = Math.cos(m) * a * 0.4, y = Math.sin(m) * a * 0.3;
           t.beginPath(), t.ellipse(u, y, a * 0.2, a * 0.1, m, 0, Math.PI * 2), t.fill();
         }
-      } else s === "ak47" ? (t.fillStyle = "#333", t.fillRect(-a * 0.8, -a * 0.15, a * 1.6, a * 0.3), t.fillRect(-a * 0.3, -a * 0.15, a * 0.15, a * 0.5), t.fillRect(a * 0.3, -a * 0.4, a * 0.5, a * 0.25)) : s === "berdger" ? (t.fillStyle = "#D2691E", t.beginPath(), t.ellipse(0, -a * 0.2, a * 0.7, a * 0.35, 0, Math.PI, 0), t.fill(), t.fillStyle = "#654321", t.fillRect(-a * 0.6, -a * 0.1, a * 1.2, a * 0.25), t.fillStyle = "#228B22", t.fillRect(-a * 0.55, a * 0.1, a * 1.1, a * 0.1), t.fillStyle = "#DEB887", t.beginPath(), t.ellipse(0, a * 0.25, a * 0.65, a * 0.3, 0, 0, Math.PI), t.fill()) : s === "water_bucket" || s === "lava_bucket" ? (t.fillStyle = "#888", t.beginPath(), t.moveTo(-a * 0.5, -a * 0.5), t.lineTo(a * 0.5, -a * 0.5), t.lineTo(a * 0.4, a * 0.5), t.lineTo(-a * 0.4, a * 0.5), t.closePath(), t.fill(), t.fillStyle = s === "water_bucket" ? "#4a90d9" : "#ff6600", t.fillRect(-a * 0.35, -a * 0.3, a * 0.7, a * 0.6), t.strokeStyle = "#666", t.lineWidth = 2, t.beginPath(), t.arc(0, -a * 0.6, a * 0.4, Math.PI * 0.2, Math.PI * 0.8), t.stroke()) : s === "sakuraPetal" ? (t.fillStyle = "#ffb7c5", t.beginPath(), t.ellipse(0, 0, a * 0.6, a * 0.3, h, 0, Math.PI * 2), t.fill()) : s === "shimenawa" ? (t.strokeStyle = "#daa520", t.lineWidth = a * 0.2, t.beginPath(), t.moveTo(-a * 0.6, 0), t.bezierCurveTo(-a * 0.3, -a * 0.4, a * 0.3, a * 0.4, a * 0.6, 0), t.stroke()) : s === "omamori" ? (t.fillStyle = "#ff4444", t.fillRect(-a * 0.3, -a * 0.5, a * 0.6, a * 0.8), t.fillStyle = "#gold", t.fillRect(-a * 0.2, -a * 0.4, a * 0.4, a * 0.15)) : s === "ema" ? (t.fillStyle = "#deb887", t.beginPath(), t.moveTo(0, -a * 0.6), t.lineTo(a * 0.5, -a * 0.2), t.lineTo(a * 0.5, a * 0.5), t.lineTo(-a * 0.5, a * 0.5), t.lineTo(-a * 0.5, -a * 0.2), t.closePath(), t.fill()) : s === "incense" ? (t.fillStyle = "#8b4513", t.fillRect(-1, -a * 0.6, 2, a * 1.2), t.fillStyle = "#ff6600", t.beginPath(), t.arc(0, -a * 0.6, 3, 0, Math.PI * 2), t.fill()) : (t.fillStyle = "#888", t.fillRect(-a * 0.5, -a * 0.5, a, a));
+      } else s === "ak47" ? (t.fillStyle = "#333", t.fillRect(-a * 0.8, -a * 0.15, a * 1.6, a * 0.3), t.fillRect(-a * 0.3, -a * 0.15, a * 0.15, a * 0.5), t.fillRect(a * 0.3, -a * 0.4, a * 0.5, a * 0.25)) : s === "berdger" ? (t.fillStyle = "#D2691E", t.beginPath(), t.ellipse(0, -a * 0.2, a * 0.7, a * 0.35, 0, Math.PI, 0), t.fill(), t.fillStyle = "#654321", t.fillRect(-a * 0.6, -a * 0.1, a * 1.2, a * 0.25), t.fillStyle = "#228B22", t.fillRect(-a * 0.55, a * 0.1, a * 1.1, a * 0.1), t.fillStyle = "#DEB887", t.beginPath(), t.ellipse(0, a * 0.25, a * 0.65, a * 0.3, 0, 0, Math.PI), t.fill()) : s === "water_bucket" || s === "lava_bucket" ? (t.fillStyle = "#888", t.beginPath(), t.moveTo(-a * 0.5, -a * 0.5), t.lineTo(a * 0.5, -a * 0.5), t.lineTo(a * 0.4, a * 0.5), t.lineTo(-a * 0.4, a * 0.5), t.closePath(), t.fill(), t.fillStyle = s === "water_bucket" ? "#4a90d9" : "#ff6600", t.fillRect(-a * 0.35, -a * 0.3, a * 0.7, a * 0.6), t.strokeStyle = "#666", t.lineWidth = 2, t.beginPath(), t.arc(0, -a * 0.6, a * 0.4, Math.PI * 0.2, Math.PI * 0.8), t.stroke()) : s === "sakuraPetal" ? (t.fillStyle = "#ffb7c5", t.beginPath(), t.ellipse(0, 0, a * 0.6, a * 0.3, r, 0, Math.PI * 2), t.fill()) : s === "shimenawa" ? (t.strokeStyle = "#daa520", t.lineWidth = a * 0.2, t.beginPath(), t.moveTo(-a * 0.6, 0), t.bezierCurveTo(-a * 0.3, -a * 0.4, a * 0.3, a * 0.4, a * 0.6, 0), t.stroke()) : s === "omamori" ? (t.fillStyle = "#ff4444", t.fillRect(-a * 0.3, -a * 0.5, a * 0.6, a * 0.8), t.fillStyle = "#gold", t.fillRect(-a * 0.2, -a * 0.4, a * 0.4, a * 0.15)) : s === "ema" ? (t.fillStyle = "#deb887", t.beginPath(), t.moveTo(0, -a * 0.6), t.lineTo(a * 0.5, -a * 0.2), t.lineTo(a * 0.5, a * 0.5), t.lineTo(-a * 0.5, a * 0.5), t.lineTo(-a * 0.5, -a * 0.2), t.closePath(), t.fill()) : s === "incense" ? (t.fillStyle = "#8b4513", t.fillRect(-1, -a * 0.6, 2, a * 1.2), t.fillStyle = "#ff6600", t.beginPath(), t.arc(0, -a * 0.6, 3, 0, Math.PI * 2), t.fill()) : (t.fillStyle = "#888", t.fillRect(-a * 0.5, -a * 0.5, a, a));
       t.restore();
       return;
     }
-    const n = a * 0.8;
-    t.fillStyle = f.top, t.beginPath(), t.moveTo(0, -n), t.lineTo(n, -n / 2), t.lineTo(0, 0), t.lineTo(-n, -n / 2), t.closePath(), t.fill(), t.fillStyle = f.side, t.beginPath(), t.moveTo(-n, -n / 2), t.lineTo(0, 0), t.lineTo(0, n), t.lineTo(-n, n / 2), t.closePath(), t.fill(), t.fillStyle = this.darkenColor(f.side, 0.7), t.beginPath(), t.moveTo(0, 0), t.lineTo(n, -n / 2), t.lineTo(n, n / 2), t.lineTo(0, n), t.closePath(), t.fill(), t.strokeStyle = "rgba(0,0,0,0.4)", t.lineWidth = 1, t.beginPath(), t.moveTo(0, -n), t.lineTo(n, -n / 2), t.lineTo(n, n / 2), t.lineTo(0, n), t.lineTo(-n, n / 2), t.lineTo(-n, -n / 2), t.closePath(), t.stroke(), t.restore();
+    const o = a * 0.8;
+    t.fillStyle = d.top, t.beginPath(), t.moveTo(0, -o), t.lineTo(o, -o / 2), t.lineTo(0, 0), t.lineTo(-o, -o / 2), t.closePath(), t.fill(), t.fillStyle = d.side, t.beginPath(), t.moveTo(-o, -o / 2), t.lineTo(0, 0), t.lineTo(0, o), t.lineTo(-o, o / 2), t.closePath(), t.fill(), t.fillStyle = this.darkenColor(d.side, 0.7), t.beginPath(), t.moveTo(0, 0), t.lineTo(o, -o / 2), t.lineTo(o, o / 2), t.lineTo(0, o), t.closePath(), t.fill(), t.strokeStyle = "rgba(0,0,0,0.4)", t.lineWidth = 1, t.beginPath(), t.moveTo(0, -o), t.lineTo(o, -o / 2), t.lineTo(o, o / 2), t.lineTo(0, o), t.lineTo(-o, o / 2), t.lineTo(-o, -o / 2), t.closePath(), t.stroke(), t.restore();
   },
   // Use seeds to calm birds
   useSeeds() {
@@ -1829,14 +1880,14 @@ const Vt = {
   shootBerdger() {
     const t = this.inventory.hotbar[this.selectedSlot];
     if (t && t.id === "berdger") {
-      const e = this.camera.rotX, i = this.camera.rotY, a = Math.cos(e), s = Math.sin(e), c = -Math.sin(i) * a, f = -s, h = Math.cos(i) * a;
+      const e = this.camera.rotX, i = this.camera.rotY, a = Math.cos(e), s = Math.sin(e), c = -Math.sin(i) * a, d = -s, r = Math.cos(i) * a;
       return this.particles.push({
         x: this.camera.x + c * 0.5,
-        y: this.camera.y + f * 0.5,
-        z: this.camera.z + h * 0.5,
+        y: this.camera.y + d * 0.5,
+        z: this.camera.z + r * 0.5,
         vx: c * 0.8,
-        vy: f * 0.8,
-        vz: h * 0.8,
+        vy: d * 0.8,
+        vz: r * 0.8,
         life: 120,
         type: "burger",
         size: 8,
@@ -1850,15 +1901,15 @@ const Vt = {
     const t = this.inventory.hotbar[this.selectedSlot];
     if (t && t.id === "apple" && t.count > 0) {
       t.count--, t.count <= 0 && (this.inventory.hotbar[this.selectedSlot] = null, this.selectedItem = null), this.updateHotbarDisplay();
-      const e = this.camera.rotX, i = this.camera.rotY, a = Math.cos(e), s = Math.sin(e), c = -Math.sin(i) * a, f = -s, h = Math.cos(i) * a;
+      const e = this.camera.rotX, i = this.camera.rotY, a = Math.cos(e), s = Math.sin(e), c = -Math.sin(i) * a, d = -s, r = Math.cos(i) * a;
       return this.particles.push({
         x: this.camera.x + c * 0.5,
-        y: this.camera.y + f * 0.5,
-        z: this.camera.z + h * 0.5,
+        y: this.camera.y + d * 0.5,
+        z: this.camera.z + r * 0.5,
         vx: c * 0.6,
-        vy: f * 0.6 + 0.1,
+        vy: d * 0.6 + 0.1,
         // Slight arc
-        vz: h * 0.6,
+        vz: r * 0.6,
         life: 180,
         type: "apple",
         size: 6,
@@ -1919,12 +1970,12 @@ const Vt = {
       charmSocket: "charmSocketFilled",
       plaqueSocket: "plaqueSocketFilled",
       incenseSocket: "incenseSocketFilled"
-    }, f = s[a];
-    if (!f || a.includes("Filled")) return;
-    const h = this.inventory.hotbar[this.selectedSlot];
-    if (h && h.id === f && h.count > 0) {
-      h.count--, h.count <= 0 && (this.inventory.hotbar[this.selectedSlot] = null), this.updateHotbarDisplay(), this.setBlock(t, e, i, c[a]), this.socketsFilled || (this.socketsFilled = {}), this.socketsFilled[a] = !0;
-      for (let d = 0; d < 20; d++)
+    }, d = s[a];
+    if (!d || a.includes("Filled")) return;
+    const r = this.inventory.hotbar[this.selectedSlot];
+    if (r && r.id === d && r.count > 0) {
+      r.count--, r.count <= 0 && (this.inventory.hotbar[this.selectedSlot] = null), this.updateHotbarDisplay(), this.setBlock(t, e, i, c[a]), this.socketsFilled || (this.socketsFilled = {}), this.socketsFilled[a] = !0;
+      for (let f = 0; f < 20; f++)
         this.particles.push({
           x: t + 0.5 + (Math.random() - 0.5) * 0.5,
           y: e + 1 + Math.random() * 0.5,
@@ -1937,13 +1988,13 @@ const Vt = {
           size: 3 + Math.random() * 2
         });
       if (Object.keys(s).every(
-        (d) => this.socketsFilled && this.socketsFilled[d]
+        (f) => this.socketsFilled && this.socketsFilled[f]
       ) && !this.ritualComplete) {
         if (this.ritualComplete = !0, this.ritualBlessingActive = !0, this.ritualBlessingTimer = 60 * 60 * 10, this.triggerRitualReward(), this.pestBirds)
-          for (const d of this.pestBirds)
-            d.anger = 0, d.state = "fleeing", d.stateTimer = 600;
+          for (const f of this.pestBirds)
+            f.anger = 0, f.state = "fleeing", f.stateTimer = 600;
         this.survivalStats && (this.survivalStats.score += 5e3, this.survivalStats.currentObjective = { text: "Blessing active - birds flee!", type: "complete" }, this.updateSurvivalHUD());
-        for (let d = 0; d < 100; d++)
+        for (let f = 0; f < 100; f++)
           this.particles.push({
             x: t + 0.5 + (Math.random() - 0.5) * 10,
             y: e + Math.random() * 8,
@@ -1968,8 +2019,8 @@ const Vt = {
     if (s && Array.isArray(s) && s.length > 0) {
       for (const c of s) {
         if (!c) continue;
-        const f = c.type || c.id, h = c.count || 1;
-        f && (this.addToInventory(f, h) || this.dropItem(t + 0.5, e + 1.5, i + 0.5, f, h));
+        const d = c.type || c.id, r = c.count || 1;
+        d && (this.addToInventory(d, r) || this.dropItem(t + 0.5, e + 1.5, i + 0.5, d, r));
       }
       this.chestContents[a] = [], this.updateHotbarDisplay();
     }
@@ -2041,8 +2092,8 @@ const Vt = {
         break;
       case "tp":
         if (a.length >= 3) {
-          const d = parseFloat(a[0]), m = parseFloat(a[1]), u = parseFloat(a[2]);
-          !isNaN(d) && !isNaN(m) && !isNaN(u) ? (this.camera.x = d, this.camera.y = m, this.camera.z = u, this.velocity = { x: 0, y: 0, z: 0 }, this.debugLog(`Teleported to ${d.toFixed(1)}, ${m.toFixed(1)}, ${u.toFixed(1)}`, "success")) : this.debugLog("Invalid coordinates", "error");
+          const f = parseFloat(a[0]), m = parseFloat(a[1]), u = parseFloat(a[2]);
+          !isNaN(f) && !isNaN(m) && !isNaN(u) ? (this.camera.x = f, this.camera.y = m, this.camera.z = u, this.velocity = { x: 0, y: 0, z: 0 }, this.debugLog(`Teleported to ${f.toFixed(1)}, ${m.toFixed(1)}, ${u.toFixed(1)}`, "success")) : this.debugLog("Invalid coordinates", "error");
         } else
           this.debugLog("Usage: tp <x> <y> <z>", "error");
         break;
@@ -2054,45 +2105,45 @@ const Vt = {
         break;
       case "give":
         if (a.length >= 1) {
-          const d = a[0], m = a.length >= 2 ? parseInt(a[1]) : 1;
-          this.blockColors[d] || this.itemTypes[d] ? (this.addToInventory(d, m), this.debugLog(`Given ${m}x ${d}`, "success")) : (this.debugLog(`Unknown item: ${d}`, "error"), this.debugLog("Items: " + Object.keys(this.itemTypes).slice(0, 10).join(", ") + "...", "info"));
+          const f = a[0], m = a.length >= 2 ? parseInt(a[1]) : 1;
+          this.blockColors[f] || this.itemTypes[f] ? (this.addToInventory(f, m), this.debugLog(`Given ${m}x ${f}`, "success")) : (this.debugLog(`Unknown item: ${f}`, "error"), this.debugLog("Items: " + Object.keys(this.itemTypes).slice(0, 10).join(", ") + "...", "info"));
         } else
           this.debugLog("Usage: give <item> [count]", "error");
         break;
       case "spawn":
-        const s = a[0], c = a.length >= 2 ? parseInt(a[1]) : 1, f = ["bird", "pest", "fish", "cat", "creeper", "bluebird"];
+        const s = a[0], c = a.length >= 2 ? parseInt(a[1]) : 1, d = ["bird", "pest", "fish", "cat", "creeper", "bluebird"];
         if (s === "bird" || s === "pest") {
-          for (let d = 0; d < c; d++) this.spawnPestBird();
+          for (let f = 0; f < c; f++) this.spawnPestBird();
           this.debugLog(`Spawned ${c} pest bird(s)`, "success");
         } else if (s === "fish") {
-          for (let d = 0; d < c; d++) this.spawnFish();
+          for (let f = 0; f < c; f++) this.spawnFish();
           this.debugLog(`Spawned ${c} fish`, "success");
         } else if (s === "cat") {
-          for (let d = 0; d < c; d++) this.spawnCat();
+          for (let f = 0; f < c; f++) this.spawnCat();
           this.debugLog(`Spawned ${c} cat(s)`, "success");
         } else if (s === "creeper") {
-          for (let d = 0; d < c; d++) this.spawnCreeper();
+          for (let f = 0; f < c; f++) this.spawnCreeper();
           this.debugLog(`Spawned ${c} creeper(s)`, "success");
         } else if (s === "bluebird") {
-          for (let d = 0; d < c; d++) this.spawnBlueBird();
+          for (let f = 0; f < c; f++) this.spawnBlueBird();
           this.debugLog(`Spawned ${c} blue bird(s)`, "success");
         } else
-          this.debugLog("Usage: spawn <mob> [count]", "error"), this.debugLog("Mobs: " + f.join(", "), "info");
+          this.debugLog("Usage: spawn <mob> [count]", "error"), this.debugLog("Mobs: " + d.join(", "), "info");
         break;
       case "kill":
-        let h = 0;
-        h += this.pestBirds ? this.pestBirds.length : 0, h += this.blueBirds ? this.blueBirds.length : 0, h += this.creepers ? this.creepers.length : 0, this.pestBirds = [], this.blueBirds = [], this.creepers = [], this.debugLog(`Killed ${h} mobs`, "success");
+        let r = 0;
+        r += this.pestBirds ? this.pestBirds.length : 0, r += this.blueBirds ? this.blueBirds.length : 0, r += this.creepers ? this.creepers.length : 0, this.pestBirds = [], this.blueBirds = [], this.creepers = [], this.debugLog(`Killed ${r} mobs`, "success");
         break;
       case "time":
         if (a.length >= 1) {
-          const d = parseInt(a[0]);
-          !isNaN(d) && this.birdEvent && (this.birdEvent.timer = d, this.debugLog(`Bird event timer set to ${d}ms`, "success"));
+          const f = parseInt(a[0]);
+          !isNaN(f) && this.birdEvent && (this.birdEvent.timer = f, this.debugLog(`Bird event timer set to ${f}ms`, "success"));
         } else
           this.debugLog("Usage: time <ms>", "error");
         break;
       case "clear":
-        const n = document.getElementById("debugOutput");
-        n && (n.innerHTML = "");
+        const o = document.getElementById("debugOutput");
+        o && (o.innerHTML = "");
         break;
       case "speed":
         a.length >= 1 ? (this.debugMoveSpeed = parseFloat(a[0]), this.debugLog(`Speed set to ${this.debugMoveSpeed}`, "success")) : this.debugLog("Usage: speed <value> (default: 0.12)", "error");
@@ -2227,39 +2278,39 @@ const Vt = {
         });
         continue;
       }
-      const f = s - 1;
-      if (!(f <= 0) && c && !this.fluidBlocks.includes(c)) {
-        const h = [
+      const d = s - 1;
+      if (!(d <= 0) && c && !this.fluidBlocks.includes(c)) {
+        const r = [
           { x: 1, z: 0 },
           { x: -1, z: 0 },
           { x: 0, z: 1 },
           { x: 0, z: -1 }
         ];
-        for (let n = h.length - 1; n > 0; n--) {
-          const d = Math.floor(Math.random() * (n + 1));
-          [h[n], h[d]] = [h[d], h[n]];
+        for (let o = r.length - 1; o > 0; o--) {
+          const f = Math.floor(Math.random() * (o + 1));
+          [r[o], r[f]] = [r[f], r[o]];
         }
-        for (const n of h) {
-          const d = i.x + n.x, m = i.z + n.z, u = this.getBlock(d, i.y, m), y = this.getFluidLevel(d, i.y, m);
+        for (const o of r) {
+          const f = i.x + o.x, m = i.z + o.z, u = this.getBlock(f, i.y, m), y = this.getFluidLevel(f, i.y, m);
           if (i.type === "lava" && u === "water") {
-            this.setBlock(d, i.y, m, "stone"), this.setFluidLevel(d, i.y, m, 0);
+            this.setBlock(f, i.y, m, "stone"), this.setFluidLevel(f, i.y, m, 0);
             continue;
           } else if (i.type === "water" && u === "lava") {
-            this.setBlock(d, i.y, m, "stone"), this.setFluidLevel(d, i.y, m, 0);
+            this.setBlock(f, i.y, m, "stone"), this.setFluidLevel(f, i.y, m, 0);
             continue;
           }
-          u ? u === i.type && y < f && (this.setFluidLevel(d, i.y, m, f), this.fluidUpdates.push({
-            x: d,
+          u ? u === i.type && y < d && (this.setFluidLevel(f, i.y, m, d), this.fluidUpdates.push({
+            x: f,
             y: i.y,
             z: m,
             type: i.type,
-            level: f
-          })) : (this.setBlock(d, i.y, m, i.type), this.setFluidLevel(d, i.y, m, f), this.fluidUpdates.push({
-            x: d,
+            level: d
+          })) : (this.setBlock(f, i.y, m, i.type), this.setFluidLevel(f, i.y, m, d), this.fluidUpdates.push({
+            x: f,
             y: i.y,
             z: m,
             type: i.type,
-            level: f
+            level: d
           }));
         }
       }
@@ -2317,18 +2368,18 @@ const Vt = {
       }), i += "</span>", i += `<span class="recipe-result">→ ${a.result.count}x ${a.result.id}</span>`, s && (i += `<button class="craft-btn" onclick="minecraftGame.craftRecipe('${a.name}')">Craft</button>`), i += "</div>";
     }
     i += "</div></div>", i += '<div class="inv-hotbar">', i += "<h3>Hotbar</h3>", i += '<div class="inv-slots" id="hotbarSlots">', this.inventory.hotbar.forEach((a, s) => {
-      const c = this.getItemEmoji(a), f = a && a.count > 0, h = this.inventoryHeldItem && this.inventoryHeldItem.source === "hotbar" && this.inventoryHeldItem.index === s, n = f ? e(a) : "";
-      i += `<div class="inv-slot ${s === this.selectedSlot ? "selected" : ""} ${f ? "has-item" : ""} ${h ? "held" : ""}" 
-                        data-source="hotbar" data-index="${s}" ${n ? `data-tooltip="${n}"` : ""}
-                        draggable="${f}">${c}<span class="count">${a ? a.count : ""}</span></div>`;
+      const c = this.getItemEmoji(a), d = a && a.count > 0, r = this.inventoryHeldItem && this.inventoryHeldItem.source === "hotbar" && this.inventoryHeldItem.index === s, o = d ? e(a) : "";
+      i += `<div class="inv-slot ${s === this.selectedSlot ? "selected" : ""} ${d ? "has-item" : ""} ${r ? "held" : ""}" 
+                        data-source="hotbar" data-index="${s}" ${o ? `data-tooltip="${o}"` : ""}
+                        draggable="${d}">${c}<span class="count">${a ? a.count : ""}</span></div>`;
     }), i += "</div></div>", i += '<div class="inv-main">', i += "<h3>Storage</h3>", i += '<div class="inv-slots" id="storageSlots">';
     for (let a = 0; a < 27; a++) {
       const s = this.inventory.main[a];
       s && s.count > 0;
       const c = this.inventoryHeldItem && this.inventoryHeldItem.source === "main" && this.inventoryHeldItem.index === a;
       if (s) {
-        const f = this.getItemEmoji(s), h = e(s);
-        i += `<div class="inv-slot has-item ${c ? "held" : ""}" data-source="main" data-index="${a}" ${h ? `data-tooltip="${h}"` : ""} draggable="true">${f}<span class="count">${s.count}</span></div>`;
+        const d = this.getItemEmoji(s), r = e(s);
+        i += `<div class="inv-slot has-item ${c ? "held" : ""}" data-source="main" data-index="${a}" ${r ? `data-tooltip="${r}"` : ""} draggable="true">${d}<span class="count">${s.count}</span></div>`;
       } else
         i += `<div class="inv-slot empty" data-source="main" data-index="${a}" draggable="false"></div>`;
     }
@@ -2340,8 +2391,8 @@ const Vt = {
     const i = t.querySelector(".inventory-container");
     i && i.addEventListener("wheel", (a) => {
       a.stopPropagation();
-      const { scrollTop: s, scrollHeight: c, clientHeight: f } = i, h = s === 0, n = s + f >= c;
-      (h && a.deltaY < 0 || n && a.deltaY > 0) && a.preventDefault();
+      const { scrollTop: s, scrollHeight: c, clientHeight: d } = i, r = s === 0, o = s + d >= c;
+      (r && a.deltaY < 0 || o && a.deltaY > 0) && a.preventDefault();
     }, { passive: !1 }), t.addEventListener("dragover", (a) => {
       a.preventDefault(), a.stopPropagation();
     }), t.addEventListener("drop", (a) => {
@@ -2349,17 +2400,17 @@ const Vt = {
     }), e.forEach((a) => {
       a.addEventListener("click", (s) => {
         s.preventDefault(), s.stopPropagation();
-        const c = a.dataset.source, f = parseInt(a.dataset.index), n = (c === "hotbar" ? this.inventory.hotbar : this.inventory.main)[f];
+        const c = a.dataset.source, d = parseInt(a.dataset.index), o = (c === "hotbar" ? this.inventory.hotbar : this.inventory.main)[d];
         this.inventoryHeldItem ? (this.swapInventorySlots(
           this.inventoryHeldItem.source,
           this.inventoryHeldItem.index,
           c,
-          f
-        ), this.inventoryHeldItem = null, this.renderInventory(), this.updateHotbar(), this.updateHotbarDisplay()) : n && n.count > 0 && (this.inventoryHeldItem = { source: c, index: f }, this.renderInventory());
+          d
+        ), this.inventoryHeldItem = null, this.renderInventory(), this.updateHotbar(), this.updateHotbarDisplay()) : o && o.count > 0 && (this.inventoryHeldItem = { source: c, index: d }, this.renderInventory());
       }), a.addEventListener("dragstart", (s) => {
         s.stopPropagation();
-        const c = a.dataset.source, f = parseInt(a.dataset.index);
-        this.draggedItem = { source: c, index: f }, a.classList.add("dragging"), s.dataTransfer.effectAllowed = "move", s.dataTransfer.setDragImage(a, 20, 20);
+        const c = a.dataset.source, d = parseInt(a.dataset.index);
+        this.draggedItem = { source: c, index: d }, a.classList.add("dragging"), s.dataTransfer.effectAllowed = "move", s.dataTransfer.setDragImage(a, 20, 20);
       }), a.addEventListener("dragend", (s) => {
         s.preventDefault(), s.stopPropagation(), a.classList.remove("dragging"), this.draggedItem = null;
       }), a.addEventListener("dragover", (s) => {
@@ -2368,23 +2419,23 @@ const Vt = {
         s.preventDefault(), s.stopPropagation(), a.classList.remove("drag-over");
       }), a.addEventListener("drop", (s) => {
         if (s.preventDefault(), s.stopPropagation(), a.classList.remove("drag-over"), !this.draggedItem) return;
-        const c = a.dataset.source, f = parseInt(a.dataset.index), h = document.querySelector(".inventory-container"), n = h ? h.scrollTop : 0;
+        const c = a.dataset.source, d = parseInt(a.dataset.index), r = document.querySelector(".inventory-container"), o = r ? r.scrollTop : 0;
         this.swapInventorySlots(
           this.draggedItem.source,
           this.draggedItem.index,
           c,
-          f
+          d
         ), this.draggedItem = null, this.renderInventory(), this.updateHotbar(), this.updateHotbarDisplay();
-        const d = document.querySelector(".inventory-container");
-        d && (d.scrollTop = n);
+        const f = document.querySelector(".inventory-container");
+        f && (f.scrollTop = o);
       });
     });
   },
   swapInventorySlots(t, e, i, a) {
-    const s = t === "hotbar" ? this.inventory.hotbar : this.inventory.main, c = i === "hotbar" ? this.inventory.hotbar : this.inventory.main, f = s[e], h = c[a];
-    if (s[e] = h, c[a] = f, t === "hotbar" || i === "hotbar") {
-      const n = this.inventory.hotbar[this.selectedSlot];
-      n ? n.type === "block" ? (this.selectedBlock = n.id, this.selectedItem = null) : n.type === "weapon" && (this.selectedItem = n.id, this.selectedBlock = null) : (this.selectedBlock = null, this.selectedItem = null);
+    const s = t === "hotbar" ? this.inventory.hotbar : this.inventory.main, c = i === "hotbar" ? this.inventory.hotbar : this.inventory.main, d = s[e], r = c[a];
+    if (s[e] = r, c[a] = d, t === "hotbar" || i === "hotbar") {
+      const o = this.inventory.hotbar[this.selectedSlot];
+      o ? o.type === "block" ? (this.selectedBlock = o.id, this.selectedItem = null) : o.type === "weapon" && (this.selectedItem = o.id, this.selectedBlock = null) : (this.selectedBlock = null, this.selectedItem = null);
     }
   },
   getItemEmoji(t) {
@@ -2470,45 +2521,45 @@ const Vt = {
       }
   },
   raycast() {
-    const t = this.camera.rotX, e = this.camera.rotY, i = Math.cos(t), a = Math.sin(t), s = Math.cos(e), f = -Math.sin(e) * i, h = -a, n = s * i, d = Math.sqrt(f * f + h * h + n * n), m = f / d, u = h / d, y = n / d, b = 0.1;
-    let T = this.camera.x + m * b, P = this.camera.y + u * b, L = this.camera.z + y * b, z = Math.floor(T), R = Math.floor(P), I = Math.floor(L);
-    const E = m >= 0 ? 1 : -1, H = u >= 0 ? 1 : -1, D = y >= 0 ? 1 : -1, U = Math.abs(1 / m), _ = Math.abs(1 / u), X = Math.abs(1 / y);
-    let Z, Y, q;
-    m > 0 ? Z = (z + 1 - T) / m : m < 0 ? Z = (z - T) / m : Z = 1 / 0, u > 0 ? Y = (R + 1 - P) / u : u < 0 ? Y = (R - P) / u : Y = 1 / 0, y > 0 ? q = (I + 1 - L) / y : y < 0 ? q = (I - L) / y : q = 1 / 0;
-    let o = null;
-    const r = 6;
-    let l = 0, p = null, g = !1, k = !1;
-    for (let v = 0; v < 100; v++) {
-      const M = this.getBlock(z, R, I);
-      if (M)
-        if (M === "water" || M === "lava")
-          M === "water" && (g = !0), M === "lava" && (k = !0);
+    const t = this.camera.rotX, e = this.camera.rotY, i = Math.cos(t), a = Math.sin(t), s = Math.cos(e), d = -Math.sin(e) * i, r = -a, o = s * i, f = Math.sqrt(d * d + r * r + o * o), m = d / f, u = r / f, y = o / f, b = 0.1;
+    let B = this.camera.x + m * b, C = this.camera.y + u * b, L = this.camera.z + y * b, I = Math.floor(B), F = Math.floor(C), z = Math.floor(L);
+    const $ = m >= 0 ? 1 : -1, R = u >= 0 ? 1 : -1, E = y >= 0 ? 1 : -1, j = Math.abs(1 / m), Q = Math.abs(1 / u), Y = Math.abs(1 / y);
+    let O, X, H;
+    m > 0 ? O = (I + 1 - B) / m : m < 0 ? O = (I - B) / m : O = 1 / 0, u > 0 ? X = (F + 1 - C) / u : u < 0 ? X = (F - C) / u : X = 1 / 0, y > 0 ? H = (z + 1 - L) / y : y < 0 ? H = (z - L) / y : H = 1 / 0;
+    let Z = null;
+    const n = 6;
+    let h = 0, l = null, p = !1, g = !1;
+    for (let P = 0; P < 100; P++) {
+      const v = this.getBlock(I, F, z);
+      if (v)
+        if (v === "water" || v === "lava")
+          v === "water" && (p = !0), v === "lava" && (g = !0);
         else {
-          let w = null;
-          const S = p || o;
-          return S && (w = {
-            x: z + S.x,
-            y: R + S.y,
-            z: I + S.z
+          let k = null;
+          const S = l || Z;
+          return S && (k = {
+            x: I + S.x,
+            y: F + S.y,
+            z: z + S.z
           }), {
-            hit: { x: z, y: R, z: I },
-            place: w,
-            block: M,
-            throughWater: g,
-            throughLava: k
+            hit: { x: I, y: F, z },
+            place: k,
+            block: v,
+            throughWater: p,
+            throughLava: g
           };
         }
       else
-        p = o;
-      if (Z < Y && Z < q) {
-        if (l = Z, l > r) break;
-        z += E, Z += U, o = { x: -E, y: 0, z: 0 };
-      } else if (Y < q) {
-        if (l = Y, l > r) break;
-        R += H, Y += _, o = { x: 0, y: -H, z: 0 };
+        l = Z;
+      if (O < X && O < H) {
+        if (h = O, h > n) break;
+        I += $, O += j, Z = { x: -$, y: 0, z: 0 };
+      } else if (X < H) {
+        if (h = X, h > n) break;
+        F += R, X += Q, Z = { x: 0, y: -R, z: 0 };
       } else {
-        if (l = q, l > r) break;
-        I += D, q += X, o = { x: 0, y: 0, z: -D };
+        if (h = H, h > n) break;
+        z += E, H += Y, Z = { x: 0, y: 0, z: -E };
       }
     }
     return null;
@@ -2518,99 +2569,99 @@ const Vt = {
     this.shootCooldown > 0 && this.shootCooldown--, this.muzzleFlash > 0 && this.muzzleFlash--, this.ritualFlightTimer > 0 && (this.ritualFlightTimer--, this.ritualFlightTimer <= 0 && (this.ritualFlight = !1));
     const t = this.debugMoveSpeed || 0.12, i = this.debugNoclip || this.debugFly || this.ritualFlight ? t * 2 : t, a = Math.sin(this.camera.rotY), s = Math.cos(this.camera.rotY);
     if (this.debugNoclip || this.debugFly) {
-      let B = 0, x = 0, F = 0;
-      this.keys.w && (B -= a * Math.cos(this.camera.rotX) * i, x -= Math.sin(this.camera.rotX) * i, F += s * Math.cos(this.camera.rotX) * i), this.keys.s && (B += a * Math.cos(this.camera.rotX) * i, x += Math.sin(this.camera.rotX) * i, F -= s * Math.cos(this.camera.rotX) * i), this.keys.a && (B -= s * i, F -= a * i), this.keys.d && (B += s * i, F += a * i), this.keys[" "] && (x += i), this.keys.shift && (x -= i), this.debugNoclip ? (this.camera.x += B, this.camera.y += x, this.camera.z += F) : (this.camera.x += B, this.camera.y += x, this.camera.z += F), this.velocity = { x: 0, y: 0, z: 0 };
+      let x = 0, T = 0, w = 0;
+      this.keys.w && (x -= a * Math.cos(this.camera.rotX) * i, T -= Math.sin(this.camera.rotX) * i, w += s * Math.cos(this.camera.rotX) * i), this.keys.s && (x += a * Math.cos(this.camera.rotX) * i, T += Math.sin(this.camera.rotX) * i, w -= s * Math.cos(this.camera.rotX) * i), this.keys.a && (x -= s * i, w -= a * i), this.keys.d && (x += s * i, w += a * i), this.keys[" "] && (T += i), this.keys.shift && (T -= i), this.debugNoclip ? (this.camera.x += x, this.camera.y += T, this.camera.z += w) : (this.camera.x += x, this.camera.y += T, this.camera.z += w), this.velocity = { x: 0, y: 0, z: 0 };
       return;
     }
     if (this.ritualFlight) {
-      let B = 0, x = 0, F = 0;
-      this.keys.w && (B -= a * i, F += s * i), this.keys.s && (B += a * i, F -= s * i), this.keys.a && (B -= s * i, F -= a * i), this.keys.d && (B += s * i, F += a * i), this.keys[" "] && (x += i), this.keys.shift && (x -= i);
-      const $ = this.camera.x + B, A = this.camera.y + x, O = this.camera.z + F, W = Math.floor(A - this.playerEyeHeight), G = Math.floor(A), Q = Math.floor($), tt = Math.floor(O);
-      let J = !0;
-      for (let N = W; N <= G; N++) {
-        const V = this.getBlock(Q, N, tt);
-        if (V && !this.fluidBlocks.includes(V)) {
-          J = !1;
+      let x = 0, T = 0, w = 0;
+      this.keys.w && (x -= a * i, w += s * i), this.keys.s && (x += a * i, w -= s * i), this.keys.a && (x -= s * i, w -= a * i), this.keys.d && (x += s * i, w += a * i), this.keys[" "] && (T += i), this.keys.shift && (T -= i);
+      const D = this.camera.x + x, q = this.camera.y + T, N = this.camera.z + w, A = Math.floor(q - this.playerEyeHeight), G = Math.floor(q), _ = Math.floor(D), W = Math.floor(N);
+      let et = !0;
+      for (let it = A; it <= G; it++) {
+        const K = this.getBlock(_, it, W);
+        if (K && !this.fluidBlocks.includes(K)) {
+          et = !1;
           break;
         }
       }
-      J && (this.camera.x = $, this.camera.y = A, this.camera.z = O), this.velocity = { x: 0, y: 0, z: 0 };
+      et && (this.camera.x = D, this.camera.y = q, this.camera.z = N), this.velocity = { x: 0, y: 0, z: 0 };
       return;
     }
-    const c = this.camera.y - this.playerEyeHeight, f = c + this.playerHeight, h = Math.floor(this.camera.x), n = Math.floor(this.camera.z), d = this.getBlock(h, Math.floor(c), n), m = this.getBlock(h, Math.floor(c + 0.9), n), u = this.getBlock(h, Math.floor(f - 0.1), n), y = d === "water", b = d === "lava", T = m === "water", P = m === "lava", L = u === "water", z = u === "lava", R = y || T, I = b || P, E = R || I, H = L || z;
-    this.inWater = R || L, this.inLava = I || z, this.swimming = E, this.headSubmergedWater = L, this.headSubmergedLava = z;
-    let D = 1;
-    R && (D = 0.65), I && (D = 0.35);
-    let U = 0, _ = 0;
-    const X = t;
-    this.keys.w && (U -= a * X * D, _ += s * X * D), this.keys.s && (U += a * X * D, _ -= s * X * D), this.keys.a && (U -= s * X * D, _ -= a * X * D), this.keys.d && (U += s * X * D, _ += a * X * D);
-    const Z = this.camera.x, Y = this.camera.z, q = 0.25, o = 1.8;
-    if (this.collidesAt(this.camera.x, this.camera.y, this.camera.z, q, o)) {
-      let B = !1;
-      for (let x = 0.1; x <= 1.5 && !B; x += 0.1) {
-        const F = [0, 45, 90, 135, 180, 225, 270, 315];
-        for (const $ of F) {
-          const A = $ * Math.PI / 180, O = this.camera.x + Math.cos(A) * x, W = this.camera.z + Math.sin(A) * x;
-          if (!this.collidesAt(O, this.camera.y, W, q, o)) {
-            this.camera.x = O, this.camera.z = W, B = !0;
+    const c = this.camera.y - this.playerEyeHeight, d = c + this.playerHeight, r = Math.floor(this.camera.x), o = Math.floor(this.camera.z), f = this.getBlock(r, Math.floor(c), o), m = this.getBlock(r, Math.floor(c + 0.9), o), u = this.getBlock(r, Math.floor(d - 0.1), o), y = f === "water", b = f === "lava", B = m === "water", C = m === "lava", L = u === "water", I = u === "lava", F = y || B, z = b || C, $ = F || z, R = L || I;
+    this.inWater = F || L, this.inLava = z || I, this.swimming = $, this.headSubmergedWater = L, this.headSubmergedLava = I;
+    let E = 1;
+    F && (E = 0.65), z && (E = 0.35);
+    let j = 0, Q = 0;
+    const Y = t;
+    this.keys.w && (j -= a * Y * E, Q += s * Y * E), this.keys.s && (j += a * Y * E, Q -= s * Y * E), this.keys.a && (j -= s * Y * E, Q -= a * Y * E), this.keys.d && (j += s * Y * E, Q += a * Y * E);
+    const O = this.camera.x, X = this.camera.z, H = 0.25, Z = 1.8;
+    if (this.collidesAt(this.camera.x, this.camera.y, this.camera.z, H, Z)) {
+      let x = !1;
+      for (let T = 0.1; T <= 1.5 && !x; T += 0.1) {
+        const w = [0, 45, 90, 135, 180, 225, 270, 315];
+        for (const D of w) {
+          const q = D * Math.PI / 180, N = this.camera.x + Math.cos(q) * T, A = this.camera.z + Math.sin(q) * T;
+          if (!this.collidesAt(N, this.camera.y, A, H, Z)) {
+            this.camera.x = N, this.camera.z = A, x = !0;
             break;
           }
         }
-        !B && !this.collidesAt(this.camera.x, this.camera.y + x, this.camera.z, q, o) && (this.camera.y += x, B = !0);
+        !x && !this.collidesAt(this.camera.x, this.camera.y + T, this.camera.z, H, Z) && (this.camera.y += T, x = !0);
       }
     }
-    let r = this.camera.x, l = this.camera.z;
-    const p = 8, g = U / p, k = _ / p;
-    for (let B = 0; B < p; B++) {
-      const x = r + g;
-      if (!this.collidesAt(x, this.camera.y, l, q, o))
-        r = x;
+    let n = this.camera.x, h = this.camera.z;
+    const l = 8, p = j / l, g = Q / l;
+    for (let x = 0; x < l; x++) {
+      const T = n + p;
+      if (!this.collidesAt(T, this.camera.y, h, H, Z))
+        n = T;
       else {
-        const $ = g * 0.5;
-        this.collidesAt(r + $, this.camera.y, l, q, o) || (r += $);
+        const D = p * 0.5;
+        this.collidesAt(n + D, this.camera.y, h, H, Z) || (n += D);
       }
-      const F = l + k;
-      if (!this.collidesAt(r, this.camera.y, F, q, o))
-        l = F;
+      const w = h + g;
+      if (!this.collidesAt(n, this.camera.y, w, H, Z))
+        h = w;
       else {
-        const $ = k * 0.5;
-        this.collidesAt(r, this.camera.y, l + $, q, o) || (l += $);
+        const D = g * 0.5;
+        this.collidesAt(n, this.camera.y, h + D, H, Z) || (h += D);
       }
     }
-    this.collidesAt(r, this.camera.y, l, q, o) && (r = this.camera.x, l = this.camera.z), this.camera.x = r, this.camera.z = l;
-    const v = this.camera.x - Z, M = this.camera.z - Y;
-    if (this.stats.distance += Math.sqrt(v * v + M * M), E) {
-      const B = I ? 8e-3 : 0.012, x = I ? 0.92 : 0.95;
-      if (this.velocity.y += B, this.keys[" "]) {
-        const $ = I ? 0.04 : 0.06;
-        this.velocity.y += $;
+    this.collidesAt(n, this.camera.y, h, H, Z) && (n = this.camera.x, h = this.camera.z), this.camera.x = n, this.camera.z = h;
+    const P = this.camera.x - O, v = this.camera.z - X;
+    if (this.stats.distance += Math.sqrt(P * P + v * v), $) {
+      const x = z ? 8e-3 : 0.012, T = z ? 0.92 : 0.95;
+      if (this.velocity.y += x, this.keys[" "]) {
+        const D = z ? 0.04 : 0.06;
+        this.velocity.y += D;
       }
       if (this.keys.shift) {
-        const $ = I ? 0.03 : 0.04;
-        this.velocity.y -= $;
+        const D = z ? 0.03 : 0.04;
+        this.velocity.y -= D;
       }
-      const F = I ? 0.12 : 0.15;
-      this.velocity.y = Math.max(-F, Math.min(F, this.velocity.y)), this.velocity.y *= x, !H && this.keys[" "] && this.velocity.y < 0.15 && (this.velocity.y = 0.2);
+      const w = z ? 0.12 : 0.15;
+      this.velocity.y = Math.max(-w, Math.min(w, this.velocity.y)), this.velocity.y *= T, !R && this.keys[" "] && this.velocity.y < 0.15 && (this.velocity.y = 0.2);
     } else
       this.velocity.y += this.gravity;
-    const w = this.camera.y + this.velocity.y, S = this.getGroundHeightBelow(this.camera.x, this.camera.z, this.camera.y) + this.playerEyeHeight + 0.5;
-    w < S ? (this.camera.y = S, this.velocity.y = 0, this.isJumping = !1, this.keys[" "] && !E && (this.velocity.y = 0.28, this.isJumping = !0, this.stats.jumps++)) : this.camera.y = w;
-    const C = this.getCeilingAbove(this.camera.x, this.camera.z, this.camera.y);
-    C !== null && this.camera.y > C - 0.5 && (this.camera.y = C - 0.5, this.velocity.y = 0), this.worldBounds && (this.camera.x < this.worldBounds.minX + 0.5 && (this.camera.x = this.worldBounds.minX + 0.5, this.velocity.x = Math.abs(this.velocity.x || 0) * 0.3), this.camera.x > this.worldBounds.maxX - 0.5 && (this.camera.x = this.worldBounds.maxX - 0.5, this.velocity.x = -Math.abs(this.velocity.x || 0) * 0.3), this.camera.z < this.worldBounds.minZ + 0.5 && (this.camera.z = this.worldBounds.minZ + 0.5, this.velocity.z = Math.abs(this.velocity.z || 0) * 0.3), this.camera.z > this.worldBounds.maxZ - 0.5 && (this.camera.z = this.worldBounds.maxZ - 0.5, this.velocity.z = -Math.abs(this.velocity.z || 0) * 0.3), this.camera.y < this.worldBounds.minY + this.playerEyeHeight && (this.camera.y = this.worldBounds.minY + this.playerEyeHeight, this.velocity.y = 0.15)), this.settings.filter === "trippy" && this.applyFilters();
+    const k = this.camera.y + this.velocity.y, S = this.getGroundHeightBelow(this.camera.x, this.camera.z, this.camera.y) + this.playerEyeHeight + 0.5;
+    k < S ? (this.camera.y = S, this.velocity.y = 0, this.isJumping = !1, this.keys[" "] && !$ && (this.velocity.y = 0.28, this.isJumping = !0, this.stats.jumps++)) : this.camera.y = k;
+    const M = this.getCeilingAbove(this.camera.x, this.camera.z, this.camera.y);
+    M !== null && this.camera.y > M - 0.5 && (this.camera.y = M - 0.5, this.velocity.y = 0), this.worldBounds && (this.camera.x < this.worldBounds.minX + 0.5 && (this.camera.x = this.worldBounds.minX + 0.5, this.velocity.x = Math.abs(this.velocity.x || 0) * 0.3), this.camera.x > this.worldBounds.maxX - 0.5 && (this.camera.x = this.worldBounds.maxX - 0.5, this.velocity.x = -Math.abs(this.velocity.x || 0) * 0.3), this.camera.z < this.worldBounds.minZ + 0.5 && (this.camera.z = this.worldBounds.minZ + 0.5, this.velocity.z = Math.abs(this.velocity.z || 0) * 0.3), this.camera.z > this.worldBounds.maxZ - 0.5 && (this.camera.z = this.worldBounds.maxZ - 0.5, this.velocity.z = -Math.abs(this.velocity.z || 0) * 0.3), this.camera.y < this.worldBounds.minY + this.playerEyeHeight && (this.camera.y = this.worldBounds.minY + this.playerEyeHeight, this.velocity.y = 0.15)), this.settings.filter === "trippy" && this.applyFilters();
   },
   // Check if player would collide with blocks at position
   collidesAt(t, e, i, a, s) {
-    const c = e - this.playerEyeHeight, f = [
+    const c = e - this.playerEyeHeight, d = [
       { x: t - a, z: i - a },
       { x: t + a, z: i - a },
       { x: t - a, z: i + a },
       { x: t + a, z: i + a },
       { x: t, z: i }
     ];
-    for (const h of f) {
-      const n = Math.floor(h.x), d = Math.floor(h.z);
+    for (const r of d) {
+      const o = Math.floor(r.x), f = Math.floor(r.z);
       for (let m = Math.floor(c); m < Math.floor(c + s); m++) {
-        const u = this.getBlock(n, m, d);
+        const u = this.getBlock(o, m, f);
         if (u && !this.fluidBlocks.includes(u))
           return !0;
       }
@@ -2620,402 +2671,404 @@ const Vt = {
   // Get ground height directly below player (not teleporting to trees)
   getGroundHeightBelow(t, e, i) {
     const a = Math.floor(t), s = Math.floor(e), c = Math.floor(i - this.playerEyeHeight);
-    for (let f = c; f >= 0; f--) {
-      const h = this.getBlock(a, f, s);
-      if (h && !this.fluidBlocks.includes(h))
-        return f + 1;
+    for (let d = c; d >= 0; d--) {
+      const r = this.getBlock(a, d, s);
+      if (r && !this.fluidBlocks.includes(r))
+        return d + 1;
     }
     return 0;
   },
   // Get ceiling above player
   getCeilingAbove(t, e, i) {
     const a = Math.floor(t), s = Math.floor(e), c = Math.floor(i);
-    for (let f = c; f <= c + 3; f++) {
-      const h = this.getBlock(a, f, s);
-      if (h && !this.fluidBlocks.includes(h))
-        return f;
+    for (let d = c; d <= c + 3; d++) {
+      const r = this.getBlock(a, d, s);
+      if (r && !this.fluidBlocks.includes(r))
+        return d;
     }
     return null;
   },
   render() {
     if (!this.isActive) return;
-    const t = this.ctx, e = this.canvas.width, i = this.canvas.height;
+    const t = this.ctx, e = this.canvas.width, i = this.canvas.height, a = this.camera.y + this.getEyeHeight();
     if (!this.cachedSky || this.cachedSky.w !== e || this.cachedSky.h !== i || this.cachedSky.lighting !== this.settings.lighting) {
-      const o = t.createLinearGradient(0, 0, 0, i);
-      this.settings.lighting ? (o.addColorStop(0, "#1a0a1a"), o.addColorStop(0.5, "#2d1f3d"), o.addColorStop(1, "#ffb7c5")) : (o.addColorStop(0, "#111"), o.addColorStop(1, "#333")), this.cachedSky = { grad: o, w: e, h: i, lighting: this.settings.lighting };
+      const n = t.createLinearGradient(0, 0, 0, i);
+      this.settings.lighting ? (n.addColorStop(0, "#1a0a1a"), n.addColorStop(0.5, "#2d1f3d"), n.addColorStop(1, "#ffb7c5")) : (n.addColorStop(0, "#111"), n.addColorStop(1, "#333")), this.cachedSky = { grad: n, w: e, h: i, lighting: this.settings.lighting };
     }
     t.fillStyle = this.cachedSky.grad, t.fillRect(0, 0, e, i);
-    const a = this.camera.x, s = this.camera.y, c = this.camera.z, f = Math.cos(-this.camera.rotY), h = Math.sin(-this.camera.rotY), n = Math.cos(-this.camera.rotX), d = Math.sin(-this.camera.rotX), m = e / 2, u = i / 2, y = 400, b = this.settings.renderDistance, T = b * b, P = (o, r, l) => {
-      const p = o - a, g = r - s, k = l - c, v = p * f - k * h, M = p * h + k * f, w = g * n - M * d, S = g * d + M * n;
-      return S <= 0.1 ? null : { x: m + v / S * y, y: u - w / S * y, z: S };
-    }, L = [], z = -Math.sin(this.camera.rotY), R = Math.cos(this.camera.rotY), I = Object.keys(this.world);
-    for (let o = 0; o < I.length; o++) {
-      const r = I[o], [l, p, g] = r.split(",").map(Number), k = l + 0.5 - a, v = p + 0.5 - s, M = g + 0.5 - c, w = k * k + v * v + M * M;
-      w > T || k * z + M * R < -3 && w > 16 || L.push({ x: l, y: p, z: g, dist: w, type: this.world[r] });
+    const s = this.camera.x, c = a, d = this.camera.z, r = Math.cos(-this.camera.rotY), o = Math.sin(-this.camera.rotY), f = Math.cos(-this.camera.rotX), m = Math.sin(-this.camera.rotX), u = e / 2, y = i / 2, b = 400, B = this.settings.renderDistance, C = B * B, L = (n, h, l) => {
+      const p = n - s, g = h - c, P = l - d, v = p * r - P * o, k = p * o + P * r, S = g * f - k * m, M = g * m + k * f;
+      return M <= 0.1 ? null : { x: u + v / M * b, y: y - S / M * b, z: M };
+    }, I = [], F = -Math.sin(this.camera.rotY), z = Math.cos(this.camera.rotY), $ = Object.keys(this.world);
+    for (let n = 0; n < $.length; n++) {
+      const h = $[n], [l, p, g] = h.split(",").map(Number), P = l + 0.5 - s, v = p + 0.5 - c, k = g + 0.5 - d, S = P * P + v * v + k * k;
+      S > C || P * F + k * z < -3 && S > 16 || I.push({ x: l, y: p, z: g, dist: S, type: this.world[h] });
     }
-    L.sort((o, r) => r.dist - o.dist);
-    const E = (o, r, l) => this.world[`${o},${r},${l}`], H = (o) => !o || this.fluidBlocks.includes(o), D = (o, r, l) => this.fluidLevels[`${o},${r},${l}`] || 8, U = Date.now() * 2e-3, _ = [], X = [];
-    for (let o = 0; o < L.length; o++) {
-      const r = L[o], l = this.blockColors[r.type];
-      l && l.transparent ? X.push(r) : _.push(r);
+    I.sort((n, h) => h.dist - n.dist);
+    const R = (n, h, l) => this.world[`${n},${h},${l}`], E = (n) => !n || this.fluidBlocks.includes(n), j = (n, h, l) => this.fluidLevels[`${n},${h},${l}`] || 8, Q = Date.now() * 2e-3, Y = [], O = [];
+    for (let n = 0; n < I.length; n++) {
+      const h = I[n], l = this.blockColors[h.type];
+      l && l.transparent ? O.push(h) : Y.push(h);
     }
-    const Z = (o, r, l) => {
+    const X = (n, h, l) => {
       const p = [
-        [o + 0.5, r + 0.5, l + 0.5],
+        [n + 0.5, h + 0.5, l + 0.5],
         // center
-        [o + 0.1, r + 0.1, l + 0.1],
+        [n + 0.1, h + 0.1, l + 0.1],
         // corners with small inset
-        [o + 0.9, r + 0.1, l + 0.1],
-        [o + 0.1, r + 0.9, l + 0.1],
-        [o + 0.9, r + 0.9, l + 0.1],
-        [o + 0.1, r + 0.1, l + 0.9],
-        [o + 0.9, r + 0.1, l + 0.9],
-        [o + 0.1, r + 0.9, l + 0.9],
-        [o + 0.9, r + 0.9, l + 0.9]
+        [n + 0.9, h + 0.1, l + 0.1],
+        [n + 0.1, h + 0.9, l + 0.1],
+        [n + 0.9, h + 0.9, l + 0.1],
+        [n + 0.1, h + 0.1, l + 0.9],
+        [n + 0.9, h + 0.1, l + 0.9],
+        [n + 0.1, h + 0.9, l + 0.9],
+        [n + 0.9, h + 0.9, l + 0.9]
       ];
-      for (const [g, k, v] of p) {
-        const M = g - a, w = k - s, S = v - c, C = Math.sqrt(M * M + w * w + S * S);
-        let B = !1;
-        const x = Math.min(8, Math.ceil(C / 2));
-        for (let F = 1; F < x; F++) {
-          const $ = F / x, A = Math.floor(a + M * $), O = Math.floor(s + w * $), W = Math.floor(c + S * $);
-          if (A === o && O === r && W === l) continue;
-          const G = E(A, O, W);
-          if (G && !this.fluidBlocks.includes(G)) {
-            const Q = this.blockColors[G];
-            if (!Q || !Q.transparent) {
-              B = !0;
+      for (const [g, P, v] of p) {
+        const k = g - s, S = P - c, M = v - d, x = Math.sqrt(k * k + S * S + M * M);
+        let T = !1;
+        const w = Math.min(8, Math.ceil(x / 2));
+        for (let D = 1; D < w; D++) {
+          const q = D / w, N = Math.floor(s + k * q), A = Math.floor(c + S * q), G = Math.floor(d + M * q);
+          if (N === n && A === h && G === l) continue;
+          const _ = R(N, A, G);
+          if (_ && !this.fluidBlocks.includes(_)) {
+            const W = this.blockColors[_];
+            if (!W || !W.transparent) {
+              T = !0;
               break;
             }
           }
         }
-        if (!B) return !1;
+        if (!T) return !1;
       }
       return !0;
-    }, Y = X.filter((o) => !Z(o.x, o.y, o.z));
-    Y.sort((o, r) => r.dist - o.dist), _.sort((o, r) => r.dist - o.dist);
-    const q = [..._, ...Y];
-    for (let o = 0; o < q.length; o++) {
-      const r = q[o], { x: l, y: p, z: g, type: k } = r, v = this.blockColors[k];
+    }, H = O.filter((n) => !X(n.x, n.y, n.z));
+    H.sort((n, h) => h.dist - n.dist), Y.sort((n, h) => h.dist - n.dist);
+    const Z = [...Y, ...H];
+    for (let n = 0; n < Z.length; n++) {
+      const h = Z[n], { x: l, y: p, z: g, type: P } = h, v = this.blockColors[P];
       if (!v) continue;
-      const M = this.fluidBlocks.includes(k), w = M ? D(l, p, g) : 8, S = p + w / 8, C = E(l, p + 1, g), B = E(l, p - 1, g), x = E(l, p, g + 1), F = E(l, p, g - 1), $ = E(l - 1, p, g), A = E(l + 1, p, g);
-      let O, W, G, Q, tt, J;
-      if (M) {
-        O = !C || C !== k, W = !B || !this.fluidBlocks.includes(B);
-        const V = w, et = x === k ? D(l, p, g + 1) : 0, K = F === k ? D(l, p, g - 1) : 0, rt = $ === k ? D(l - 1, p, g) : 0, at = A === k ? D(l + 1, p, g) : 0;
-        G = !x || x !== k || et < V, Q = !F || F !== k || K < V, tt = !$ || $ !== k || rt < V, J = !A || A !== k || at < V;
+      const k = this.fluidBlocks.includes(P), S = k ? j(l, p, g) : 8, M = p + S / 8, x = R(l, p + 1, g), T = R(l, p - 1, g), w = R(l, p, g + 1), D = R(l, p, g - 1), q = R(l - 1, p, g), N = R(l + 1, p, g);
+      let A, G, _, W, et, it;
+      if (k) {
+        A = !x || x !== P, G = !T || !this.fluidBlocks.includes(T);
+        const J = S, V = w === P ? j(l, p, g + 1) : 0, tt = D === P ? j(l, p, g - 1) : 0, ct = q === P ? j(l - 1, p, g) : 0, ot = N === P ? j(l + 1, p, g) : 0;
+        _ = !w || w !== P || V < J, W = !D || D !== P || tt < J, et = !q || q !== P || ct < J, it = !N || N !== P || ot < J;
       } else
-        O = H(C), W = H(B), G = H(x), Q = H(F), tt = H($), J = H(A);
-      if (!O && !W && !G && !Q && !tt && !J) continue;
-      const N = [];
-      G && N.push({ v: [[l, p, g + 1], [l + 1, p, g + 1], [l + 1, S, g + 1], [l, S, g + 1]], color: v.side, dark: 1, isTop: !1 }), Q && N.push({ v: [[l + 1, p, g], [l, p, g], [l, S, g], [l + 1, S, g]], color: v.side, dark: 0.7, isTop: !1 }), O && N.push({ v: [[l, S, g], [l + 1, S, g], [l + 1, S, g + 1], [l, S, g + 1]], color: v.top, dark: 1, isTop: !0 }), W && N.push({ v: [[l, p, g + 1], [l + 1, p, g + 1], [l + 1, p, g], [l, p, g]], color: v.bottom, dark: 0.7, isTop: !1 }), tt && N.push({ v: [[l, p, g], [l, p, g + 1], [l, S, g + 1], [l, S, g]], color: v.side, dark: 0.85, isTop: !1 }), J && N.push({ v: [[l + 1, p, g + 1], [l + 1, p, g], [l + 1, S, g], [l + 1, S, g + 1]], color: v.side, dark: 0.85, isTop: !1 });
-      for (let V = 0; V < N.length; V++) {
-        const et = N[V], K = [];
-        let rt = !0;
-        for (let j = 0; j < 4; j++) {
-          const it = P(et.v[j][0], et.v[j][1], et.v[j][2]);
-          if (!it) {
-            rt = !1;
+        A = E(x), G = E(T), _ = E(w), W = E(D), et = E(q), it = E(N);
+      if (!A && !G && !_ && !W && !et && !it) continue;
+      const K = [];
+      _ && K.push({ v: [[l, p, g + 1], [l + 1, p, g + 1], [l + 1, M, g + 1], [l, M, g + 1]], color: v.side, dark: 1, isTop: !1 }), W && K.push({ v: [[l + 1, p, g], [l, p, g], [l, M, g], [l + 1, M, g]], color: v.side, dark: 0.7, isTop: !1 }), A && K.push({ v: [[l, M, g], [l + 1, M, g], [l + 1, M, g + 1], [l, M, g + 1]], color: v.top, dark: 1, isTop: !0 }), G && K.push({ v: [[l, p, g + 1], [l + 1, p, g + 1], [l + 1, p, g], [l, p, g]], color: v.bottom, dark: 0.7, isTop: !1 }), et && K.push({ v: [[l, p, g], [l, p, g + 1], [l, M, g + 1], [l, M, g]], color: v.side, dark: 0.85, isTop: !1 }), it && K.push({ v: [[l + 1, p, g + 1], [l + 1, p, g], [l + 1, M, g], [l + 1, M, g + 1]], color: v.side, dark: 0.85, isTop: !1 });
+      for (let J = 0; J < K.length; J++) {
+        const V = K[J], tt = [];
+        let ct = !0;
+        for (let U = 0; U < 4; U++) {
+          const st = L(V.v[U][0], V.v[U][1], V.v[U][2]);
+          if (!st) {
+            ct = !1;
             break;
           }
-          K.push(it);
+          tt.push(st);
         }
-        if (!rt || K.length !== 4) continue;
-        let at = et.color;
-        if (this.settings.shadows && et.dark < 1 && (at = this.darkenColor(et.color, et.dark)), M && v.animated) {
-          if (k === "water") {
-            const j = U, it = Math.sin(j + l * 0.7 + g * 0.5) * 0.4, ft = Math.sin(j * 0.8 - l * 0.3 + g * 0.7) * 0.3, ut = Math.sin(j * 1.3 + l * 0.5 - g * 0.3) * 0.2, ct = (it + ft + ut) / 3 + 0.5, mt = l + 0.5 - a, ht = p + 0.5 - s, pt = g + 0.5 - c, lt = Math.sqrt(mt * mt + ht * ht + pt * pt), It = Math.abs(ht / (lt || 1)), zt = 0.02, gt = zt + (1 - zt) * Math.pow(1 - It, 5);
-            let st = 0;
-            const Ct = this.camera.x - (l + 0.5), Lt = this.camera.z - (g + 0.5), Et = Math.sqrt(Ct * Ct + Lt * Lt);
-            Et < 5 && this.camera.y > p + 1 && (st = (1 - Et / 5) * gt * 0.3);
-            const Ft = [
+        if (!ct || tt.length !== 4) continue;
+        let ot = V.color;
+        if (this.settings.shadows && V.dark < 1 && (ot = this.darkenColor(V.color, V.dark)), k && v.animated) {
+          if (P === "water") {
+            const U = Q, st = Math.sin(U + l * 0.7 + g * 0.5) * 0.4, ut = Math.sin(U * 0.8 - l * 0.3 + g * 0.7) * 0.3, mt = Math.sin(U * 1.3 + l * 0.5 - g * 0.3) * 0.2, ht = (st + ut + mt) / 3 + 0.5, pt = l + 0.5 - s, dt = p + 0.5 - c, gt = g + 0.5 - d, rt = Math.sqrt(pt * pt + dt * dt + gt * gt), zt = Math.abs(dt / (rt || 1)), Ct = 0.02, yt = Ct + (1 - Ct) * Math.pow(1 - zt, 5);
+            let at = 0;
+            const Lt = this.camera.x - (l + 0.5), Et = this.camera.z - (g + 0.5), Ft = Math.sqrt(Lt * Lt + Et * Et);
+            Ft < 5 && this.camera.y > p + 1 && (at = (1 - Ft / 5) * yt * 0.3);
+            const Dt = [
               { r: 255, g: 183, b: 197 },
               // Sunset pink
               { r: 255, g: 218, b: 185 },
               // Peach
               { r: 135, g: 206, b: 235 }
               // Sky blue
-            ], Dt = Math.min(2, Math.floor((1 - It) * 3)), yt = Ft[Dt], vt = Math.min(1, lt / 20), $t = 30 + vt * 15, Rt = 80 + vt * 20, Ht = 160 - vt * 30, bt = { r: 100, g: 60, b: 40 }, nt = Math.min(0.7, gt * 1.5);
-            let kt = Math.floor($t * (1 - nt) + yt.r * nt), Mt = Math.floor(Rt * (1 - nt) + yt.g * nt), St = Math.floor(Ht * (1 - nt) + yt.b * nt);
-            st > 0 && (kt = Math.floor(kt * (1 - st) + bt.r * st), Mt = Math.floor(Mt * (1 - st) + bt.g * st), St = Math.floor(St * (1 - st) + bt.b * st));
-            const wt = { x: 0.5, y: 0.8, z: 0.3 }, Bt = { x: mt / lt, y: ht / lt, z: pt / lt }, ot = {
-              x: wt.x + Bt.x,
-              y: wt.y + Bt.y,
-              z: wt.z + Bt.z
-            }, qt = Math.sqrt(ot.x * ot.x + ot.y * ot.y + ot.z * ot.z), At = Math.max(0, ot.y / qt), dt = Math.pow(At, 32) * ct * 0.6, Wt = Math.sin(j * 2 + l * 1.5) * Math.cos(j * 1.5 + g * 1.5), Ot = Math.sin(j * 1.7 - l * 1.2 + g * 0.8), Yt = (Wt * Ot + 1) * 0.1, Pt = 0.85 + ct * 0.15 + dt + Yt, Xt = Math.min(255, Math.floor(kt * Pt + dt * 200)), Zt = Math.min(255, Math.floor(Mt * Pt + dt * 180)), Nt = Math.min(255, Math.floor(St * Pt + dt * 150)), jt = 0.55, _t = gt * 0.35, Gt = Math.min(0.9, jt + _t);
-            at = `rgba(${Xt}, ${Zt}, ${Nt}, ${Gt})`;
-          } else if (k === "lava") {
-            const j = U * 1.5 + l * 0.3 + g * 0.3, it = 0.8 + Math.sin(j) * 0.2, ft = Math.floor(255 * it), ut = Math.floor((80 + Math.sin(j * 2) * 30) * it), ct = Math.floor(30 * (1 - it * 0.5));
-            at = `rgb(${Math.min(255, ft)}, ${Math.min(255, ut)}, ${ct})`;
+            ], $t = Math.min(2, Math.floor((1 - zt) * 3)), vt = Dt[$t], bt = Math.min(1, rt / 20), Rt = 30 + bt * 15, Ht = 80 + bt * 20, qt = 160 - bt * 30, kt = { r: 100, g: 60, b: 40 }, lt = Math.min(0.7, yt * 1.5);
+            let Mt = Math.floor(Rt * (1 - lt) + vt.r * lt), St = Math.floor(Ht * (1 - lt) + vt.g * lt), wt = Math.floor(qt * (1 - lt) + vt.b * lt);
+            at > 0 && (Mt = Math.floor(Mt * (1 - at) + kt.r * at), St = Math.floor(St * (1 - at) + kt.g * at), wt = Math.floor(wt * (1 - at) + kt.b * at));
+            const Bt = { x: 0.5, y: 0.8, z: 0.3 }, Pt = { x: pt / rt, y: dt / rt, z: gt / rt }, nt = {
+              x: Bt.x + Pt.x,
+              y: Bt.y + Pt.y,
+              z: Bt.z + Pt.z
+            }, At = Math.sqrt(nt.x * nt.x + nt.y * nt.y + nt.z * nt.z), Wt = Math.max(0, nt.y / At), ft = Math.pow(Wt, 32) * ht * 0.6, Yt = Math.sin(U * 2 + l * 1.5) * Math.cos(U * 1.5 + g * 1.5), Ot = Math.sin(U * 1.7 - l * 1.2 + g * 0.8), Xt = (Yt * Ot + 1) * 0.1, xt = 0.85 + ht * 0.15 + ft + Xt, Zt = Math.min(255, Math.floor(Mt * xt + ft * 200)), Nt = Math.min(255, Math.floor(St * xt + ft * 180)), Gt = Math.min(255, Math.floor(wt * xt + ft * 150)), jt = 0.55, _t = yt * 0.35, Ut = Math.min(0.9, jt + _t);
+            ot = `rgba(${Zt}, ${Nt}, ${Gt}, ${Ut})`;
+          } else if (P === "lava") {
+            const U = Q * 1.5 + l * 0.3 + g * 0.3, st = 0.8 + Math.sin(U) * 0.2, ut = Math.floor(255 * st), mt = Math.floor((80 + Math.sin(U * 2) * 30) * st), ht = Math.floor(30 * (1 - st * 0.5));
+            ot = `rgb(${Math.min(255, ut)}, ${Math.min(255, mt)}, ${ht})`;
           }
         }
-        t.fillStyle = at, t.beginPath(), t.moveTo(K[0].x, K[0].y), t.lineTo(K[1].x, K[1].y), t.lineTo(K[2].x, K[2].y), t.lineTo(K[3].x, K[3].y), t.closePath(), t.fill(), M || (t.strokeStyle = this.darkenColor(at, 0.7), t.lineWidth = 0.5, t.stroke());
+        t.fillStyle = ot, t.beginPath(), t.moveTo(tt[0].x, tt[0].y), t.lineTo(tt[1].x, tt[1].y), t.lineTo(tt[2].x, tt[2].y), t.lineTo(tt[3].x, tt[3].y), t.closePath(), t.fill(), k || (t.strokeStyle = this.darkenColor(ot, 0.7), t.lineWidth = 0.5, t.stroke());
       }
     }
     if (this.worldBounds) {
-      const o = this.worldBounds, r = Date.now() * 3e-3, l = 5, p = [
-        { axis: "x", value: o.minX, dir: 1 },
+      const n = this.worldBounds, h = Date.now() * 3e-3, l = 5, p = [
+        { axis: "x", value: n.minX, dir: 1 },
         // West wall
-        { axis: "x", value: o.maxX, dir: -1 },
+        { axis: "x", value: n.maxX, dir: -1 },
         // East wall
-        { axis: "z", value: o.minZ, dir: 1 },
+        { axis: "z", value: n.minZ, dir: 1 },
         // North wall
-        { axis: "z", value: o.maxZ, dir: -1 }
+        { axis: "z", value: n.maxZ, dir: -1 }
         // South wall
       ];
-      for (const k of p) {
-        let v;
-        if (k.axis === "x" ? v = Math.abs(a - k.value) : v = Math.abs(c - k.value), !(v > b * 1.5))
-          for (let M = o.minY; M < o.maxY; M += l) {
-            const w = k.axis === "x" ? o.minZ : o.minX, S = k.axis === "x" ? o.maxZ : o.maxX;
-            for (let C = w; C < S; C += l) {
-              let B, x;
-              if (k.axis === "x" ? (B = k.value, x = C + l / 2) : (B = C + l / 2, x = k.value), Math.sqrt((B - a) ** 2 + (x - c) ** 2) > b) continue;
-              let $;
-              const A = Math.min(M + l, o.maxY), O = Math.min(C + l, S);
-              k.axis === "x" ? $ = [
-                [k.value, M, C],
-                [k.value, M, O],
-                [k.value, A, O],
-                [k.value, A, C]
-              ] : $ = [
-                [C, M, k.value],
-                [O, M, k.value],
-                [O, A, k.value],
-                [C, A, k.value]
-              ];
-              const W = [];
-              let G = !0;
-              for (const J of $) {
-                const N = P(J[0], J[1], J[2]);
-                if (!N) {
-                  G = !1;
-                  break;
-                }
-                W.push(N);
+      for (const v of p) {
+        let k;
+        if (v.axis === "x" ? k = Math.abs(s - v.value) : k = Math.abs(d - v.value), k > B * 1.5) continue;
+        const S = Math.max(n.minY, c - 10);
+        for (let M = S; M < n.maxY; M += l) {
+          const x = v.axis === "x" ? n.minZ : n.minX, T = v.axis === "x" ? n.maxZ : n.maxX;
+          for (let w = x; w < T; w += l) {
+            let D, q;
+            if (v.axis === "x" ? (D = v.value, q = w + l / 2) : (D = w + l / 2, q = v.value), Math.sqrt((D - s) ** 2 + (q - d) ** 2) > B) continue;
+            let A;
+            const G = Math.min(M + l, n.maxY), _ = Math.min(w + l, T);
+            v.axis === "x" ? A = [
+              [v.value, M, w],
+              [v.value, M, _],
+              [v.value, G, _],
+              [v.value, G, w]
+            ] : A = [
+              [w, M, v.value],
+              [_, M, v.value],
+              [_, G, v.value],
+              [w, G, v.value]
+            ];
+            const W = [];
+            let et = !0;
+            for (const J of A) {
+              const V = L(J[0], J[1], J[2]);
+              if (!V) {
+                et = !1;
+                break;
               }
-              if (!G || W.length < 4) continue;
-              const Q = ((C + M) * 0.2 + r) % (Math.PI * 2), tt = 0.15 + 0.1 * Math.sin(Q);
-              t.fillStyle = `hsla(${180 + Math.sin(r + C * 0.1) * 20}, 100%, 60%, ${tt})`, t.beginPath(), t.moveTo(W[0].x, W[0].y), t.lineTo(W[1].x, W[1].y), t.lineTo(W[2].x, W[2].y), t.lineTo(W[3].x, W[3].y), t.closePath(), t.fill(), t.strokeStyle = `hsla(180, 100%, 70%, ${tt * 2})`, t.lineWidth = 1, t.stroke();
+              W.push(V);
             }
+            if (!et || W.length < 4) continue;
+            const it = ((w + M) * 0.2 + h) % (Math.PI * 2), K = 0.15 + 0.1 * Math.sin(it);
+            t.fillStyle = `hsla(${180 + Math.sin(h + w * 0.1) * 20}, 100%, 60%, ${K})`, t.beginPath(), t.moveTo(W[0].x, W[0].y), t.lineTo(W[1].x, W[1].y), t.lineTo(W[2].x, W[2].y), t.lineTo(W[3].x, W[3].y), t.closePath(), t.fill(), t.strokeStyle = `hsla(180, 100%, 70%, ${K * 2})`, t.lineWidth = 1, t.stroke();
           }
-      }
-      const g = o.minY;
-      for (let k = o.minX; k < o.maxX; k += l)
-        for (let v = o.minZ; v < o.maxZ; v += l) {
-          if (Math.sqrt((k + l / 2 - a) ** 2 + (v + l / 2 - c) ** 2) > b) continue;
-          const w = Math.min(k + l, o.maxX), S = Math.min(v + l, o.maxZ), C = [
-            [k, g, v],
-            [w, g, v],
-            [w, g, S],
-            [k, g, S]
-          ], B = [];
-          let x = !0;
-          for (const A of C) {
-            const O = P(A[0], A[1], A[2]);
-            if (!O) {
-              x = !1;
-              break;
-            }
-            B.push(O);
-          }
-          if (!x || B.length < 4) continue;
-          const F = ((k + v) * 0.2 + r) % (Math.PI * 2), $ = 0.1 + 0.08 * Math.sin(F);
-          t.fillStyle = `hsla(${280 + Math.sin(r + k * 0.1) * 20}, 100%, 50%, ${$})`, t.beginPath(), t.moveTo(B[0].x, B[0].y), t.lineTo(B[1].x, B[1].y), t.lineTo(B[2].x, B[2].y), t.lineTo(B[3].x, B[3].y), t.closePath(), t.fill(), t.strokeStyle = `hsla(280, 100%, 60%, ${$ * 2})`, t.lineWidth = 1, t.stroke();
         }
+      }
+      const g = n.minY;
+      if (c > g + 3)
+        for (let v = n.minX; v < n.maxX; v += l)
+          for (let k = n.minZ; k < n.maxZ; k += l) {
+            if (Math.sqrt((v + l / 2 - s) ** 2 + (k + l / 2 - d) ** 2) > B) continue;
+            const M = Math.min(v + l, n.maxX), x = Math.min(k + l, n.maxZ), T = [
+              [v, g, k],
+              [M, g, k],
+              [M, g, x],
+              [v, g, x]
+            ], w = [];
+            let D = !0;
+            for (const A of T) {
+              const G = L(A[0], A[1], A[2]);
+              if (!G) {
+                D = !1;
+                break;
+              }
+              w.push(G);
+            }
+            if (!D || w.length < 4) continue;
+            const q = ((v + k) * 0.2 + h) % (Math.PI * 2), N = 0.1 + 0.08 * Math.sin(q);
+            t.fillStyle = `hsla(${280 + Math.sin(h + v * 0.1) * 20}, 100%, 50%, ${N})`, t.beginPath(), t.moveTo(w[0].x, w[0].y), t.lineTo(w[1].x, w[1].y), t.lineTo(w[2].x, w[2].y), t.lineTo(w[3].x, w[3].y), t.closePath(), t.fill(), t.strokeStyle = `hsla(280, 100%, 60%, ${N * 2})`, t.lineWidth = 1, t.stroke();
+          }
     }
-    for (const o of this.birds) {
-      const r = o.x - a, l = o.y - s, p = o.z - c;
-      if (r * z + p * R < 0 || r * r + l * l + p * p > T) continue;
-      const v = P(o.x, o.y, o.z);
+    for (const n of this.birds) {
+      const h = n.x - s, l = n.y - c, p = n.z - d;
+      if (h * F + p * z < 0 || h * h + l * l + p * p > C) continue;
+      const v = L(n.x, n.y, n.z);
       if (!v) continue;
-      const M = o.size * y / v.z;
-      if (M < 2) continue;
-      const w = Math.sin(o.wingPhase) * 0.5;
-      o.angle + Math.PI / 2, t.fillStyle = "#d85a8a", t.beginPath(), t.ellipse(v.x, v.y, M * 0.8, M * 0.4, 0, 0, Math.PI * 2), t.fill(), t.fillStyle = "#ff9ec4";
-      const S = M * 1.5, C = M * 0.6 * (1 + w);
+      const k = n.size * b / v.z;
+      if (k < 2) continue;
+      const S = Math.sin(n.wingPhase) * 0.5;
+      n.angle + Math.PI / 2, t.fillStyle = "#d85a8a", t.beginPath(), t.ellipse(v.x, v.y, k * 0.8, k * 0.4, 0, 0, Math.PI * 2), t.fill(), t.fillStyle = "#ff9ec4";
+      const M = k * 1.5, x = k * 0.6 * (1 + S);
       t.beginPath(), t.moveTo(v.x, v.y), t.quadraticCurveTo(
-        v.x - S * 0.5,
-        v.y - C,
-        v.x - S,
-        v.y + M * 0.2
+        v.x - M * 0.5,
+        v.y - x,
+        v.x - M,
+        v.y + k * 0.2
       ), t.quadraticCurveTo(
-        v.x - S * 0.5,
-        v.y + M * 0.1,
+        v.x - M * 0.5,
+        v.y + k * 0.1,
         v.x,
         v.y
       ), t.fill(), t.beginPath(), t.moveTo(v.x, v.y), t.quadraticCurveTo(
-        v.x + S * 0.5,
-        v.y - C,
-        v.x + S,
-        v.y + M * 0.2
+        v.x + M * 0.5,
+        v.y - x,
+        v.x + M,
+        v.y + k * 0.2
       ), t.quadraticCurveTo(
-        v.x + S * 0.5,
-        v.y + M * 0.1,
+        v.x + M * 0.5,
+        v.y + k * 0.1,
         v.x,
         v.y
-      ), t.fill(), t.fillStyle = "#d85a8a", t.beginPath(), t.arc(v.x + M * 0.6, v.y - M * 0.1, M * 0.3, 0, Math.PI * 2), t.fill(), t.fillStyle = "#ffaa00", t.beginPath(), t.moveTo(v.x + M * 0.9, v.y - M * 0.1), t.lineTo(v.x + M * 1.2, v.y), t.lineTo(v.x + M * 0.9, v.y + M * 0.1), t.fill();
+      ), t.fill(), t.fillStyle = "#d85a8a", t.beginPath(), t.arc(v.x + k * 0.6, v.y - k * 0.1, k * 0.3, 0, Math.PI * 2), t.fill(), t.fillStyle = "#ffaa00", t.beginPath(), t.moveTo(v.x + k * 0.9, v.y - k * 0.1), t.lineTo(v.x + k * 1.2, v.y), t.lineTo(v.x + k * 0.9, v.y + k * 0.1), t.fill();
     }
-    for (const o of this.pestBirds) {
-      const r = P(o.x, o.y, o.z);
-      if (!r) continue;
-      const l = o.size * y / r.z;
+    for (const n of this.pestBirds) {
+      const h = L(n.x, n.y, n.z);
+      if (!h) continue;
+      const l = n.size * b / h.z;
       if (l < 1) continue;
-      const p = Math.sin(o.wingPhase) * 0.7, g = o.anger || 0, k = Math.min(255, 107 + g * 30), v = Math.max(0, 68 - g * 10), M = Math.max(0, 35 - g * 7), w = o.state === "swooping", S = g > 0 ? `rgb(${k}, ${v}, ${M})` : w ? "#8b4513" : "#6b4423", C = g > 0 ? `rgb(${Math.min(255, k + 30)}, ${v + 20}, ${M + 10})` : w ? "#a0522d" : "#8b7355";
-      t.fillStyle = S, t.beginPath(), t.ellipse(r.x, r.y, l * 0.6, l * 0.5, 0, 0, Math.PI * 2), t.fill(), g >= 3 && (t.shadowColor = "#ff0000", t.shadowBlur = g * 3), t.fillStyle = C;
-      const B = l * 1.2, x = l * 0.8 * (1 + p);
-      t.beginPath(), t.moveTo(r.x, r.y), t.quadraticCurveTo(
-        r.x - B * 0.4,
-        r.y - x,
-        r.x - B,
-        r.y
+      const p = Math.sin(n.wingPhase) * 0.7, g = n.anger || 0, P = Math.min(255, 107 + g * 30), v = Math.max(0, 68 - g * 10), k = Math.max(0, 35 - g * 7), S = n.state === "swooping", M = g > 0 ? `rgb(${P}, ${v}, ${k})` : S ? "#8b4513" : "#6b4423", x = g > 0 ? `rgb(${Math.min(255, P + 30)}, ${v + 20}, ${k + 10})` : S ? "#a0522d" : "#8b7355";
+      t.fillStyle = M, t.beginPath(), t.ellipse(h.x, h.y, l * 0.6, l * 0.5, 0, 0, Math.PI * 2), t.fill(), g >= 3 && (t.shadowColor = "#ff0000", t.shadowBlur = g * 3), t.fillStyle = x;
+      const T = l * 1.2, w = l * 0.8 * (1 + p);
+      t.beginPath(), t.moveTo(h.x, h.y), t.quadraticCurveTo(
+        h.x - T * 0.4,
+        h.y - w,
+        h.x - T,
+        h.y
       ), t.quadraticCurveTo(
-        r.x - B * 0.4,
-        r.y + l * 0.2,
-        r.x,
-        r.y
-      ), t.fill(), t.beginPath(), t.moveTo(r.x, r.y), t.quadraticCurveTo(
-        r.x + B * 0.4,
-        r.y - x,
-        r.x + B,
-        r.y
+        h.x - T * 0.4,
+        h.y + l * 0.2,
+        h.x,
+        h.y
+      ), t.fill(), t.beginPath(), t.moveTo(h.x, h.y), t.quadraticCurveTo(
+        h.x + T * 0.4,
+        h.y - w,
+        h.x + T,
+        h.y
       ), t.quadraticCurveTo(
-        r.x + B * 0.4,
-        r.y + l * 0.2,
-        r.x,
-        r.y
-      ), t.fill(), t.fillStyle = S, t.beginPath(), t.arc(r.x + l * 0.4, r.y - l * 0.15, l * 0.25, 0, Math.PI * 2), t.fill(), t.fillStyle = "#000", t.beginPath(), t.arc(r.x + l * 0.45, r.y - l * 0.2, l * 0.08, 0, Math.PI * 2), t.fill(), t.fillStyle = "#ff6600", t.beginPath(), t.moveTo(r.x + l * 0.6, r.y - l * 0.15), t.lineTo(r.x + l * 0.85, r.y - l * 0.1), t.lineTo(r.x + l * 0.6, r.y - l * 0.05), t.fill(), t.fillStyle = C, t.beginPath(), t.moveTo(r.x - l * 0.4, r.y), t.lineTo(r.x - l * 0.9, r.y - l * 0.1), t.lineTo(r.x - l * 0.95, r.y + l * 0.05), t.lineTo(r.x - l * 0.85, r.y + l * 0.15), t.lineTo(r.x - l * 0.4, r.y + l * 0.1), t.fill(), t.shadowBlur = 0, t.shadowColor = "transparent";
+        h.x + T * 0.4,
+        h.y + l * 0.2,
+        h.x,
+        h.y
+      ), t.fill(), t.fillStyle = M, t.beginPath(), t.arc(h.x + l * 0.4, h.y - l * 0.15, l * 0.25, 0, Math.PI * 2), t.fill(), t.fillStyle = "#000", t.beginPath(), t.arc(h.x + l * 0.45, h.y - l * 0.2, l * 0.08, 0, Math.PI * 2), t.fill(), t.fillStyle = "#ff6600", t.beginPath(), t.moveTo(h.x + l * 0.6, h.y - l * 0.15), t.lineTo(h.x + l * 0.85, h.y - l * 0.1), t.lineTo(h.x + l * 0.6, h.y - l * 0.05), t.fill(), t.fillStyle = x, t.beginPath(), t.moveTo(h.x - l * 0.4, h.y), t.lineTo(h.x - l * 0.9, h.y - l * 0.1), t.lineTo(h.x - l * 0.95, h.y + l * 0.05), t.lineTo(h.x - l * 0.85, h.y + l * 0.15), t.lineTo(h.x - l * 0.4, h.y + l * 0.1), t.fill(), t.shadowBlur = 0, t.shadowColor = "transparent";
     }
     if (this.blueBirds)
-      for (const o of this.blueBirds) {
-        const r = P(o.x, o.y, o.z);
-        if (!r) continue;
-        const l = Math.max(8, 25 / r.z), p = Math.sin(o.wingPhase) * 0.6, g = l * 0.5 * (1 + p);
-        t.fillStyle = "#1e90ff", t.beginPath(), t.ellipse(r.x, r.y, l * 0.5, l * 0.3, 0, 0, Math.PI * 2), t.fill(), t.fillStyle = "#00bfff";
-        const k = l * 1.2;
-        t.beginPath(), t.moveTo(r.x, r.y), t.quadraticCurveTo(r.x - k * 0.5, r.y - g, r.x - k, r.y), t.quadraticCurveTo(r.x - k * 0.5, r.y + l * 0.2, r.x, r.y), t.fill(), t.beginPath(), t.moveTo(r.x, r.y), t.quadraticCurveTo(r.x + k * 0.5, r.y - g, r.x + k, r.y), t.quadraticCurveTo(r.x + k * 0.5, r.y + l * 0.2, r.x, r.y), t.fill(), t.fillStyle = "#ff0000", t.beginPath(), t.arc(r.x + l * 0.3, r.y - l * 0.1, l * 0.15, 0, Math.PI * 2), t.fill();
+      for (const n of this.blueBirds) {
+        const h = L(n.x, n.y, n.z);
+        if (!h) continue;
+        const l = Math.max(8, 25 / h.z), p = Math.sin(n.wingPhase) * 0.6, g = l * 0.5 * (1 + p);
+        t.fillStyle = "#1e90ff", t.beginPath(), t.ellipse(h.x, h.y, l * 0.5, l * 0.3, 0, 0, Math.PI * 2), t.fill(), t.fillStyle = "#00bfff";
+        const P = l * 1.2;
+        t.beginPath(), t.moveTo(h.x, h.y), t.quadraticCurveTo(h.x - P * 0.5, h.y - g, h.x - P, h.y), t.quadraticCurveTo(h.x - P * 0.5, h.y + l * 0.2, h.x, h.y), t.fill(), t.beginPath(), t.moveTo(h.x, h.y), t.quadraticCurveTo(h.x + P * 0.5, h.y - g, h.x + P, h.y), t.quadraticCurveTo(h.x + P * 0.5, h.y + l * 0.2, h.x, h.y), t.fill(), t.fillStyle = "#ff0000", t.beginPath(), t.arc(h.x + l * 0.3, h.y - l * 0.1, l * 0.15, 0, Math.PI * 2), t.fill();
       }
     if (this.fish)
-      for (const o of this.fish) {
-        const r = P(o.x, o.y, o.z);
-        if (!r) continue;
-        const l = Math.max(4, o.size * 30 / r.z), p = Math.sin(o.swimPhase) * 0.2;
-        t.save(), t.translate(r.x, r.y), t.rotate(Math.atan2(o.vz, o.vx) + p), t.fillStyle = o.color, t.beginPath(), t.ellipse(0, 0, l, l * 0.4, 0, 0, Math.PI * 2), t.fill(), t.beginPath(), t.moveTo(-l * 0.8, 0), t.lineTo(-l * 1.5, -l * 0.4), t.lineTo(-l * 1.5, l * 0.4), t.closePath(), t.fill(), t.fillStyle = "#000", t.beginPath(), t.arc(l * 0.5, -l * 0.1, l * 0.15, 0, Math.PI * 2), t.fill(), t.restore();
+      for (const n of this.fish) {
+        const h = L(n.x, n.y, n.z);
+        if (!h) continue;
+        const l = Math.max(4, n.size * 30 / h.z), p = Math.sin(n.swimPhase) * 0.2;
+        t.save(), t.translate(h.x, h.y), t.rotate(Math.atan2(n.vz, n.vx) + p), t.fillStyle = n.color, t.beginPath(), t.ellipse(0, 0, l, l * 0.4, 0, 0, Math.PI * 2), t.fill(), t.beginPath(), t.moveTo(-l * 0.8, 0), t.lineTo(-l * 1.5, -l * 0.4), t.lineTo(-l * 1.5, l * 0.4), t.closePath(), t.fill(), t.fillStyle = "#000", t.beginPath(), t.arc(l * 0.5, -l * 0.1, l * 0.15, 0, Math.PI * 2), t.fill(), t.restore();
       }
     if (this.cats)
-      for (const o of this.cats) {
-        const r = P(o.x, o.y + 0.3, o.z);
-        if (!r) continue;
-        const l = Math.max(10, 40 / r.z), p = Math.sin(o.walkPhase) * l * 0.05;
-        t.fillStyle = o.color, t.beginPath(), t.ellipse(r.x, r.y + p, l * 0.6, l * 0.4, 0, 0, Math.PI * 2), t.fill(), t.beginPath(), t.arc(r.x + l * 0.5, r.y - l * 0.2 + p, l * 0.35, 0, Math.PI * 2), t.fill(), t.beginPath(), t.moveTo(r.x + l * 0.3, r.y - l * 0.5 + p), t.lineTo(r.x + l * 0.4, r.y - l * 0.2 + p), t.lineTo(r.x + l * 0.5, r.y - l * 0.5 + p), t.fill(), t.beginPath(), t.moveTo(r.x + l * 0.6, r.y - l * 0.5 + p), t.lineTo(r.x + l * 0.7, r.y - l * 0.2 + p), t.lineTo(r.x + l * 0.5, r.y - l * 0.5 + p), t.fill(), t.fillStyle = "#00ff00", t.beginPath(), t.ellipse(r.x + l * 0.4, r.y - l * 0.25 + p, l * 0.08, l * 0.12, 0, 0, Math.PI * 2), t.fill(), t.beginPath(), t.ellipse(r.x + l * 0.6, r.y - l * 0.25 + p, l * 0.08, l * 0.12, 0, 0, Math.PI * 2), t.fill(), t.strokeStyle = o.color, t.lineWidth = l * 0.1, t.lineCap = "round", t.beginPath(), t.moveTo(r.x - l * 0.5, r.y + p), t.quadraticCurveTo(r.x - l * 0.8, r.y - l * 0.3, r.x - l * 0.7, r.y - l * 0.5), t.stroke();
+      for (const n of this.cats) {
+        const h = L(n.x, n.y + 0.3, n.z);
+        if (!h) continue;
+        const l = Math.max(10, 40 / h.z), p = Math.sin(n.walkPhase) * l * 0.05;
+        t.fillStyle = n.color, t.beginPath(), t.ellipse(h.x, h.y + p, l * 0.6, l * 0.4, 0, 0, Math.PI * 2), t.fill(), t.beginPath(), t.arc(h.x + l * 0.5, h.y - l * 0.2 + p, l * 0.35, 0, Math.PI * 2), t.fill(), t.beginPath(), t.moveTo(h.x + l * 0.3, h.y - l * 0.5 + p), t.lineTo(h.x + l * 0.4, h.y - l * 0.2 + p), t.lineTo(h.x + l * 0.5, h.y - l * 0.5 + p), t.fill(), t.beginPath(), t.moveTo(h.x + l * 0.6, h.y - l * 0.5 + p), t.lineTo(h.x + l * 0.7, h.y - l * 0.2 + p), t.lineTo(h.x + l * 0.5, h.y - l * 0.5 + p), t.fill(), t.fillStyle = "#00ff00", t.beginPath(), t.ellipse(h.x + l * 0.4, h.y - l * 0.25 + p, l * 0.08, l * 0.12, 0, 0, Math.PI * 2), t.fill(), t.beginPath(), t.ellipse(h.x + l * 0.6, h.y - l * 0.25 + p, l * 0.08, l * 0.12, 0, 0, Math.PI * 2), t.fill(), t.strokeStyle = n.color, t.lineWidth = l * 0.1, t.lineCap = "round", t.beginPath(), t.moveTo(h.x - l * 0.5, h.y + p), t.quadraticCurveTo(h.x - l * 0.8, h.y - l * 0.3, h.x - l * 0.7, h.y - l * 0.5), t.stroke();
       }
     if (this.creepers)
-      for (const o of this.creepers) {
-        const r = P(o.x, o.y + 0.8, o.z);
-        if (!r) continue;
-        const l = Math.max(15, 50 / r.z), p = o.state === "fusing" && o.flashing ? "#ffffff" : "#00aa00";
-        t.fillStyle = p, t.fillRect(r.x - l * 0.3, r.y - l * 0.5, l * 0.6, l), t.fillRect(r.x - l * 0.35, r.y - l * 0.9, l * 0.7, l * 0.5), t.fillStyle = "#000", t.fillRect(r.x - l * 0.25, r.y - l * 0.8, l * 0.15, l * 0.15), t.fillRect(r.x + l * 0.1, r.y - l * 0.8, l * 0.15, l * 0.15), t.fillRect(r.x - l * 0.2, r.y - l * 0.55, l * 0.1, l * 0.15), t.fillRect(r.x + l * 0.1, r.y - l * 0.55, l * 0.1, l * 0.15), t.fillRect(r.x - l * 0.1, r.y - l * 0.5, l * 0.2, l * 0.1), t.fillStyle = p, t.fillRect(r.x - l * 0.3, r.y + l * 0.4, l * 0.2, l * 0.3), t.fillRect(r.x + l * 0.1, r.y + l * 0.4, l * 0.2, l * 0.3);
+      for (const n of this.creepers) {
+        const h = L(n.x, n.y + 0.8, n.z);
+        if (!h) continue;
+        const l = Math.max(15, 50 / h.z), p = n.state === "fusing" && n.flashing ? "#ffffff" : "#00aa00";
+        t.fillStyle = p, t.fillRect(h.x - l * 0.3, h.y - l * 0.5, l * 0.6, l), t.fillRect(h.x - l * 0.35, h.y - l * 0.9, l * 0.7, l * 0.5), t.fillStyle = "#000", t.fillRect(h.x - l * 0.25, h.y - l * 0.8, l * 0.15, l * 0.15), t.fillRect(h.x + l * 0.1, h.y - l * 0.8, l * 0.15, l * 0.15), t.fillRect(h.x - l * 0.2, h.y - l * 0.55, l * 0.1, l * 0.15), t.fillRect(h.x + l * 0.1, h.y - l * 0.55, l * 0.1, l * 0.15), t.fillRect(h.x - l * 0.1, h.y - l * 0.5, l * 0.2, l * 0.1), t.fillStyle = p, t.fillRect(h.x - l * 0.3, h.y + l * 0.4, l * 0.2, l * 0.3), t.fillRect(h.x + l * 0.1, h.y + l * 0.4, l * 0.2, l * 0.3);
       }
-    for (const o of this.particles) {
-      const r = P(o.x, o.y, o.z);
-      if (r) {
-        if (o.type === "bullet") {
-          const l = o.x - this.camera.x, p = o.y - this.camera.y, g = o.z - this.camera.z;
-          let k = !1;
-          for (let M = 0.3; M < 0.95; M += 0.2) {
-            const w = this.camera.x + l * M, S = this.camera.y + p * M, C = this.camera.z + g * M, B = this.getBlock(Math.floor(w), Math.floor(S), Math.floor(C));
-            if (B && !this.fluidBlocks.includes(B)) {
-              k = !0;
+    for (const n of this.particles) {
+      const h = L(n.x, n.y, n.z);
+      if (h) {
+        if (n.type === "bullet") {
+          const l = n.x - this.camera.x, p = n.y - this.camera.y, g = n.z - this.camera.z;
+          let P = !1;
+          for (let k = 0.3; k < 0.95; k += 0.2) {
+            const S = this.camera.x + l * k, M = this.camera.y + p * k, x = this.camera.z + g * k, T = this.getBlock(Math.floor(S), Math.floor(M), Math.floor(x));
+            if (T && !this.fluidBlocks.includes(T)) {
+              P = !0;
               break;
             }
           }
-          if (k) continue;
-          if (o.trail.length > 1) {
+          if (P) continue;
+          if (n.trail.length > 1) {
             t.strokeStyle = "rgba(255, 200, 50, 0.8)", t.lineWidth = 2, t.beginPath();
-            let M = !1;
-            for (let w = 0; w < o.trail.length; w++) {
-              const S = P(o.trail[w].x, o.trail[w].y, o.trail[w].z);
-              S && (M ? t.lineTo(S.x, S.y) : (t.moveTo(S.x, S.y), M = !0));
+            let k = !1;
+            for (let S = 0; S < n.trail.length; S++) {
+              const M = L(n.trail[S].x, n.trail[S].y, n.trail[S].z);
+              M && (k ? t.lineTo(M.x, M.y) : (t.moveTo(M.x, M.y), k = !0));
             }
-            M && (t.lineTo(r.x, r.y), t.stroke());
+            k && (t.lineTo(h.x, h.y), t.stroke());
           }
-          const v = Math.max(2, 8 / r.z);
-          t.fillStyle = "#ffcc00", t.beginPath(), t.arc(r.x, r.y, v, 0, Math.PI * 2), t.fill();
-        } else if (o.type === "ricochet" || o.type === "spark") {
-          const l = Math.max(1, (o.size || 3) * 20 / r.z), p = Math.min(1, o.life / 15);
-          t.fillStyle = `rgba(255, ${150 + Math.random() * 100}, 50, ${p})`, t.beginPath(), t.arc(r.x, r.y, l, 0, Math.PI * 2), t.fill();
-        } else if (o.type === "blessing") {
-          const l = Math.max(2, (o.size || 4) * 20 / r.z), p = Math.min(1, o.life / 30), g = Math.sin(o.life * 0.3) * 0.5 + 0.5;
-          t.fillStyle = `rgba(255, 215, 0, ${p * 0.3})`, t.beginPath(), t.arc(r.x, r.y, l * 2, 0, Math.PI * 2), t.fill(), t.fillStyle = `rgba(255, ${200 + g * 55}, ${100 + g * 155}, ${p})`, t.beginPath(), t.arc(r.x, r.y, l, 0, Math.PI * 2), t.fill(), t.fillStyle = `rgba(255, 255, 255, ${p * g})`, t.beginPath(), t.arc(r.x, r.y, l * 0.3, 0, Math.PI * 2), t.fill();
-        } else if (o.type === "explosion") {
-          const l = Math.max(3, (o.size || 5) * 25 / r.z), p = Math.min(1, o.life / 20), g = Math.random() * 0.3 + 0.7;
-          t.fillStyle = `rgba(255, 100, 0, ${p * 0.4})`, t.beginPath(), t.arc(r.x, r.y, l * 1.5, 0, Math.PI * 2), t.fill(), t.fillStyle = `rgba(255, ${150 + Math.random() * 100}, 0, ${p * g})`, t.beginPath(), t.arc(r.x, r.y, l, 0, Math.PI * 2), t.fill(), t.fillStyle = `rgba(255, 255, ${Math.random() * 100}, ${p * 0.8})`, t.beginPath(), t.arc(r.x, r.y, l * 0.4, 0, Math.PI * 2), t.fill();
-        } else if (o.type === "feather") {
-          const l = Math.max(2, 15 / r.z), p = Math.min(1, o.life / 20);
-          t.save(), t.translate(r.x, r.y), t.rotate(o.rotation), t.fillStyle = `rgba(139, 90, 43, ${p})`, t.beginPath(), t.ellipse(0, 0, l * 2, l * 0.5, 0, 0, Math.PI * 2), t.fill(), t.strokeStyle = `rgba(100, 60, 30, ${p})`, t.lineWidth = 1, t.beginPath(), t.moveTo(-l * 2, 0), t.lineTo(l * 2, 0), t.stroke(), t.restore();
-        } else if (o.type === "petal") {
-          const l = o.x - this.camera.x, p = o.y - this.camera.y, g = o.z - this.camera.z;
-          let k = !1;
-          for (let w = 0.2; w < 0.9; w += 0.25) {
-            const S = this.camera.x + l * w, C = this.camera.y + p * w, B = this.camera.z + g * w, x = this.getBlock(Math.floor(S), Math.floor(C), Math.floor(B));
-            if (x && !this.fluidBlocks.includes(x)) {
-              k = !0;
+          const v = Math.max(2, 8 / h.z);
+          t.fillStyle = "#ffcc00", t.beginPath(), t.arc(h.x, h.y, v, 0, Math.PI * 2), t.fill();
+        } else if (n.type === "ricochet" || n.type === "spark") {
+          const l = Math.max(1, (n.size || 3) * 20 / h.z), p = Math.min(1, n.life / 15);
+          t.fillStyle = `rgba(255, ${150 + Math.random() * 100}, 50, ${p})`, t.beginPath(), t.arc(h.x, h.y, l, 0, Math.PI * 2), t.fill();
+        } else if (n.type === "blessing") {
+          const l = Math.max(2, (n.size || 4) * 20 / h.z), p = Math.min(1, n.life / 30), g = Math.sin(n.life * 0.3) * 0.5 + 0.5;
+          t.fillStyle = `rgba(255, 215, 0, ${p * 0.3})`, t.beginPath(), t.arc(h.x, h.y, l * 2, 0, Math.PI * 2), t.fill(), t.fillStyle = `rgba(255, ${200 + g * 55}, ${100 + g * 155}, ${p})`, t.beginPath(), t.arc(h.x, h.y, l, 0, Math.PI * 2), t.fill(), t.fillStyle = `rgba(255, 255, 255, ${p * g})`, t.beginPath(), t.arc(h.x, h.y, l * 0.3, 0, Math.PI * 2), t.fill();
+        } else if (n.type === "explosion") {
+          const l = Math.max(3, (n.size || 5) * 25 / h.z), p = Math.min(1, n.life / 20), g = Math.random() * 0.3 + 0.7;
+          t.fillStyle = `rgba(255, 100, 0, ${p * 0.4})`, t.beginPath(), t.arc(h.x, h.y, l * 1.5, 0, Math.PI * 2), t.fill(), t.fillStyle = `rgba(255, ${150 + Math.random() * 100}, 0, ${p * g})`, t.beginPath(), t.arc(h.x, h.y, l, 0, Math.PI * 2), t.fill(), t.fillStyle = `rgba(255, 255, ${Math.random() * 100}, ${p * 0.8})`, t.beginPath(), t.arc(h.x, h.y, l * 0.4, 0, Math.PI * 2), t.fill();
+        } else if (n.type === "feather") {
+          const l = Math.max(2, 15 / h.z), p = Math.min(1, n.life / 20);
+          t.save(), t.translate(h.x, h.y), t.rotate(n.rotation), t.fillStyle = `rgba(139, 90, 43, ${p})`, t.beginPath(), t.ellipse(0, 0, l * 2, l * 0.5, 0, 0, Math.PI * 2), t.fill(), t.strokeStyle = `rgba(100, 60, 30, ${p})`, t.lineWidth = 1, t.beginPath(), t.moveTo(-l * 2, 0), t.lineTo(l * 2, 0), t.stroke(), t.restore();
+        } else if (n.type === "petal") {
+          const l = n.x - this.camera.x, p = n.y - this.camera.y, g = n.z - this.camera.z;
+          let P = !1;
+          for (let S = 0.2; S < 0.9; S += 0.25) {
+            const M = this.camera.x + l * S, x = this.camera.y + p * S, T = this.camera.z + g * S, w = this.getBlock(Math.floor(M), Math.floor(x), Math.floor(T));
+            if (w && !this.fluidBlocks.includes(w)) {
+              P = !0;
               break;
             }
           }
-          if (k) continue;
-          const v = Math.max(2, (o.size || 4) * 15 / r.z), M = Math.min(1, o.life / 50);
-          t.save(), t.translate(r.x, r.y), t.rotate(o.rotation), t.fillStyle = `rgba(255, 183, 197, ${M})`, t.beginPath(), t.ellipse(0, 0, v * 1.5, v * 0.7, 0, 0, Math.PI * 2), t.fill(), t.fillStyle = `rgba(255, 150, 170, ${M})`, t.beginPath(), t.ellipse(0, 0, v * 0.5, v * 0.3, 0, 0, Math.PI * 2), t.fill(), t.restore();
-        } else if (o.type === "burger") {
-          const l = Math.max(3, (o.size || 8) * 20 / r.z);
-          t.save(), t.translate(r.x, r.y), t.fillStyle = "#D2691E", t.beginPath(), t.ellipse(0, -l * 0.3, l, l * 0.5, 0, Math.PI, 0), t.fill(), t.fillStyle = "#654321", t.fillRect(-l, -l * 0.2, l * 2, l * 0.4), t.fillStyle = "#228B22", t.fillRect(-l * 0.9, l * 0.1, l * 1.8, l * 0.15), t.fillStyle = "#DEB887", t.beginPath(), t.ellipse(0, l * 0.3, l, l * 0.4, 0, 0, Math.PI), t.fill(), t.restore();
-        } else if (o.type === "burgerSplat") {
-          const l = Math.max(2, (o.size || 4) * 10 / r.z), p = Math.min(1, o.life / 10), g = ["#D2691E", "#654321", "#228B22", "#FF6347"];
-          t.fillStyle = g[Math.floor(Math.random() * g.length)].replace(")", `, ${p})`).replace("rgb", "rgba"), t.beginPath(), t.arc(r.x, r.y, l, 0, Math.PI * 2), t.fill();
-        } else if (o.type === "apple") {
-          const l = Math.max(3, (o.size || 6) * 18 / r.z);
-          t.save(), t.translate(r.x, r.y), t.fillStyle = "#dc143c", t.beginPath(), t.arc(0, 0, l, 0, Math.PI * 2), t.fill(), t.fillStyle = "rgba(255, 255, 255, 0.3)", t.beginPath(), t.arc(-l * 0.3, -l * 0.3, l * 0.4, 0, Math.PI * 2), t.fill(), t.fillStyle = "#654321", t.fillRect(-1, -l - 3, 2, 4), t.fillStyle = "#228b22", t.beginPath(), t.ellipse(3, -l - 1, 4, 2, 0.3, 0, Math.PI * 2), t.fill(), t.restore();
-        } else if (o.type === "appleSplat") {
-          const l = Math.max(2, (o.size || 3) * 8 / r.z), p = Math.min(1, o.life / 10);
-          t.fillStyle = `rgba(220, 20, 60, ${p})`, t.beginPath(), t.arc(r.x, r.y, l, 0, Math.PI * 2), t.fill();
+          if (P) continue;
+          const v = Math.max(2, (n.size || 4) * 15 / h.z), k = Math.min(1, n.life / 50);
+          t.save(), t.translate(h.x, h.y), t.rotate(n.rotation), t.fillStyle = `rgba(255, 183, 197, ${k})`, t.beginPath(), t.ellipse(0, 0, v * 1.5, v * 0.7, 0, 0, Math.PI * 2), t.fill(), t.fillStyle = `rgba(255, 150, 170, ${k})`, t.beginPath(), t.ellipse(0, 0, v * 0.5, v * 0.3, 0, 0, Math.PI * 2), t.fill(), t.restore();
+        } else if (n.type === "burger") {
+          const l = Math.max(3, (n.size || 8) * 20 / h.z);
+          t.save(), t.translate(h.x, h.y), t.fillStyle = "#D2691E", t.beginPath(), t.ellipse(0, -l * 0.3, l, l * 0.5, 0, Math.PI, 0), t.fill(), t.fillStyle = "#654321", t.fillRect(-l, -l * 0.2, l * 2, l * 0.4), t.fillStyle = "#228B22", t.fillRect(-l * 0.9, l * 0.1, l * 1.8, l * 0.15), t.fillStyle = "#DEB887", t.beginPath(), t.ellipse(0, l * 0.3, l, l * 0.4, 0, 0, Math.PI), t.fill(), t.restore();
+        } else if (n.type === "burgerSplat") {
+          const l = Math.max(2, (n.size || 4) * 10 / h.z), p = Math.min(1, n.life / 10), g = ["#D2691E", "#654321", "#228B22", "#FF6347"];
+          t.fillStyle = g[Math.floor(Math.random() * g.length)].replace(")", `, ${p})`).replace("rgb", "rgba"), t.beginPath(), t.arc(h.x, h.y, l, 0, Math.PI * 2), t.fill();
+        } else if (n.type === "apple") {
+          const l = Math.max(3, (n.size || 6) * 18 / h.z);
+          t.save(), t.translate(h.x, h.y), t.fillStyle = "#dc143c", t.beginPath(), t.arc(0, 0, l, 0, Math.PI * 2), t.fill(), t.fillStyle = "rgba(255, 255, 255, 0.3)", t.beginPath(), t.arc(-l * 0.3, -l * 0.3, l * 0.4, 0, Math.PI * 2), t.fill(), t.fillStyle = "#654321", t.fillRect(-1, -l - 3, 2, 4), t.fillStyle = "#228b22", t.beginPath(), t.ellipse(3, -l - 1, 4, 2, 0.3, 0, Math.PI * 2), t.fill(), t.restore();
+        } else if (n.type === "appleSplat") {
+          const l = Math.max(2, (n.size || 3) * 8 / h.z), p = Math.min(1, n.life / 10);
+          t.fillStyle = `rgba(220, 20, 60, ${p})`, t.beginPath(), t.arc(h.x, h.y, l, 0, Math.PI * 2), t.fill();
         }
       }
     }
     if (this.droppedItems)
-      for (const r of this.droppedItems) {
-        const l = r.x - a, p = r.y - s, g = r.z - c;
+      for (const h of this.droppedItems) {
+        const l = h.x - s, p = h.y - c, g = h.z - d;
         if (l * l + p * p + g * g > 400) continue;
         let v = !1;
-        for (let C = 0.15; C < 0.9; C += 0.2) {
-          const B = a + l * C, x = s + p * C, F = c + g * C, $ = this.getBlock(Math.floor(B), Math.floor(x), Math.floor(F));
-          if ($ && !this.fluidBlocks.includes($)) {
+        for (let x = 0.15; x < 0.9; x += 0.2) {
+          const T = s + l * x, w = c + p * x, D = d + g * x, q = this.getBlock(Math.floor(T), Math.floor(w), Math.floor(D));
+          if (q && !this.fluidBlocks.includes(q)) {
             v = !0;
             break;
           }
         }
         if (v) continue;
-        const M = Math.sin(r.bobPhase) * 0.1, w = P(r.x, r.y + M, r.z);
-        if (!w || w.z <= 0) continue;
-        const S = Math.max(6, 30 / w.z);
-        this.drawDroppedItem3D(t, w.x, w.y, S, r.type, r.bobPhase), r.count > 1 && (t.font = `bold ${Math.max(8, S * 0.5)}px monospace`, t.fillStyle = "#fff", t.strokeStyle = "#000", t.lineWidth = 2, t.textAlign = "center", t.strokeText(r.count.toString(), w.x + S * 0.5, w.y + S * 0.4), t.fillText(r.count.toString(), w.x + S * 0.5, w.y + S * 0.4));
+        const k = Math.sin(h.bobPhase) * 0.1, S = L(h.x, h.y + k, h.z);
+        if (!S || S.z <= 0) continue;
+        const M = Math.max(6, 30 / S.z);
+        this.drawDroppedItem3D(t, S.x, S.y, M, h.type, h.bobPhase), h.count > 1 && (t.font = `bold ${Math.max(8, M * 0.5)}px monospace`, t.fillStyle = "#fff", t.strokeStyle = "#000", t.lineWidth = 2, t.textAlign = "center", t.strokeText(h.count.toString(), S.x + M * 0.5, S.y + M * 0.4), t.fillText(h.count.toString(), S.x + M * 0.5, S.y + M * 0.4));
       }
     if (!this.isPaused && this.pointerLocked) {
-      const o = this.raycast();
-      if (o && o.hit) {
-        const r = o.hit.x, l = o.hit.y, p = o.hit.z, g = 5e-3, v = [
-          [r - g, l - g, p - g],
-          [r + 1 + g, l - g, p - g],
-          [r + 1 + g, l + 1 + g, p - g],
-          [r - g, l + 1 + g, p - g],
-          [r - g, l - g, p + 1 + g],
-          [r + 1 + g, l - g, p + 1 + g],
-          [r + 1 + g, l + 1 + g, p + 1 + g],
-          [r - g, l + 1 + g, p + 1 + g]
-        ].map((w) => P(w[0], w[1], w[2]));
-        if (v.every((w) => w !== null)) {
-          let w = "rgba(0, 0, 0, 0.8)", S = 2;
-          o.throughWater ? (w = "rgba(74, 144, 217, 0.7)", S = 3) : o.throughLava && (w = "rgba(255, 100, 0, 0.7)", S = 3), t.strokeStyle = w, t.lineWidth = S;
-          const C = [
+      const n = this.raycast();
+      if (n && n.hit) {
+        const h = n.hit.x, l = n.hit.y, p = n.hit.z, g = 5e-3, v = [
+          [h - g, l - g, p - g],
+          [h + 1 + g, l - g, p - g],
+          [h + 1 + g, l + 1 + g, p - g],
+          [h - g, l + 1 + g, p - g],
+          [h - g, l - g, p + 1 + g],
+          [h + 1 + g, l - g, p + 1 + g],
+          [h + 1 + g, l + 1 + g, p + 1 + g],
+          [h - g, l + 1 + g, p + 1 + g]
+        ].map((S) => L(S[0], S[1], S[2]));
+        if (v.every((S) => S !== null)) {
+          let S = "rgba(0, 0, 0, 0.8)", M = 2;
+          n.throughWater ? (S = "rgba(74, 144, 217, 0.7)", M = 3) : n.throughLava && (S = "rgba(255, 100, 0, 0.7)", M = 3), t.strokeStyle = S, t.lineWidth = M;
+          const x = [
             [0, 1],
             [1, 2],
             [2, 3],
@@ -3033,75 +3086,75 @@ const Vt = {
             // connecting edges
           ];
           t.beginPath();
-          for (const [B, x] of C)
-            t.moveTo(v[B].x, v[B].y), t.lineTo(v[x].x, v[x].y);
+          for (const [T, w] of x)
+            t.moveTo(v[T].x, v[T].y), t.lineTo(v[w].x, v[w].y);
           t.stroke();
         }
-        const M = this.getBlock(r, l, p);
-        this.updateBlockTooltip(M);
+        const k = this.getBlock(h, l, p);
+        this.updateBlockTooltip(k);
       } else
         this.updateBlockTooltip(null);
     }
-    if (this.debugShowCoords && (t.fillStyle = "rgba(0, 0, 0, 0.7)", t.fillRect(e - 200, 10, 190, 80), t.fillStyle = "#0f0", t.font = "12px monospace", t.textAlign = "left", t.fillText(`X: ${this.camera.x.toFixed(2)}`, e - 190, 28), t.fillText(`Y: ${this.camera.y.toFixed(2)}`, e - 190, 43), t.fillText(`Z: ${this.camera.z.toFixed(2)}`, e - 190, 58), t.fillText(`Blocks: ${Object.keys(this.world).length}`, e - 190, 73), t.fillText(`Birds: ${this.pestBirds.length}`, e - 190, 88)), this.renderPlayerModel(t, m, u, e, i), !this.isPaused && this.pointerLocked && (t.strokeStyle = "#fff", t.lineWidth = 2, t.beginPath(), t.moveTo(m - 10, u), t.lineTo(m + 10, u), t.moveTo(m, u - 10), t.lineTo(m, u + 10), t.stroke()), this.birdEvent && this.birdEvent.alertMessage && this.birdEvent.alertFade > 0) {
-      const o = Math.min(1, this.birdEvent.alertFade / 1e3), r = 0.8 + Math.sin(Date.now() * 0.01) * 0.2;
-      t.save(), t.globalAlpha = o, t.fillStyle = `rgba(0, 0, 0, ${0.7 * r})`;
-      const l = Math.min(e * 0.8, 500), p = 60, g = (e - l) / 2, k = 80;
-      t.fillRect(g, k, l, p), t.strokeStyle = `rgba(255, 100, 100, ${r})`, t.lineWidth = 3, t.strokeRect(g, k, l, p), t.fillStyle = `rgba(255, 255, 255, ${r})`, t.font = "bold 20px monospace", t.textAlign = "center", t.fillText(this.birdEvent.alertMessage, e / 2, k + 38), t.restore();
+    if (this.debugShowCoords && (t.fillStyle = "rgba(0, 0, 0, 0.7)", t.fillRect(e - 200, 10, 190, 80), t.fillStyle = "#0f0", t.font = "12px monospace", t.textAlign = "left", t.fillText(`X: ${this.camera.x.toFixed(2)}`, e - 190, 28), t.fillText(`Y: ${this.camera.y.toFixed(2)}`, e - 190, 43), t.fillText(`Z: ${this.camera.z.toFixed(2)}`, e - 190, 58), t.fillText(`Blocks: ${Object.keys(this.world).length}`, e - 190, 73), t.fillText(`Birds: ${this.pestBirds.length}`, e - 190, 88)), this.renderPlayerModel(t, u, y, e, i), !this.isPaused && this.pointerLocked && (t.strokeStyle = "#fff", t.lineWidth = 2, t.beginPath(), t.moveTo(u - 10, y), t.lineTo(u + 10, y), t.moveTo(u, y - 10), t.lineTo(u, y + 10), t.stroke()), this.birdEvent && this.birdEvent.alertMessage && this.birdEvent.alertFade > 0) {
+      const n = Math.min(1, this.birdEvent.alertFade / 1e3), h = 0.8 + Math.sin(Date.now() * 0.01) * 0.2;
+      t.save(), t.globalAlpha = n, t.fillStyle = `rgba(0, 0, 0, ${0.7 * h})`;
+      const l = Math.min(e * 0.8, 500), p = 60, g = (e - l) / 2, P = 80;
+      t.fillRect(g, P, l, p), t.strokeStyle = `rgba(255, 100, 100, ${h})`, t.lineWidth = 3, t.strokeRect(g, P, l, p), t.fillStyle = `rgba(255, 255, 255, ${h})`, t.font = "bold 20px monospace", t.textAlign = "center", t.fillText(this.birdEvent.alertMessage, e / 2, P + 38), t.restore();
     }
     if (this.birdEvent && !this.isPaused) {
-      const o = Math.max(0, this.birdEvent.timer), r = Math.floor(o / 6e4), l = Math.floor(o % 6e4 / 1e3), p = `🐦 ${r}:${l.toString().padStart(2, "0")}`;
-      t.save(), t.fillStyle = "rgba(0, 0, 0, 0.5)", t.fillRect(e - 100, 10, 90, 25), t.fillStyle = o < 6e4 ? "#ff6666" : "#fff", t.font = "14px monospace", t.textAlign = "right", t.fillText(p, e - 15, 28), t.restore();
+      const n = Math.max(0, this.birdEvent.timer), h = Math.floor(n / 6e4), l = Math.floor(n % 6e4 / 1e3), p = `🐦 ${h}:${l.toString().padStart(2, "0")}`;
+      t.save(), t.fillStyle = "rgba(0, 0, 0, 0.5)", t.fillRect(e - 100, 10, 90, 25), t.fillStyle = n < 6e4 ? "#ff6666" : "#fff", t.font = "14px monospace", t.textAlign = "right", t.fillText(p, e - 15, 28), t.restore();
     }
     if (this.selectedItem === "ak47" && !this.isPaused) {
-      const o = Math.min(e, i) * 55e-4, r = e * 0.75, l = i * 0.78;
-      t.save(), t.translate(r, l), t.rotate(-0.1), t.fillStyle = "#d4a574", t.beginPath(), t.ellipse(45 * o, 25 * o, 18 * o, 12 * o, 0.3, 0, Math.PI * 2), t.fill(), t.fillStyle = "#c49a6c";
+      const n = Math.min(e, i) * 55e-4, h = e * 0.75, l = i * 0.78;
+      t.save(), t.translate(h, l), t.rotate(-0.1), t.fillStyle = "#d4a574", t.beginPath(), t.ellipse(45 * n, 25 * n, 18 * n, 12 * n, 0.3, 0, Math.PI * 2), t.fill(), t.fillStyle = "#c49a6c";
       for (let p = 0; p < 4; p++)
-        t.beginPath(), t.ellipse((35 + p * 7) * o, 35 * o, 4 * o, 8 * o, 0.2, 0, Math.PI * 2), t.fill();
-      t.fillStyle = "#d4a574", t.beginPath(), t.ellipse(30 * o, 15 * o, 6 * o, 10 * o, -0.5, 0, Math.PI * 2), t.fill(), t.fillStyle = "#5a3d2b", t.beginPath(), t.moveTo(80 * o, -5 * o), t.lineTo(160 * o, 0 * o), t.lineTo(165 * o, 25 * o), t.lineTo(155 * o, 30 * o), t.lineTo(80 * o, 25 * o), t.closePath(), t.fill(), t.fillStyle = "#6b4d3b", t.fillRect(100 * o, 2 * o, 50 * o, 8 * o), t.fillRect(95 * o, 15 * o, 55 * o, 6 * o), t.fillStyle = "#333", t.fillRect(155 * o, -2 * o, 8 * o, 30 * o), t.fillStyle = "#2a2a2a", t.fillRect(-30 * o, -8 * o, 115 * o, 30 * o), t.fillStyle = "#3a3a3a", t.fillRect(-25 * o, -12 * o, 100 * o, 8 * o), t.fillStyle = "#1a1a1a", t.fillRect(15 * o, -6 * o, 25 * o, 12 * o), t.fillStyle = "#1a1a1a", t.fillRect(-140 * o, -4 * o, 115 * o, 14 * o), t.fillStyle = "#111", t.fillRect(-180 * o, 0 * o, 45 * o, 8 * o), t.fillStyle = "#000", t.beginPath(), t.ellipse(-182 * o, 4 * o, 3 * o, 3 * o, 0, 0, Math.PI * 2), t.fill(), t.fillStyle = "#333", t.fillRect(-130 * o, -10 * o, 100 * o, 5 * o), t.fillStyle = "#111";
+        t.beginPath(), t.ellipse((35 + p * 7) * n, 35 * n, 4 * n, 8 * n, 0.2, 0, Math.PI * 2), t.fill();
+      t.fillStyle = "#d4a574", t.beginPath(), t.ellipse(30 * n, 15 * n, 6 * n, 10 * n, -0.5, 0, Math.PI * 2), t.fill(), t.fillStyle = "#5a3d2b", t.beginPath(), t.moveTo(80 * n, -5 * n), t.lineTo(160 * n, 0 * n), t.lineTo(165 * n, 25 * n), t.lineTo(155 * n, 30 * n), t.lineTo(80 * n, 25 * n), t.closePath(), t.fill(), t.fillStyle = "#6b4d3b", t.fillRect(100 * n, 2 * n, 50 * n, 8 * n), t.fillRect(95 * n, 15 * n, 55 * n, 6 * n), t.fillStyle = "#333", t.fillRect(155 * n, -2 * n, 8 * n, 30 * n), t.fillStyle = "#2a2a2a", t.fillRect(-30 * n, -8 * n, 115 * n, 30 * n), t.fillStyle = "#3a3a3a", t.fillRect(-25 * n, -12 * n, 100 * n, 8 * n), t.fillStyle = "#1a1a1a", t.fillRect(15 * n, -6 * n, 25 * n, 12 * n), t.fillStyle = "#1a1a1a", t.fillRect(-140 * n, -4 * n, 115 * n, 14 * n), t.fillStyle = "#111", t.fillRect(-180 * n, 0 * n, 45 * n, 8 * n), t.fillStyle = "#000", t.beginPath(), t.ellipse(-182 * n, 4 * n, 3 * n, 3 * n, 0, 0, Math.PI * 2), t.fill(), t.fillStyle = "#333", t.fillRect(-130 * n, -10 * n, 100 * n, 5 * n), t.fillStyle = "#111";
       for (let p = 0; p < 4; p++)
-        t.beginPath(), t.ellipse((-120 + p * 22) * o, 3 * o, 6 * o, 3 * o, 0, 0, Math.PI * 2), t.fill();
-      t.fillStyle = "#1a1a1a", t.fillRect(-145 * o, -20 * o, 6 * o, 18 * o), t.fillRect(-148 * o, -22 * o, 12 * o, 4 * o), t.fillRect(-5 * o, -18 * o, 15 * o, 8 * o), t.fillStyle = "#333", t.beginPath(), t.moveTo(10 * o, 22 * o), t.lineTo(35 * o, 22 * o), t.quadraticCurveTo(45 * o, 50 * o, 35 * o, 80 * o), t.lineTo(15 * o, 85 * o), t.quadraticCurveTo(5 * o, 55 * o, 10 * o, 22 * o), t.closePath(), t.fill(), t.strokeStyle = "#222", t.lineWidth = 1.5 * o;
+        t.beginPath(), t.ellipse((-120 + p * 22) * n, 3 * n, 6 * n, 3 * n, 0, 0, Math.PI * 2), t.fill();
+      t.fillStyle = "#1a1a1a", t.fillRect(-145 * n, -20 * n, 6 * n, 18 * n), t.fillRect(-148 * n, -22 * n, 12 * n, 4 * n), t.fillRect(-5 * n, -18 * n, 15 * n, 8 * n), t.fillStyle = "#333", t.beginPath(), t.moveTo(10 * n, 22 * n), t.lineTo(35 * n, 22 * n), t.quadraticCurveTo(45 * n, 50 * n, 35 * n, 80 * n), t.lineTo(15 * n, 85 * n), t.quadraticCurveTo(5 * n, 55 * n, 10 * n, 22 * n), t.closePath(), t.fill(), t.strokeStyle = "#222", t.lineWidth = 1.5 * n;
       for (let p = 0; p < 4; p++)
-        t.beginPath(), t.moveTo((12 + p * 2) * o, (35 + p * 12) * o), t.lineTo((32 + p * 1) * o, (38 + p * 12) * o), t.stroke();
-      t.fillStyle = "#5a3d2b", t.beginPath(), t.moveTo(45 * o, 22 * o), t.lineTo(65 * o, 22 * o), t.lineTo(70 * o, 65 * o), t.lineTo(45 * o, 70 * o), t.closePath(), t.fill(), t.fillStyle = "#4a2d1b";
+        t.beginPath(), t.moveTo((12 + p * 2) * n, (35 + p * 12) * n), t.lineTo((32 + p * 1) * n, (38 + p * 12) * n), t.stroke();
+      t.fillStyle = "#5a3d2b", t.beginPath(), t.moveTo(45 * n, 22 * n), t.lineTo(65 * n, 22 * n), t.lineTo(70 * n, 65 * n), t.lineTo(45 * n, 70 * n), t.closePath(), t.fill(), t.fillStyle = "#4a2d1b";
       for (let p = 0; p < 5; p++)
-        t.fillRect(50 * o, (28 + p * 8) * o, 12 * o, 3 * o);
-      if (t.strokeStyle = "#2a2a2a", t.lineWidth = 3 * o, t.beginPath(), t.arc(25 * o, 35 * o, 15 * o, -0.8, 2.2), t.stroke(), t.fillStyle = "#222", t.fillRect(22 * o, 28 * o, 4 * o, 12 * o), this.muzzleFlash > 0) {
-        const p = 25 + Math.random() * 20, g = -190 * o, k = 4 * o;
-        t.fillStyle = "rgba(255, 100, 0, 0.5)", t.beginPath(), t.arc(g, k, p * o * 1.5, 0, Math.PI * 2), t.fill(), t.fillStyle = "rgba(255, 150, 0, 0.8)", t.beginPath(), t.arc(g, k, p * o, 0, Math.PI * 2), t.fill(), t.fillStyle = "#ffff00", t.beginPath(), t.arc(g, k, p * o * 0.4, 0, Math.PI * 2), t.fill(), t.strokeStyle = "#ffff88", t.lineWidth = 2;
+        t.fillRect(50 * n, (28 + p * 8) * n, 12 * n, 3 * n);
+      if (t.strokeStyle = "#2a2a2a", t.lineWidth = 3 * n, t.beginPath(), t.arc(25 * n, 35 * n, 15 * n, -0.8, 2.2), t.stroke(), t.fillStyle = "#222", t.fillRect(22 * n, 28 * n, 4 * n, 12 * n), this.muzzleFlash > 0) {
+        const p = 25 + Math.random() * 20, g = -190 * n, P = 4 * n;
+        t.fillStyle = "rgba(255, 100, 0, 0.5)", t.beginPath(), t.arc(g, P, p * n * 1.5, 0, Math.PI * 2), t.fill(), t.fillStyle = "rgba(255, 150, 0, 0.8)", t.beginPath(), t.arc(g, P, p * n, 0, Math.PI * 2), t.fill(), t.fillStyle = "#ffff00", t.beginPath(), t.arc(g, P, p * n * 0.4, 0, Math.PI * 2), t.fill(), t.strokeStyle = "#ffff88", t.lineWidth = 2;
         for (let v = 0; v < 6; v++) {
-          const M = Math.PI + (Math.random() - 0.5) * 1.5, w = (20 + Math.random() * 35) * o;
-          t.beginPath(), t.moveTo(g, k), t.lineTo(g + Math.cos(M) * w, k + Math.sin(M) * w), t.stroke();
+          const k = Math.PI + (Math.random() - 0.5) * 1.5, S = (20 + Math.random() * 35) * n;
+          t.beginPath(), t.moveTo(g, P), t.lineTo(g + Math.cos(k) * S, P + Math.sin(k) * S), t.stroke();
         }
       }
       t.restore();
     }
     if (this.headSubmergedWater && (t.fillStyle = "rgba(0, 100, 200, 0.25)", t.fillRect(0, 0, e, i)), this.headSubmergedLava) {
-      const o = Date.now() * 5e-3;
+      const n = Date.now() * 5e-3;
       t.fillStyle = "rgba(255, 80, 0, 0.4)", t.fillRect(0, 0, e, i), t.fillStyle = "rgba(255, 50, 0, 0.6)";
       for (let l = 0; l < 12; l++) {
-        const p = l / 12 * e, g = 60 + Math.sin(o + l * 0.8) * 30 + Math.sin(o * 1.5 + l) * 20;
+        const p = l / 12 * e, g = 60 + Math.sin(n + l * 0.8) * 30 + Math.sin(n * 1.5 + l) * 20;
         t.beginPath(), t.moveTo(p - 30, i), t.quadraticCurveTo(p, i - g, p + 30, i), t.fill();
       }
       t.fillStyle = "rgba(255, 100, 0, 0.5)";
       for (let l = 0; l < 8; l++) {
-        const p = l / 8 * e + 40, g = 40 + Math.sin(o * 0.8 + l * 1.2) * 25;
+        const p = l / 8 * e + 40, g = 40 + Math.sin(n * 0.8 + l * 1.2) * 25;
         t.beginPath(), t.moveTo(p - 25, 0), t.quadraticCurveTo(p, g, p + 25, 0), t.fill();
       }
       t.fillStyle = "rgba(255, 60, 0, 0.5)";
       for (let l = 0; l < 6; l++) {
-        const p = l / 6 * i, g = 40 + Math.sin(o + l) * 20;
+        const p = l / 6 * i, g = 40 + Math.sin(n + l) * 20;
         t.beginPath(), t.moveTo(0, p - 30), t.quadraticCurveTo(g, p, 0, p + 30), t.fill(), t.beginPath(), t.moveTo(e, p - 30), t.quadraticCurveTo(e - g, p, e, p + 30), t.fill();
       }
-      const r = t.createRadialGradient(e / 2, i / 2, 0, e / 2, i / 2, e * 0.7);
-      r.addColorStop(0, "rgba(255, 50, 0, 0)"), r.addColorStop(0.7, "rgba(255, 30, 0, 0.3)"), r.addColorStop(1, "rgba(200, 0, 0, 0.6)"), t.fillStyle = r, t.fillRect(0, 0, e, i);
+      const h = t.createRadialGradient(e / 2, i / 2, 0, e / 2, i / 2, e * 0.7);
+      h.addColorStop(0, "rgba(255, 50, 0, 0)"), h.addColorStop(0.7, "rgba(255, 30, 0, 0.3)"), h.addColorStop(1, "rgba(200, 0, 0, 0.6)"), t.fillStyle = h, t.fillRect(0, 0, e, i);
     }
   },
   project(t, e, i) {
-    const a = t - this.camera.x, s = e - this.camera.y, c = i - this.camera.z, f = Math.cos(-this.camera.rotY), h = Math.sin(-this.camera.rotY), n = a * f - c * h, d = a * h + c * f, m = Math.cos(-this.camera.rotX), u = Math.sin(-this.camera.rotX), y = s * m - d * u, b = s * u + d * m;
+    const a = t - this.camera.x, s = e - this.camera.y, c = i - this.camera.z, d = Math.cos(-this.camera.rotY), r = Math.sin(-this.camera.rotY), o = a * d - c * r, f = a * r + c * d, m = Math.cos(-this.camera.rotX), u = Math.sin(-this.camera.rotX), y = s * m - f * u, b = s * u + f * m;
     if (b <= 0.1) return null;
-    const T = 400, P = this.canvas.width / 2 + n / b * T, L = this.canvas.height / 2 - y / b * T;
-    return { x: P, y: L, z: b };
+    const B = 400, C = this.canvas.width / 2 + o / b * B, L = this.canvas.height / 2 - y / b * B;
+    return { x: C, y: L, z: b };
   },
   // Update block tooltip display
   updateBlockTooltip(t) {
@@ -3133,30 +3186,30 @@ const Vt = {
       this.renderHeldItem(t, e, i, a, s);
       return;
     }
-    const f = Math.min(1, c);
+    const d = Math.min(1, c);
     t.save();
-    const h = s - 50 + (1 - c) * 200;
-    this.drawPlayerBody3D(t, e, h, f, c), t.restore(), this.renderHeldItem(t, e, i, a, s);
+    const r = s - 50 + (1 - c) * 200;
+    this.drawPlayerBody3D(t, e, r, d, c), t.restore(), this.renderHeldItem(t, e, i, a, s);
   },
   // Render held item in first person
   renderHeldItem(t, e, i, a, s) {
     const c = this.inventory.hotbar[this.selectedSlot];
     if (!c) return;
-    const f = c.id, h = Math.sin(Date.now() * 3e-3) * 3, n = a - 120, d = s - 100 + h, m = 60;
-    t.save(), t.translate(n, d), t.rotate(-0.2), t.fillStyle = "#ffdab9", t.beginPath(), t.ellipse(0, 20, 25, 35, 0.3, 0, Math.PI * 2), t.fill();
-    const u = this.blockColors[f];
+    const d = c.id, r = Math.sin(Date.now() * 3e-3) * 3, o = a - 120, f = s - 100 + r, m = 60;
+    t.save(), t.translate(o, f), t.rotate(-0.2), t.fillStyle = "#ffdab9", t.beginPath(), t.ellipse(0, 20, 25, 35, 0.3, 0, Math.PI * 2), t.fill();
+    const u = this.blockColors[d];
     if (u) {
       const y = m * 0.5;
       t.translate(0, -10), t.fillStyle = u.top, t.beginPath(), t.moveTo(0, -y), t.lineTo(y, -y / 2), t.lineTo(0, 0), t.lineTo(-y, -y / 2), t.closePath(), t.fill(), t.fillStyle = u.side, t.beginPath(), t.moveTo(-y, -y / 2), t.lineTo(0, 0), t.lineTo(0, y), t.lineTo(-y, y / 2), t.closePath(), t.fill(), t.fillStyle = this.darkenColor(u.side, 0.7), t.beginPath(), t.moveTo(0, 0), t.lineTo(y, -y / 2), t.lineTo(y, y / 2), t.lineTo(0, y), t.closePath(), t.fill();
-    } else if (f === "ak47")
+    } else if (d === "ak47")
       t.fillStyle = "#333", t.fillRect(-30, -20, 80, 15), t.fillStyle = "#8b4513", t.fillRect(-10, -5, 25, 25), t.fillStyle = "#222", t.fillRect(10, -5, 8, 20);
-    else if (f === "berdger")
+    else if (d === "berdger")
       t.fillStyle = "#daa520", t.beginPath(), t.ellipse(0, -15, 25, 12, 0, Math.PI, 0), t.fill(), t.fillStyle = "#8b4513", t.fillRect(-22, -8, 44, 10), t.fillStyle = "#228b22", t.fillRect(-20, 0, 40, 5), t.fillStyle = "#daa520", t.beginPath(), t.ellipse(0, 10, 23, 10, 0, 0, Math.PI), t.fill();
-    else if (f === "apple")
+    else if (d === "apple")
       t.fillStyle = "#dc143c", t.beginPath(), t.arc(0, -5, 20, 0, Math.PI * 2), t.fill(), t.fillStyle = "#654321", t.fillRect(-2, -30, 4, 10), t.fillStyle = "#228b22", t.beginPath(), t.ellipse(5, -28, 8, 4, 0.5, 0, Math.PI * 2), t.fill();
-    else if (f === "water_bucket" || f === "lava_bucket")
-      t.fillStyle = "#888", t.beginPath(), t.moveTo(-20, -25), t.lineTo(20, -25), t.lineTo(15, 15), t.lineTo(-15, 15), t.closePath(), t.fill(), t.fillStyle = f === "water_bucket" ? "#4a90d9" : "#ff6600", t.fillRect(-15, -15, 30, 25);
-    else if (f === "seeds") {
+    else if (d === "water_bucket" || d === "lava_bucket")
+      t.fillStyle = "#888", t.beginPath(), t.moveTo(-20, -25), t.lineTo(20, -25), t.lineTo(15, 15), t.lineTo(-15, 15), t.closePath(), t.fill(), t.fillStyle = d === "water_bucket" ? "#4a90d9" : "#ff6600", t.fillRect(-15, -15, 30, 25);
+    else if (d === "seeds") {
       t.fillStyle = "#daa520";
       for (let y = 0; y < 5; y++)
         t.beginPath(), t.ellipse(Math.cos(y) * 10, Math.sin(y) * 8 - 10, 4, 6, y, 0, Math.PI * 2), t.fill();
@@ -3168,18 +3221,18 @@ const Vt = {
     t.save();
     const c = t.createLinearGradient(e - 50, i, e + 50, i);
     c.addColorStop(0, `rgba(180, 130, 150, ${a})`), c.addColorStop(0.3, `rgba(255, 183, 197, ${a})`), c.addColorStop(0.7, `rgba(255, 183, 197, ${a})`), c.addColorStop(1, `rgba(180, 130, 150, ${a})`), t.fillStyle = c, t.beginPath(), t.moveTo(e - 35, i + 5), t.lineTo(e + 35, i + 5), t.quadraticCurveTo(e + 50, i + 40, e + 45, i + 80), t.lineTo(e - 45, i + 80), t.quadraticCurveTo(e - 50, i + 40, e - 35, i + 5), t.closePath(), t.fill(), t.fillStyle = `rgba(255, 240, 245, ${a * 0.8})`, t.beginPath(), t.moveTo(e - 20, i + 5), t.lineTo(e, i + 25), t.lineTo(e + 20, i + 5), t.closePath(), t.fill();
-    const f = t.createRadialGradient(e - 55, i + 30, 0, e - 55, i + 30, 30);
-    f.addColorStop(0, `rgba(255, 228, 205, ${a})`), f.addColorStop(1, `rgba(220, 180, 160, ${a})`), t.fillStyle = f, t.beginPath(), t.ellipse(e - 52, i + 35, 14, 28, -0.2, 0, Math.PI * 2), t.fill();
-    const h = t.createRadialGradient(e + 55, i + 30, 0, e + 55, i + 30, 30);
-    h.addColorStop(0, `rgba(255, 228, 205, ${a})`), h.addColorStop(1, `rgba(220, 180, 160, ${a})`), t.fillStyle = h, t.beginPath(), t.ellipse(e + 52, i + 35, 14, 28, 0.2, 0, Math.PI * 2), t.fill(), t.fillStyle = `rgba(255, 218, 195, ${a})`, t.beginPath(), t.arc(e - 55, i + 60, 12, 0, Math.PI * 2), t.fill(), t.beginPath(), t.arc(e + 55, i + 60, 12, 0, Math.PI * 2), t.fill();
-    const n = t.createLinearGradient(e - 40, i + 75, e + 40, i + 75);
-    n.addColorStop(0, `rgba(50, 70, 100, ${a})`), n.addColorStop(0.3, `rgba(70, 90, 120, ${a})`), n.addColorStop(0.7, `rgba(70, 90, 120, ${a})`), n.addColorStop(1, `rgba(50, 70, 100, ${a})`), t.fillStyle = n, t.beginPath(), t.roundRect(e - 38, i + 78, 28, 55, 3), t.fill(), t.beginPath(), t.roundRect(e + 10, i + 78, 28, 55, 3), t.fill(), t.fillStyle = `rgba(100, 60, 30, ${a})`, t.beginPath(), t.roundRect(e - 42, i + 128, 35, 20, 4), t.fill(), t.beginPath(), t.roundRect(e + 7, i + 128, 35, 20, 4), t.fill(), t.fillStyle = `rgba(255, 255, 255, ${a * 0.2})`, t.beginPath(), t.ellipse(e - 30, i + 133, 8, 3, 0, 0, Math.PI * 2), t.fill(), t.beginPath(), t.ellipse(e + 20, i + 133, 8, 3, 0, 0, Math.PI * 2), t.fill(), t.restore();
+    const d = t.createRadialGradient(e - 55, i + 30, 0, e - 55, i + 30, 30);
+    d.addColorStop(0, `rgba(255, 228, 205, ${a})`), d.addColorStop(1, `rgba(220, 180, 160, ${a})`), t.fillStyle = d, t.beginPath(), t.ellipse(e - 52, i + 35, 14, 28, -0.2, 0, Math.PI * 2), t.fill();
+    const r = t.createRadialGradient(e + 55, i + 30, 0, e + 55, i + 30, 30);
+    r.addColorStop(0, `rgba(255, 228, 205, ${a})`), r.addColorStop(1, `rgba(220, 180, 160, ${a})`), t.fillStyle = r, t.beginPath(), t.ellipse(e + 52, i + 35, 14, 28, 0.2, 0, Math.PI * 2), t.fill(), t.fillStyle = `rgba(255, 218, 195, ${a})`, t.beginPath(), t.arc(e - 55, i + 60, 12, 0, Math.PI * 2), t.fill(), t.beginPath(), t.arc(e + 55, i + 60, 12, 0, Math.PI * 2), t.fill();
+    const o = t.createLinearGradient(e - 40, i + 75, e + 40, i + 75);
+    o.addColorStop(0, `rgba(50, 70, 100, ${a})`), o.addColorStop(0.3, `rgba(70, 90, 120, ${a})`), o.addColorStop(0.7, `rgba(70, 90, 120, ${a})`), o.addColorStop(1, `rgba(50, 70, 100, ${a})`), t.fillStyle = o, t.beginPath(), t.roundRect(e - 38, i + 78, 28, 55, 3), t.fill(), t.beginPath(), t.roundRect(e + 10, i + 78, 28, 55, 3), t.fill(), t.fillStyle = `rgba(100, 60, 30, ${a})`, t.beginPath(), t.roundRect(e - 42, i + 128, 35, 20, 4), t.fill(), t.beginPath(), t.roundRect(e + 7, i + 128, 35, 20, 4), t.fill(), t.fillStyle = `rgba(255, 255, 255, ${a * 0.2})`, t.beginPath(), t.ellipse(e - 30, i + 133, 8, 3, 0, 0, Math.PI * 2), t.fill(), t.beginPath(), t.ellipse(e + 20, i + 133, 8, 3, 0, 0, Math.PI * 2), t.fill(), t.restore();
   },
   darkenColor(t, e) {
     const i = t + e;
     if (this.colorCache || (this.colorCache = {}), this.colorCache[i]) return this.colorCache[i];
-    const a = Math.floor(parseInt(t.slice(1, 3), 16) * e), s = Math.floor(parseInt(t.slice(3, 5), 16) * e), c = Math.floor(parseInt(t.slice(5, 7), 16) * e), f = `rgb(${a},${s},${c})`;
-    return this.colorCache[i] = f, f;
+    const a = Math.floor(parseInt(t.slice(1, 3), 16) * e), s = Math.floor(parseInt(t.slice(3, 5), 16) * e), c = Math.floor(parseInt(t.slice(5, 7), 16) * e), d = `rgb(${a},${s},${c})`;
+    return this.colorCache[i] = d, d;
   },
   gameLoop(t) {
     if (!this.isActive) {
@@ -3201,42 +3254,42 @@ const Vt = {
   start() {
     this.fullInit(), this.isActive = !0, this.isPaused = !1, this.pointerLocked = !1, this.stats = { blocksPlaced: 0, blocksBroken: 0, distance: 0, jumps: 0, startTime: Date.now() }, document.getElementById("minecraftGame").classList.add("active"), document.getElementById("pauseMenu").classList.remove("active"), document.getElementById("gameUI").style.display = "flex";
     const e = (() => {
-      const f = (d, m) => {
+      const d = (f, m) => {
         let u = null;
-        for (let E = 40; E >= 0; E--) {
-          const H = this.getBlock(d, E, m);
-          if (H && H !== "water" && H !== "lava") {
-            u = E;
+        for (let $ = 40; $ >= 0; $--) {
+          const R = this.getBlock(f, $, m);
+          if (R && R !== "water" && R !== "lava") {
+            u = $;
             break;
           }
         }
         if (u === null) return null;
-        const y = u + 1, b = u + 2, T = this.getBlock(d, y, m), P = this.getBlock(d, b, m), L = !T || T === "water" || T === "lava", z = !P || P === "water" || P === "lava", R = this.getBlock(d, u, m), I = R !== "water" && R !== "lava" && R !== "sand";
-        return L && z ? {
-          x: d,
+        const y = u + 1, b = u + 2, B = this.getBlock(f, y, m), C = this.getBlock(f, b, m), L = !B || B === "water" || B === "lava", I = !C || C === "water" || C === "lava", F = this.getBlock(f, u, m), z = F !== "water" && F !== "lava" && F !== "sand";
+        return L && I ? {
+          x: f,
           y: y + this.playerEyeHeight,
           z: m,
-          priority: I ? 1 : 2
+          priority: z ? 1 : 2
           // Prefer dry land
         } : null;
       };
-      let h = f(0, -8);
-      if (h && h.priority === 1)
-        return h;
-      const n = 30;
-      for (let d = 1; d <= n; d++) {
-        for (let m = -d; m <= d; m++)
-          for (let u = -d; u <= d; u++) {
-            if (Math.abs(m) !== d && Math.abs(u) !== d) continue;
-            const y = f(0 + m, -8 + u);
+      let r = d(0, -8);
+      if (r && r.priority === 1)
+        return r;
+      const o = 30;
+      for (let f = 1; f <= o; f++) {
+        for (let m = -f; m <= f; m++)
+          for (let u = -f; u <= f; u++) {
+            if (Math.abs(m) !== f && Math.abs(u) !== f) continue;
+            const y = d(0 + m, -8 + u);
             if (y) {
               if (y.priority === 1)
                 return y;
-              (!h || y.priority < h.priority) && (h = y);
+              (!r || y.priority < r.priority) && (r = y);
             }
           }
-        if (h && d > 5)
-          return h;
+        if (r && f > 5)
+          return r;
       }
       return { x: 0, y: 30, z: 0 };
     })();
@@ -3312,11 +3365,11 @@ const Vt = {
     e && (e.style.visibility = "visible");
   }
 };
-class xt {
+class It {
   constructor() {
     Tt(this, "_game");
     Tt(this, "_initialized");
-    this._game = Vt, this._initialized = !1;
+    this._game = te, this._initialized = !1;
   }
   /**
    * Initialize the game with options
@@ -3325,7 +3378,7 @@ class xt {
     var i, a;
     if (!document.getElementById("minecraftGame")) {
       let s = document.body;
-      e.container && (s = typeof e.container == "string" ? document.querySelector(e.container) || document.body : e.container), Jt(s);
+      e.container && (s = typeof e.container == "string" ? document.querySelector(e.container) || document.body : e.container), Vt(s);
     }
     if (this._game.init(), this._initialized = !0, e.trigger) {
       const s = typeof e.trigger == "string" ? document.querySelector(e.trigger) : e.trigger;
@@ -3399,19 +3452,19 @@ class xt {
   }
 }
 if (typeof window < "u") {
-  window.SakuraCraft = xt, window.SakuraCraftGame = xt;
+  window.SakuraCraft = It, window.SakuraCraftGame = It;
   const t = document.currentScript;
   if (t != null && t.hasAttribute("data-auto-init")) {
     const e = t.getAttribute("data-trigger");
     document.addEventListener("DOMContentLoaded", () => {
-      const i = new xt();
+      const i = new It();
       i.init({ trigger: e ?? void 0 }), window.sakuraCraft = i;
     });
   }
 }
 export {
-  xt as SakuraCraftGame,
-  xt as default,
-  Vt as minecraftGame
+  It as SakuraCraftGame,
+  It as default,
+  te as minecraftGame
 };
 //# sourceMappingURL=sakuracraft.es.js.map
