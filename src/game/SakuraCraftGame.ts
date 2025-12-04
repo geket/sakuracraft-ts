@@ -331,21 +331,21 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             // Simple 2D noise function (value noise with interpolation)
             noise2D: (function() {
                 // Permutation table
-                const perm = [];
+                const perm: number[] = [];
                 for (let i = 0; i < 512; i++) {
                     perm[i] = Math.floor(Math.random() * 256);
                 }
                 
-                function fade(t) { return t * t * t * (t * (t * 6 - 15) + 10); }
-                function lerp(a, b, t) { return a + t * (b - a); }
-                function grad(hash, x, y) {
+                function fade(t: number): number { return t * t * t * (t * (t * 6 - 15) + 10); }
+                function lerp(a: number, b: number, t: number): number { return a + t * (b - a); }
+                function grad(hash: number, x: number, y: number): number {
                     const h = hash & 3;
                     const u = h < 2 ? x : y;
                     const v = h < 2 ? y : x;
                     return ((h & 1) ? -u : u) + ((h & 2) ? -v : v);
                 }
                 
-                return function(x, y) {
+                return function(x: number, y: number): number {
                     const X = Math.floor(x) & 255;
                     const Y = Math.floor(y) & 255;
                     x -= Math.floor(x);
@@ -363,7 +363,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             })(),
             
             // Fractal Brownian Motion for more natural terrain
-            fbm(x, y, octaves = 4) {
+            fbm(x: number, y: number, octaves = 4): number {
                 let value = 0;
                 let amplitude = 1;
                 let frequency = 1;
@@ -466,8 +466,14 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             init() {
                 // Lightweight init - just get canvas reference
                 // World generation is deferred to start() to avoid lagging main site
-                this.canvas = document.getElementById('gameCanvas');
+                this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement | null;
+                if (!this.canvas) {
+                    throw new Error('Canvas element not found');
+                }
                 this.ctx = this.canvas.getContext('2d');
+                if (!this.ctx) {
+                    throw new Error('Could not get 2D context');
+                }
                 this.initialized = false;  // Track if world has been generated
                 this.gameLoopId = null;    // Track animation frame for cleanup
                 this.lastFrameTime = 0;    // For FPS limiting
@@ -528,8 +534,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 this.fluidQueue = [];
                 
                 // Pre-calculate height map for faster generation
-                const heightMap = {};
-                const biomeMap = {};
+                const heightMap: Record<string, number> = {};
+                const biomeMap: Record<string, number> = {};
                 
                 // First pass: calculate heights
                 for (let x = -worldSize; x <= worldSize; x++) {
@@ -687,7 +693,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 this.initPestBirds();
             },
             
-            generateBuildings(worldSize) {
+            generateBuildings(worldSize: number) {
                 // Building types
                 const buildingTypes = ['church', 'house1', 'house2', 'house3', 'grocery', 'wcdonalds'];
                 
@@ -735,7 +741,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 }
             },
             
-            tryPlaceBuilding(x, z, buildingTypes) {
+            tryPlaceBuilding(x: number, z: number, buildingTypes: string[]) {
                 const groundY = this.getHighestBlock(x, z);
                 if (!groundY || groundY < 7) return false;
                 
@@ -771,7 +777,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             },
             
             // Ruined Church - tall with steeple and intact cross
-            generateChurch(x, y, z) {
+            generateChurch(x: number, y: number, z: number) {
                 const w = 7, d = 12, h = 8;
                 const ruinFactor = 0.3; // 30% of blocks are missing
                 
@@ -826,7 +832,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             },
             
             // Small cottage house
-            generateHouse1(x, y, z) {
+            generateHouse1(x: number, y: number, z: number) {
                 const w = 5, d = 6, h = 4;
                 const ruinFactor = 0.25;
                 
@@ -864,7 +870,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             },
             
             // Two-story house
-            generateHouse2(x, y, z) {
+            generateHouse2(x: number, y: number, z: number) {
                 const w = 6, d = 7, h = 6;
                 const ruinFactor = 0.3;
                 
@@ -902,7 +908,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             },
             
             // L-shaped house
-            generateHouse3(x, y, z) {
+            generateHouse3(x: number, y: number, z: number) {
                 const ruinFactor = 0.35;
                 
                 // Main section
@@ -934,7 +940,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             },
             
             // Abandoned grocery store
-            generateGrocery(x, y, z) {
+            generateGrocery(x: number, y: number, z: number) {
                 const w = 10, d = 8, h = 4;
                 const ruinFactor = 0.25;
                 
@@ -982,7 +988,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             },
             
             // WcDonald's - the knockoff! (W instead of M, same colors)
-            generateWcDonalds(x, y, z) {
+            generateWcDonalds(x: number, y: number, z: number) {
                 const w = 9, d = 9, h = 4;
                 const ruinFactor = 0.2;
                 
@@ -1077,7 +1083,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 }
             },
             
-            getHighestBlock(x, z) {
+            getHighestBlock(x: number, z: number) {
                 for (let y = 30; y >= 0; y--) {
                     if (this.getBlock(x, y, z)) return y;
                 }
@@ -1162,7 +1168,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     this.birdPruneTimer = 0;
                     if (this.pestBirds.length > 15) {
                         // Keep the 15 angriest birds
-                        this.pestBirds.sort((a, b) => b.anger - a.anger);
+                        this.pestBirds.sort((a: any, b: any) => b.anger - a.anger);
                         this.pestBirds = this.pestBirds.slice(0, 15);
                     }
                 }
@@ -2031,7 +2037,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             },
             
             // Generate Ritual Temple - only one per world
-            generateRitualTemple(x, y, z) {
+            generateRitualTemple(x: number, y: number, z: number) {
                 const w = 11;
                 const h = 8;
                 const d = 11;
@@ -2092,7 +2098,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             },
             
             // Generate apple tree with green leaves and chance to drop apples
-            generateTree(x, y, z) {
+            generateTree(x: number, y: number, z: number) {
                 for (let h = 0; h < 4; h++) {
                     this.setBlock(x, y + h, z, 'wood');
                 }
@@ -2113,7 +2119,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             },
             
             // Generate cherry blossom tree (larger, more dramatic)
-            generateCherryTree(x, y, z) {
+            generateCherryTree(x: number, y: number, z: number) {
                 // Taller trunk with pink-tinted wood
                 for (let h = 0; h < 6; h++) {
                     this.setBlock(x, y + h, z, 'cherryWood');
@@ -2137,7 +2143,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 this.cherryTrees.push({ x, y: y + 6, z });
             },
             
-            setBlock(x, y, z, type) {
+            setBlock(x: number, y: number, z: number, type: string) {
                 const key = `${x},${y},${z}`;
                 if (type === null) {
                     delete this.world[key];
@@ -2146,7 +2152,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 }
             },
             
-            getBlock(x, y, z) {
+            getBlock(x: number, y: number, z: number) {
                 return this.world[`${x},${y},${z}`] || null;
             },
             
@@ -3240,7 +3246,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             },
             
             // Drop an item on the ground
-            dropItem(x, y, z, type, count) {
+            dropItem(x: number, y: number, z: number, type: string, count: number) {
                 if (!this.droppedItems) this.droppedItems = [];
                 this.droppedItems.push({
                     x: x + (Math.random() - 0.5) * 0.3,
@@ -3409,7 +3415,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             },
             
             // Draw a mini 3D block for inventory display
-            drawMiniBlock(canvas, type) {
+            drawMiniBlock(canvas: HTMLCanvasElement, type: string) {
                 const ctx = canvas.getContext('2d');
                 const colors = this.blockColors[type];
                 const w = canvas.width;
@@ -3774,54 +3780,6 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 ctx.restore();
             },
             
-            // Update hotbar visual display
-            updateHotbarDisplay() {
-                const slots = document.querySelectorAll('.hotbar-slot');
-                
-                slots.forEach((slot, index) => {
-                    const invSlot = this.inventory.hotbar[index];
-                    
-                    // Clear existing content
-                    slot.innerHTML = '';
-                    
-                    if (invSlot) {
-                        const itemId = invSlot.id || invSlot.type;
-                        
-                        // Create mini block canvas
-                        const miniCanvas = document.createElement('canvas');
-                        miniCanvas.width = 32;
-                        miniCanvas.height = 32;
-                        miniCanvas.style.width = '100%';
-                        miniCanvas.style.height = '100%';
-                        this.drawMiniBlock(miniCanvas, itemId);
-                        slot.appendChild(miniCanvas);
-                        
-                        // Set count attribute (CSS handles display)
-                        slot.setAttribute('data-count', invSlot.count > 1 ? invSlot.count : '');
-                        
-                        // Add durability bar for tools
-                        if (invSlot.maxDurability && invSlot.durability !== undefined) {
-                            const durBar = document.createElement('div');
-                            durBar.className = 'durability-bar';
-                            const durFill = document.createElement('div');
-                            durFill.className = 'durability-fill';
-                            const percent = (invSlot.durability / invSlot.maxDurability) * 100;
-                            durFill.style.width = percent + '%';
-                            // Color based on durability
-                            if (percent > 50) durFill.style.background = '#4f4';
-                            else if (percent > 25) durFill.style.background = '#ff0';
-                            else durFill.style.background = '#f44';
-                            durBar.appendChild(durFill);
-                            slot.appendChild(durBar);
-                        }
-                    } else {
-                        slot.setAttribute('data-count', '');
-                    }
-                });
-                
-                this.updateHotbar();
-            },
-            
             // Use seeds to calm birds
             useSeeds() {
                 const slot = this.inventory.hotbar[this.selectedSlot];
@@ -4100,7 +4058,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             },
             
             // Open chest UI - simply take all items
-            openChest(x, y, z) {
+            openChest(x: number, y: number, z: number) {
                 if (!this.chestContents) this.chestContents = {};
                 
                 const chestKey = `${x},${y},${z}`;
@@ -4529,7 +4487,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 }
             },
             
-            getFluidLevel(x, y, z) {
+            getFluidLevel(x: number, y: number, z: number) {
                 return this.fluidLevels[`${x},${y},${z}`] || 0;
             },
             
@@ -5678,7 +5636,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 }
                 
                 // Sort back-to-front (painter's algorithm)
-                blocks.sort((a, b) => b.dist - a.dist);
+                blocks.sort((a: any, b: any) => b.dist - a.dist);
                 
                 // Render blocks with face culling
                 const getBlock = (x, y, z) => this.world[`${x},${y},${z}`];
@@ -5765,8 +5723,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 const visibleTransparent = transparentBlocks.filter(b => !isBlockOccluded(b.x, b.y, b.z));
                 
                 // Sort each group - furthest (largest dist) first
-                visibleTransparent.sort((a, b) => b.dist - a.dist);
-                opaqueBlocks.sort((a, b) => b.dist - a.dist);
+                visibleTransparent.sort((a: any, b: any) => b.dist - a.dist);
+                opaqueBlocks.sort((a: any, b: any) => b.dist - a.dist);
                 
                 // CORRECT ORDER: Draw opaque blocks FIRST, then transparent blocks
                 // This allows transparent blocks to see opaque blocks behind them
@@ -7162,7 +7120,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 }
             },
             
-            project(x, y, z) {
+            project(x: number, y: number, z: number) {
                 const dx = x - this.camera.x;
                 const dy = y - this.camera.y;
                 const dz = z - this.camera.z;

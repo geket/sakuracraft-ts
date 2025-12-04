@@ -1,0 +1,868 @@
+
+> sakuracraft@1.0.0 build
+> tsc && vite build
+
+src/game/SakuraCraftGame.ts(9,3): error TS6196: 'Camera' is declared but never used.
+src/game/SakuraCraftGame.ts(10,3): error TS6196: 'Vector3' is declared but never used.
+src/game/SakuraCraftGame.ts(11,3): error TS6196: 'BlockType' is declared but never used.
+src/game/SakuraCraftGame.ts(12,3): error TS6196: 'BlockColor' is declared but never used.
+src/game/SakuraCraftGame.ts(13,3): error TS6196: 'InventoryItem' is declared but never used.
+src/game/SakuraCraftGame.ts(14,3): error TS6196: 'Inventory' is declared but never used.
+src/game/SakuraCraftGame.ts(15,3): error TS6196: 'Recipe' is declared but never used.
+src/game/SakuraCraftGame.ts(16,3): error TS6196: 'ItemProperties' is declared but never used.
+src/game/SakuraCraftGame.ts(19,3): error TS6196: 'FPSCounter' is declared but never used.
+src/game/SakuraCraftGame.ts(20,3): error TS6196: 'Bird' is declared but never used.
+src/game/SakuraCraftGame.ts(21,3): error TS6196: 'PestBird' is declared but never used.
+src/game/SakuraCraftGame.ts(22,3): error TS6196: 'Fish' is declared but never used.
+src/game/SakuraCraftGame.ts(23,3): error TS6196: 'Cat' is declared but never used.
+src/game/SakuraCraftGame.ts(24,3): error TS6196: 'Creeper' is declared but never used.
+src/game/SakuraCraftGame.ts(25,3): error TS6196: 'Particle' is declared but never used.
+src/game/SakuraCraftGame.ts(26,3): error TS6196: 'DroppedItem' is declared but never used.
+src/game/SakuraCraftGame.ts(27,3): error TS6196: 'WorldBounds' is declared but never used.
+src/game/SakuraCraftGame.ts(28,3): error TS6196: 'Wind' is declared but never used.
+src/game/SakuraCraftGame.ts(29,3): error TS6196: 'BirdEvent' is declared but never used.
+src/game/SakuraCraftGame.ts(30,3): error TS6196: 'SurvivalStats' is declared but never used.
+src/game/SakuraCraftGame.ts(1716,28): error TS7006: Parameter 'creeper' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(1842,27): error TS7006: Parameter 'message' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(2151,21): error TS2322: Type 'string' is not assignable to type 'BlockType'.
+src/game/SakuraCraftGame.ts(2247,25): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2263,25): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2268,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2279,25): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2295,46): error TS7006: Parameter 'b' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(2298,47): error TS7006: Parameter 'b' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(2469,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2474,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2507,17): error TS18047: 'gameContainer' is possibly 'null'.
+src/game/SakuraCraftGame.ts(2532,73): error TS2551: Property 'webkitFullscreenElement' does not exist on type 'Document'. Did you mean 'fullscreenElement'?
+src/game/SakuraCraftGame.ts(2534,25): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2535,25): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2561,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2564,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2567,73): error TS2551: Property 'webkitFullscreenElement' does not exist on type 'Document'. Did you mean 'fullscreenElement'?
+src/game/SakuraCraftGame.ts(2573,45): error TS2551: Property 'webkitExitFullscreen' does not exist on type 'Document'. Did you mean 'exitFullscreen'?
+src/game/SakuraCraftGame.ts(2574,38): error TS2551: Property 'webkitExitFullscreen' does not exist on type 'Document'. Did you mean 'exitFullscreen'?
+src/game/SakuraCraftGame.ts(2578,29): error TS18047: 'container' is possibly 'null'.
+src/game/SakuraCraftGame.ts(2579,29): error TS18047: 'container' is possibly 'null'.
+src/game/SakuraCraftGame.ts(2580,36): error TS18047: 'container' is possibly 'null'.
+src/game/SakuraCraftGame.ts(2580,46): error TS2551: Property 'webkitRequestFullscreen' does not exist on type 'HTMLElement'. Did you mean 'requestFullscreen'?
+src/game/SakuraCraftGame.ts(2581,29): error TS18047: 'container' is possibly 'null'.
+src/game/SakuraCraftGame.ts(2581,39): error TS2551: Property 'webkitRequestFullscreen' does not exist on type 'HTMLElement'. Did you mean 'requestFullscreen'?
+src/game/SakuraCraftGame.ts(2594,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2599,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2605,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2610,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2613,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2614,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2617,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2618,57): error TS18047: 'e.target' is possibly 'null'.
+src/game/SakuraCraftGame.ts(2618,66): error TS2339: Property 'value' does not exist on type 'EventTarget'.
+src/game/SakuraCraftGame.ts(2622,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2623,44): error TS18047: 'e.target' is possibly 'null'.
+src/game/SakuraCraftGame.ts(2623,53): error TS2339: Property 'value' does not exist on type 'EventTarget'.
+src/game/SakuraCraftGame.ts(2627,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2628,61): error TS18047: 'e.target' is possibly 'null'.
+src/game/SakuraCraftGame.ts(2628,70): error TS2339: Property 'value' does not exist on type 'EventTarget'.
+src/game/SakuraCraftGame.ts(2633,21): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2635,38): error TS18047: 'toggle' is possibly 'null'.
+src/game/SakuraCraftGame.ts(2635,45): error TS2339: Property 'dataset' does not exist on type 'EventTarget'.
+src/game/SakuraCraftGame.ts(2636,25): error TS18047: 'toggle' is possibly 'null'.
+src/game/SakuraCraftGame.ts(2636,32): error TS2339: Property 'dataset' does not exist on type 'EventTarget'.
+src/game/SakuraCraftGame.ts(2637,25): error TS18047: 'toggle' is possibly 'null'.
+src/game/SakuraCraftGame.ts(2637,32): error TS2339: Property 'classList' does not exist on type 'EventTarget'.
+src/game/SakuraCraftGame.ts(2643,29): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2650,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2651,42): error TS18047: 'e.target' is possibly 'null'.
+src/game/SakuraCraftGame.ts(2651,51): error TS2339: Property 'value' does not exist on type 'EventTarget'.
+src/game/SakuraCraftGame.ts(2653,21): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2653,21): error TS2322: Type 'number' is not assignable to type 'string'.
+src/game/SakuraCraftGame.ts(2657,25): error TS7006: Parameter 'menuId' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(2659,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2663,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2663,17): error TS2322: Type 'number' is not assignable to type 'string'.
+src/game/SakuraCraftGame.ts(2664,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2664,17): error TS2322: Type 'number' is not assignable to type 'string'.
+src/game/SakuraCraftGame.ts(2665,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2666,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2666,17): error TS2322: Type 'number' is not assignable to type 'string'.
+src/game/SakuraCraftGame.ts(2671,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2689,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(2710,57): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/game/SakuraCraftGame.ts(2743,29): error TS18047: 'fill' is possibly 'null'.
+src/game/SakuraCraftGame.ts(2743,34): error TS2339: Property 'style' does not exist on type 'Element'.
+src/game/SakuraCraftGame.ts(2744,29): error TS18047: 'fill' is possibly 'null'.
+src/game/SakuraCraftGame.ts(2744,34): error TS2339: Property 'style' does not exist on type 'Element'.
+src/game/SakuraCraftGame.ts(2745,36): error TS2339: Property 'style' does not exist on type 'Element'.
+src/game/SakuraCraftGame.ts(2747,36): error TS2339: Property 'style' does not exist on type 'Element'.
+src/game/SakuraCraftGame.ts(2752,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(2755,44): error TS2339: Property 'style' does not exist on type 'Element'.
+src/game/SakuraCraftGame.ts(3180,61): error TS7006: Parameter 'p' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(3305,28): error TS7006: Parameter 'type' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(3305,34): error TS7006: Parameter 'count' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(3349,29): error TS2322: Type 'string' is not assignable to type 'ItemType'.
+src/game/SakuraCraftGame.ts(3365,29): error TS2322: Type 'string' is not assignable to type 'ItemType'.
+src/game/SakuraCraftGame.ts(3380,36): error TS7006: Parameter 'type' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(3380,42): error TS7006: Parameter 'count' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(3402,55): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ grass: string; dirt: string; stone: string; wood: string; appleLeaves: string; leaves: string; sand: string; brick: string; ak47: string; water_bucket: string; lava_bucket: string; obsidian: string; ... 14 more ...; ritualStone: string; }'.
+src/game/SakuraCraftGame.ts(3424,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3432,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3433,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3437,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3438,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3439,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3440,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3441,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3442,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3443,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3444,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3445,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3446,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3447,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3448,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3449,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3450,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3452,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3457,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3458,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3459,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3462,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3463,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3464,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3465,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3466,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3467,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3469,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3470,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3471,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3472,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3473,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3474,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3475,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3476,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3477,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3478,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3479,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3480,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3482,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3483,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3484,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3485,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3486,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3487,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3488,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3489,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3490,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3491,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3492,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3493,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3494,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3495,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3496,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3497,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3499,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3500,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3501,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3502,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3504,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3505,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3506,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3507,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3508,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3509,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3511,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3512,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3513,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3514,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3516,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3517,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3518,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3519,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3520,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3521,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3522,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3523,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3524,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3526,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3527,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3528,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3529,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3530,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3531,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3534,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3535,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3536,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3537,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3538,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3539,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3541,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3558,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3559,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3560,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3561,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3562,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3563,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3564,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3565,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3568,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3569,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3570,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3571,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3572,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3573,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3574,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3575,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3584,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3585,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3586,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3587,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3588,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3589,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3590,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3591,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3594,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3595,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3596,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3597,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3598,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3599,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3600,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3601,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3602,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3603,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3604,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(3608,31): error TS7006: Parameter 'ctx' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(3608,36): error TS7006: Parameter 'cx' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(3608,40): error TS7006: Parameter 'cy' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(3608,44): error TS7006: Parameter 'size' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(3608,50): error TS7006: Parameter 'type' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(3608,56): error TS7006: Parameter 'bobPhase' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(3895,21): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/game/SakuraCraftGame.ts(3901,25): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/game/SakuraCraftGame.ts(3905,59): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(3905,67): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/game/SakuraCraftGame.ts(3952,32): error TS7006: Parameter 'x' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(3952,35): error TS7006: Parameter 'y' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(3952,38): error TS7006: Parameter 'z' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(3952,41): error TS7006: Parameter 'socketType' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(3971,38): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ petalSocket: string; ropeSocket: string; charmSocket: string; plaqueSocket: string; incenseSocket: string; }'.
+src/game/SakuraCraftGame.ts(3988,44): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ petalSocket: string; ropeSocket: string; charmSocket: string; plaqueSocket: string; incenseSocket: string; }'.
+src/game/SakuraCraftGame.ts(4140,47): error TS2339: Property 'value' does not exist on type 'HTMLElement'.
+src/game/SakuraCraftGame.ts(4143,39): error TS2339: Property 'value' does not exist on type 'HTMLElement'.
+src/game/SakuraCraftGame.ts(4156,22): error TS7006: Parameter 'msg' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(4167,44): error TS2345: Argument of type 'ChildNode | null' is not assignable to parameter of type 'Node'.
+  Type 'null' is not assignable to type 'Node'.
+src/game/SakuraCraftGame.ts(4172,33): error TS7006: Parameter 'cmd' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(4413,37): error TS7006: Parameter 'type' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(4413,43): error TS7006: Parameter 'count' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(4459,43): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ grass: string; dirt: string; stone: string; wood: string; appleLeaves: string; leaves: string; sand: string; brick: string; ak47: string; water_bucket: string; lava_bucket: string; obsidian: string; ... 14 more ...; ritualStone: string; }'.
+  No index signature with a parameter of type 'string' was found on type '{ grass: string; dirt: string; stone: string; wood: string; appleLeaves: string; leaves: string; sand: string; brick: string; ak47: string; water_bucket: string; lava_bucket: string; obsidian: string; ... 14 more ...; ritualStone: string; }'.
+src/game/SakuraCraftGame.ts(4461,21): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(4481,27): error TS7006: Parameter 'x' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(4481,30): error TS7006: Parameter 'y' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(4481,33): error TS7006: Parameter 'z' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(4481,36): error TS7006: Parameter 'level' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(4637,25): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(4648,38): error TS7006: Parameter 'slot' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(4663,28): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ grass: string; dirt: string; stone: string; wood: string; leaves: string; water: string; sand: string; brick: string; ak47: string; water_bucket: string; lava_bucket: string; lava: string; obsidian: string; ... 11 more ...; incense: string; }'.
+src/game/SakuraCraftGame.ts(4678,48): error TS7006: Parameter 'ing' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(4711,27): error TS6133: 'hasItem' is declared but its value is never read.
+src/game/SakuraCraftGame.ts(4740,38): error TS18047: 'invScreen' is possibly 'null'.
+src/game/SakuraCraftGame.ts(4750,41): error TS2339: Property 'deltaY' does not exist on type 'Event'.
+src/game/SakuraCraftGame.ts(4750,71): error TS2339: Property 'deltaY' does not exist on type 'Event'.
+src/game/SakuraCraftGame.ts(4757,17): error TS18047: 'invScreen' is possibly 'null'.
+src/game/SakuraCraftGame.ts(4762,17): error TS18047: 'invScreen' is possibly 'null'.
+src/game/SakuraCraftGame.ts(4773,45): error TS2339: Property 'dataset' does not exist on type 'Element'.
+src/game/SakuraCraftGame.ts(4774,53): error TS2339: Property 'dataset' does not exist on type 'Element'.
+src/game/SakuraCraftGame.ts(4800,45): error TS2339: Property 'dataset' does not exist on type 'Element'.
+src/game/SakuraCraftGame.ts(4801,53): error TS2339: Property 'dataset' does not exist on type 'Element'.
+src/game/SakuraCraftGame.ts(4804,27): error TS2339: Property 'dataTransfer' does not exist on type 'Event'.
+src/game/SakuraCraftGame.ts(4805,27): error TS2339: Property 'dataTransfer' does not exist on type 'Event'.
+src/game/SakuraCraftGame.ts(4818,27): error TS2339: Property 'dataTransfer' does not exist on type 'Event'.
+src/game/SakuraCraftGame.ts(4835,51): error TS2339: Property 'dataset' does not exist on type 'Element'.
+src/game/SakuraCraftGame.ts(4836,59): error TS2339: Property 'dataset' does not exist on type 'Element'.
+src/game/SakuraCraftGame.ts(4864,32): error TS7006: Parameter 'srcType' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(4864,41): error TS7006: Parameter 'srcIdx' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(4864,49): error TS7006: Parameter 'destType' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(4864,59): error TS7006: Parameter 'destIdx' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(4894,26): error TS7006: Parameter 'slot' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(4907,24): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ grass: string; dirt: string; stone: string; wood: string; leaves: string; water: string; sand: string; brick: string; ak47: string; water_bucket: string; lava_bucket: string; lava: string; obsidian: string; ... 11 more ...; incense: string; }'.
+src/game/SakuraCraftGame.ts(4910,28): error TS7006: Parameter 'recipe' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(4918,23): error TS7006: Parameter 'itemId' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(4929,25): error TS7006: Parameter 'recipeName' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(4930,50): error TS7006: Parameter 'r' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(4945,24): error TS7006: Parameter 'itemId' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(4945,32): error TS7006: Parameter 'count' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(4967,21): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5504,24): error TS7006: Parameter 'x' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5504,27): error TS7006: Parameter 'y' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5504,30): error TS7006: Parameter 'z' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5504,33): error TS7006: Parameter 'radius' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5504,41): error TS7006: Parameter 'height' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5531,34): error TS7006: Parameter 'x' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5531,37): error TS7006: Parameter 'z' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5531,40): error TS7006: Parameter 'currentY' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5547,29): error TS7006: Parameter 'x' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5547,32): error TS7006: Parameter 'z' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5547,35): error TS7006: Parameter 'currentY' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5566,31): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(5567,32): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(5571,37): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(5582,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(5583,17): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(5600,34): error TS7006: Parameter 'x' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5600,37): error TS7006: Parameter 'y' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5600,40): error TS7006: Parameter 'z' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5642,35): error TS7006: Parameter 'x' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5642,38): error TS7006: Parameter 'y' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5642,41): error TS7006: Parameter 'z' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5643,40): error TS7006: Parameter 'block' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5644,40): error TS7006: Parameter 'x' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5644,43): error TS7006: Parameter 'y' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5644,46): error TS7006: Parameter 'z' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5669,42): error TS7006: Parameter 'x' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5669,45): error TS7006: Parameter 'y' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5669,48): error TS7006: Parameter 'z' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(5947,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(5948,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(5949,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(5950,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(5951,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(5952,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(5953,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(5954,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(5958,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(5959,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(5960,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(5971,27): error TS6133: 'wallSegments' is declared but its value is never read.
+src/game/SakuraCraftGame.ts(6048,39): error TS6133: 'hue' is declared but its value is never read.
+src/game/SakuraCraftGame.ts(6049,33): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6050,33): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6051,33): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6052,33): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6053,33): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6054,33): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6055,33): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6056,33): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6059,33): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6060,33): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6061,33): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6095,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6096,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6097,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6098,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6099,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6100,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6101,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6102,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6104,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6105,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6106,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6135,27): error TS6133: 'facingAngle' is declared but its value is never read.
+src/game/SakuraCraftGame.ts(6138,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6139,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6140,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6141,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6144,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6149,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6150,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6151,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6155,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6159,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6162,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6163,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6164,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6168,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6172,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6175,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6176,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6177,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6178,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6181,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6182,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6183,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6184,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6185,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6186,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6217,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6218,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6219,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6220,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6224,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6225,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6229,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6234,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6235,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6236,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6240,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6244,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6247,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6248,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6249,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6253,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6257,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6260,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6261,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6262,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6263,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6266,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6267,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6268,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6269,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6272,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6273,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6274,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6275,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6276,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6277,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6280,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6281,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6282,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6283,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6284,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6285,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6286,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6287,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6290,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6291,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6305,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6306,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6307,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6308,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6311,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6313,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6314,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6315,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6316,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6317,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6318,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6319,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6320,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6321,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6322,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6325,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6326,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6327,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6328,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6341,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6342,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6343,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6346,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6347,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6348,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6349,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6352,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6353,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6354,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6355,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6356,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6357,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6360,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6361,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6362,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6363,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6365,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6379,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6380,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6381,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6382,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6385,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6386,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6387,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6390,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6391,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6392,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6393,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6394,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6395,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6396,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6397,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6398,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6399,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6402,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6403,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6404,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6405,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6406,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6407,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6408,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6411,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6412,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6413,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6414,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6415,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6416,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6417,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6433,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6434,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6437,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6440,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6442,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6443,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6445,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6446,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6447,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6450,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6451,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6452,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6467,31): error TS6133: 'dist' is declared but its value is never read.
+src/game/SakuraCraftGame.ts(6485,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6486,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6487,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6493,41): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6496,41): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6501,33): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6502,33): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6508,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6509,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6510,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6511,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6515,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6516,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6517,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6518,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6526,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6527,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6528,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6529,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6532,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6533,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6534,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6535,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6538,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6539,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6540,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6541,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6549,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6550,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6551,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6552,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6555,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6556,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6557,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6558,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6561,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6562,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6563,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6564,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6568,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6569,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6570,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6571,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6572,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6573,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6574,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6576,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6577,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6578,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6579,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6580,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6581,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6582,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6604,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6605,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6606,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6608,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6609,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6610,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6611,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6613,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6614,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6615,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6616,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6617,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6621,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6622,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6624,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6625,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6626,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6627,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6629,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6630,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6632,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6633,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6635,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6636,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6637,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6638,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6639,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6645,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6646,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6647,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6648,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6652,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6653,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6655,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6656,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6657,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6658,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6660,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6661,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6662,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6663,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6665,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6666,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6668,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6669,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6670,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6671,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6672,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6677,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6678,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6679,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6680,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6697,31): error TS6133: 'dist' is declared but its value is never read.
+src/game/SakuraCraftGame.ts(6721,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6722,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6723,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6724,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6725,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6726,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6727,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6771,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6772,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6780,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6782,33): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6783,33): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6785,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6798,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6799,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6800,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6801,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6802,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6803,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6804,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6805,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6806,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6807,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6815,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6816,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6817,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6818,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6819,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6820,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6821,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6822,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6830,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6831,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6834,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6840,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6843,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6844,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6845,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6848,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6849,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6850,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6851,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6853,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6863,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6864,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6865,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6866,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6867,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6868,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6869,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6870,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6881,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6882,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6883,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6886,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6887,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6888,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6889,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6891,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6893,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6894,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6895,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6898,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6899,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6900,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6901,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6904,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6905,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6906,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6907,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6908,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6909,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6910,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6911,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6912,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6915,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6916,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6917,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6920,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6921,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6924,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6925,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6928,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6929,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6932,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6933,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6936,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6937,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6940,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6941,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6944,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6945,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6946,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6947,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6950,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6951,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6954,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6956,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6957,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6958,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6962,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6963,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6964,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6967,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6970,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6971,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6972,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6973,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6974,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6975,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6976,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6977,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6978,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6981,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6982,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6984,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6985,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6986,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6987,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6991,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6992,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6993,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6994,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6995,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6996,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6997,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(6998,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7001,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7003,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7007,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7008,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7009,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7010,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7011,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7014,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7015,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7024,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7025,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7026,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7027,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7030,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7031,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7032,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7033,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7036,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7037,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7038,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7039,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7042,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7043,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7047,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7048,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7049,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7050,29): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7054,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7060,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7061,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7069,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7070,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7073,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7079,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7080,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7081,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7082,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7086,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7090,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7091,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7092,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7093,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7097,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7102,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7103,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7104,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7105,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7107,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7108,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7109,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7110,25): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7114,38): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7118,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7119,21): error TS18047: 'ctx' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7141,33): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7142,33): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7148,32): error TS7006: Parameter 'blockType' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(7165,42): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ petalSocket: { name: string; item: string; desc: string; }; ropeSocket: { name: string; item: string; desc: string; }; charmSocket: { name: string; item: string; desc: string; }; plaqueSocket: { name: string; item: string; desc: string; }; ... 5 more ...; incenseSocketFilled: { ...; }; }'.
+src/game/SakuraCraftGame.ts(7168,21): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7170,21): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7178,31): error TS7006: Parameter 'ctx' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(7178,36): error TS7006: Parameter 'centerX' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(7178,45): error TS7006: Parameter 'centerY' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(7178,54): error TS7006: Parameter 'width' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(7178,61): error TS7006: Parameter 'height' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(7204,28): error TS7006: Parameter 'ctx' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(7204,33): error TS6133: 'centerX' is declared but its value is never read.
+src/game/SakuraCraftGame.ts(7204,33): error TS7006: Parameter 'centerX' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(7204,42): error TS6133: 'centerY' is declared but its value is never read.
+src/game/SakuraCraftGame.ts(7204,42): error TS7006: Parameter 'centerY' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(7204,51): error TS7006: Parameter 'width' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(7204,58): error TS7006: Parameter 'height' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(7322,30): error TS7006: Parameter 'ctx' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(7322,35): error TS7006: Parameter 'centerX' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(7322,44): error TS7006: Parameter 'bodyY' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(7322,51): error TS7006: Parameter 'alpha' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(7322,58): error TS6133: 'lookAmount' is declared but its value is never read.
+src/game/SakuraCraftGame.ts(7322,58): error TS7006: Parameter 'lookAmount' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(7326,23): error TS6133: 'edgeShade' is declared but its value is never read.
+src/game/SakuraCraftGame.ts(7420,25): error TS7006: Parameter 'hex' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(7420,30): error TS7006: Parameter 'factor' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(7434,22): error TS7006: Parameter 'timestamp' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(7479,29): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7480,29): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7480,47): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7480,71): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7481,29): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7482,29): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7483,29): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7484,29): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7484,77): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7484,101): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7485,29): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7502,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7503,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7504,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7512,42): error TS7006: Parameter 'x' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(7512,45): error TS7006: Parameter 'z' implicitly has an 'any' type.
+src/game/SakuraCraftGame.ts(7527,31): error TS6133: 'headY' is declared but its value is never read.
+src/game/SakuraCraftGame.ts(7591,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7669,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7688,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7689,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7690,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7701,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7702,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7706,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7711,69): error TS2551: Property 'webkitFullscreenElement' does not exist on type 'Document'. Did you mean 'fullscreenElement'?
+src/game/SakuraCraftGame.ts(7712,17): error TS18047: 'btn' is possibly 'null'.
+src/game/SakuraCraftGame.ts(7716,21): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7717,21): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7719,21): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7720,21): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7756,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7757,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7760,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7760,42): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7760,61): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7763,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7764,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7765,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7766,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7768,17): error TS2531: Object is possibly 'null'.
+src/game/SakuraCraftGame.ts(7776,60): error TS2551: Property 'webkitFullscreenElement' does not exist on type 'Document'. Did you mean 'fullscreenElement'?
+src/game/SakuraCraftGame.ts(7779,41): error TS2551: Property 'webkitExitFullscreen' does not exist on type 'Document'. Did you mean 'exitFullscreen'?
+src/game/SakuraCraftGame.ts(7780,34): error TS2551: Property 'webkitExitFullscreen' does not exist on type 'Document'. Did you mean 'exitFullscreen'?
+src/index.ts(13,1): error TS6192: All imports in import declaration are unused.
