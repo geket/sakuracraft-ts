@@ -173,7 +173,7 @@ const gameTemplate = `
     <!-- Debug Console -->
     <div class="debug-console" id="debugConsole">
       <div class="debug-console-header">
-        <span>Debug Console (\` to toggle)</span>
+        <span>Debug Console (` to toggle)</span>
         <span id="debugFps">0 FPS</span>
       </div>
       <div class="debug-console-output" id="debugOutput"></div>
@@ -190,7 +190,7 @@ const gameTemplate = `
     </div>
   </div>
   <div class="minecraft-instructions">
-    WASD move | SPACE jump/swim | SHIFT swim down | Q drop | R ritual | SCROLL hotbar | LEFT break | RIGHT use/place | E inventory | \` debug
+    WASD move | SPACE jump/swim | SHIFT swim down | Q drop | R ritual | SCROLL hotbar | LEFT break | RIGHT use/place | E inventory | ` debug
   </div>
 </div>
 `;
