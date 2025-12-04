@@ -2462,9 +2462,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     e.preventDefault();
                     
                     // Scroll down = next slot, scroll up = previous slot
-                    if (e.deltaY > 0) {
+                    if ((e as WheelEvent).deltaY > 0) {
                         this.selectedSlot = (this.selectedSlot + 1) % 9;
-                    } else if (e.deltaY < 0) {
+                    } else if ((e as WheelEvent).deltaY < 0) {
                         this.selectedSlot = (this.selectedSlot + 8) % 9; // +8 is same as -1 mod 9
                     }
                     
@@ -2601,32 +2601,32 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 
                 // Options controls
                 document.getElementById('optBrightness').addEventListener('input', (e) => {
-                    this.settings.brightness = parseInt(e.target.value);
+                    this.settings.brightness = parseInt((e.target as HTMLInputElement).value);
                     this.applyFilters();
                 });
                 
                 document.getElementById('optFilter').addEventListener('change', (e) => {
-                    this.settings.filter = e.target.value;
+                    this.settings.filter = (e.target as HTMLInputElement).value;
                     this.applyFilters();
                 });
                 
                 document.getElementById('optRenderDist').addEventListener('change', (e) => {
-                    this.settings.renderDistance = parseInt(e.target.value);
+                    this.settings.renderDistance = parseInt((e.target as HTMLInputElement).value);
                 });
                 
                 // Toggle switches
                 ['optShadows', 'optLighting', 'optAA', 'optShowFps'].forEach(id => {
                     document.getElementById(id).addEventListener('click', (e) => {
                         const toggle = e.target;
-                        const isOn = toggle.dataset.on === 'true';
-                        toggle.dataset.on = (!isOn).toString();
-                        toggle.classList.toggle('on', !isOn);
+                        const isOn = (toggle as HTMLElement).dataset.on === 'true';
+                        (toggle as HTMLElement).dataset.on = (!isOn).toString();
+                        (toggle as HTMLElement).classList.toggle('on', !isOn);
                         
                         if (id === 'optShadows') this.settings.shadows = !isOn;
                         if (id === 'optLighting') this.settings.lighting = !isOn;
                         if (id === 'optAA') {
                             this.settings.antialiasing = !isOn;
-                            this.canvas.style.imageRendering = !isOn ? 'pixelated' : 'auto';
+                            (this.canvas as HTMLCanvasElement).style.imageRendering = !isOn ? 'pixelated' : 'auto';
                         }
                         if (id === 'optShowFps') this.settings.showFps = !isOn;
                     });
@@ -2634,9 +2634,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 
                 // Target FPS slider
                 document.getElementById('optTargetFps').addEventListener('input', (e) => {
-                    const fps = parseInt(e.target.value);
+                    const fps = parseInt((e.target as HTMLInputElement).value);
                     this.settings.targetFps = fps;
-                    document.getElementById('targetFpsValue').textContent = fps;
+                    document.getElementById('targetFpsValue').textContent = String(fps);
                 });
             },
             
@@ -2648,7 +2648,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             updateStatsDisplay() {
                 document.getElementById('statPlaced').textContent = this.stats.blocksPlaced;
                 document.getElementById('statBroken').textContent = this.stats.blocksBroken;
-                document.getElementById('statDistance').textContent = Math.floor(this.stats.distance) + 'm';
+                document.getElementById('statDistance').textContent = String(Math.floor(this.stats.distance)) + 'm';
                 document.getElementById('statJumps').textContent = this.stats.jumps;
                 
                 const elapsed = Math.floor((Date.now() - this.stats.startTime) / 1000);
@@ -2672,7 +2672,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         break;
                 }
                 
-                this.canvas.style.filter = filter;
+                (this.canvas as HTMLElement).style.filter = filter;
             },
             
             updateHotbar() {
@@ -2704,11 +2704,11 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         canvas = document.createElement('canvas');
                         canvas.width = 32;
                         canvas.height = 32;
-                        canvas.style.width = '100%';
-                        canvas.style.height = '100%';
-                        canvas.style.position = 'absolute';
-                        canvas.style.top = '2px';
-                        canvas.style.left = '2px';
+                        (canvas as HTMLElement).style.width = '100%';
+                        (canvas as HTMLElement).style.height = '100%';
+                        (canvas as HTMLElement).style.position = 'absolute';
+                        (canvas as HTMLElement).style.top = '2px';
+                        (canvas as HTMLElement).style.left = '2px';
                         slot.appendChild(canvas);
                     }
                     
@@ -2726,11 +2726,11 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                             }
                             const fill = durBar.querySelector('.durability-fill');
                             const percent = (item.durability / item.maxDurability) * 100;
-                            fill.style.width = percent + '%';
-                            fill.style.backgroundColor = percent > 50 ? '#4a4' : percent > 25 ? '#aa4' : '#a44';
-                            durBar.style.display = 'block';
+                            (fill as HTMLElement).style.width = percent + '%';
+                            (fill as HTMLElement).style.backgroundColor = percent > 50 ? '#4a4' : percent > 25 ? '#aa4' : '#a44';
+                            (durBar as HTMLElement).style.display = 'block';
                         } else if (durBar) {
-                            durBar.style.display = 'none';
+                            (durBar as HTMLElement).style.display = 'none';
                         }
                     } else {
                         // Clear canvas for empty slot
@@ -2738,7 +2738,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
                         // Hide durability bar
                         const durBar = slot.querySelector('.durability-bar');
-                        if (durBar) durBar.style.display = 'none';
+                        if (durBar) (durBar as HTMLElement).style.display = 'none';
                     }
                 });
             },
@@ -3382,7 +3382,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     
                     const notification = document.createElement('div');
                     notification.className = 'pickup-item';
-                    notification.style.borderColor = 'rgba(255, 50, 50, 0.8)';
+                    (notification as HTMLElement).style.borderColor = 'rgba(255, 50, 50, 0.8)';
                     notification.innerHTML = `
                         <span class="pickup-icon">💔</span>
                         <span style="color:#ff6666">${itemNames[type] || type} broke!</span>
@@ -3766,54 +3766,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 ctx.restore();
             },
             
-            // Update hotbar visual display
-            updateHotbarDisplay() {
-                const slots = document.querySelectorAll('.hotbar-slot');
-                
-                slots.forEach((slot, index) => {
-                    const invSlot = this.inventory.hotbar[index];
-                    
-                    // Clear existing content
-                    slot.innerHTML = '';
-                    
-                    if (invSlot) {
-                        const itemId = invSlot.id || invSlot.type;
-                        
-                        // Create mini block canvas
-                        const miniCanvas = document.createElement('canvas');
-                        miniCanvas.width = 32;
-                        miniCanvas.height = 32;
-                        miniCanvas.style.width = '100%';
-                        miniCanvas.style.height = '100%';
-                        this.drawMiniBlock(miniCanvas, itemId);
-                        slot.appendChild(miniCanvas);
-                        
-                        // Set count attribute (CSS handles display)
-                        slot.setAttribute('data-count', invSlot.count > 1 ? invSlot.count : '');
-                        
-                        // Add durability bar for tools
-                        if (invSlot.maxDurability && invSlot.durability !== undefined) {
-                            const durBar = document.createElement('div');
-                            durBar.className = 'durability-bar';
-                            const durFill = document.createElement('div');
-                            durFill.className = 'durability-fill';
-                            const percent = (invSlot.durability / invSlot.maxDurability) * 100;
-                            durFill.style.width = percent + '%';
-                            // Color based on durability
-                            if (percent > 50) durFill.style.background = '#4f4';
-                            else if (percent > 25) durFill.style.background = '#ff0';
-                            else durFill.style.background = '#f44';
-                            durBar.appendChild(durFill);
-                            slot.appendChild(durBar);
-                        }
-                    } else {
-                        slot.setAttribute('data-count', '');
-                    }
-                });
-                
-                this.updateHotbar();
-            },
-            
+
             // Use seeds to calm birds
             useSeeds() {
                 const slot = this.inventory.hotbar[this.selectedSlot];
@@ -4167,7 +4120,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             },
             
             setupDebugConsole() {
-                const input = document.getElementById('debugInput');
+                const input = document.getElementById('debugInput') as HTMLInputElement;
                 if (input) {
                     input.addEventListener('keydown', (e) => {
                         if (e.key === 'Enter') {
@@ -4781,7 +4734,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         const atBottom = scrollTop + clientHeight >= scrollHeight;
                         
                         // Only prevent default if we're trying to scroll beyond bounds
-                        if ((atTop && e.deltaY < 0) || (atBottom && e.deltaY > 0)) {
+                        if ((atTop && (e as WheelEvent).deltaY < 0) || (atBottom && (e as WheelEvent).deltaY > 0)) {
                             e.preventDefault();
                         }
                     }, { passive: false });
@@ -4804,8 +4757,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         e.preventDefault();
                         e.stopPropagation();
                         
-                        const source = slot.dataset.source;
-                        const index = parseInt(slot.dataset.index);
+                        const source = (slot as HTMLElement).dataset.source;
+                        const index = parseInt((slot as HTMLElement).dataset.index);
                         const slotArray = source === 'hotbar' ? this.inventory.hotbar : this.inventory.main;
                         const clickedItem = slotArray[index];
                         
@@ -4831,12 +4784,12 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     // Also support drag and drop
                     slot.addEventListener('dragstart', (e) => {
                         e.stopPropagation();
-                        const source = slot.dataset.source;
-                        const index = parseInt(slot.dataset.index);
+                        const source = (slot as HTMLElement).dataset.source;
+                        const index = parseInt((slot as HTMLElement).dataset.index);
                         this.draggedItem = { source, index };
                         slot.classList.add('dragging');
-                        e.dataTransfer.effectAllowed = 'move';
-                        e.dataTransfer.setDragImage(slot, 20, 20);
+                        (e as DragEvent).dataTransfer.effectAllowed = 'move';
+                        (e as DragEvent).dataTransfer.setDragImage(slot, 20, 20);
                     });
                     
                     slot.addEventListener('dragend', (e) => {
@@ -4849,7 +4802,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     slot.addEventListener('dragover', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        e.dataTransfer.dropEffect = 'move';
+                        (e as DragEvent).dataTransfer.dropEffect = 'move';
                         slot.classList.add('drag-over');
                     });
                     
@@ -4866,8 +4819,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         
                         if (!this.draggedItem) return;
                         
-                        const targetSource = slot.dataset.source;
-                        const targetIndex = parseInt(slot.dataset.index);
+                        const targetSource = (slot as HTMLElement).dataset.source;
+                        const targetIndex = parseInt((slot as HTMLElement).dataset.index);
                         
                         // Store scroll position
                         const invContainer = document.querySelector('.inventory-container');
@@ -7622,7 +7575,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 
                 const spawnPos = findSafeSpawn();
                 this.camera = { x: spawnPos.x + 0.5, y: spawnPos.y, z: spawnPos.z + 0.5, rotX: -0.3, rotY: 0 };
-                this.canvas.style.filter = '';
+                (this.canvas as HTMLElement).style.filter = '';
                 
                 // Reset player state
                 this.velocity = { x: 0, y: 0, z: 0 };
@@ -7689,15 +7642,15 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 
                 // Hide main site animations to save GPU compositing
                 const petalCanvas = document.getElementById('petalCanvas');
-                if (petalCanvas) petalCanvas.style.display = 'none';
+                if (petalCanvas) (petalCanvas as HTMLElement).style.display = 'none';
                 
                 // Hide flame particles container
                 const flameParticles = document.getElementById('flameParticles');
-                if (flameParticles) flameParticles.style.visibility = 'hidden';
+                if (flameParticles) (flameParticles as HTMLElement).style.visibility = 'hidden';
                 
                 // Lock page scrolling while game is active
-                document.body.style.overflow = 'hidden';
-                document.documentElement.style.overflow = 'hidden';
+                (document.body as HTMLElement).style.overflow = 'hidden';
+                (document.documentElement as HTMLElement).style.overflow = 'hidden';
                 
                 // Show click-to-play - user must click to lock pointer
                 document.getElementById('clickToPlay').classList.add('active');
@@ -7799,7 +7752,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 document.getElementById('clickToPlay').classList.remove('active');
                 document.getElementById('inventoryScreen').classList.remove('active');
                 this.inventoryOpen = false;
-                this.canvas.style.filter = '';
+                (this.canvas as HTMLElement).style.filter = '';
                 
                 // Exit pointer lock
                 if (document.pointerLockElement) {
@@ -7819,16 +7772,16 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 this.keys = {};
                 
                 // Unlock page scrolling
-                document.body.style.overflow = '';
-                document.documentElement.style.overflow = '';
+                (document.body as HTMLElement).style.overflow = '';
+                (document.documentElement as HTMLElement).style.overflow = '';
                 
                 // Restore main site animations
                 const petalCanvas = document.getElementById('petalCanvas');
-                if (petalCanvas) petalCanvas.style.display = 'block';
+                if (petalCanvas) (petalCanvas as HTMLElement).style.display = 'block';
                 
                 // Show flame particles container
                 const flameParticles = document.getElementById('flameParticles');
-                if (flameParticles) flameParticles.style.visibility = 'visible';
+                if (flameParticles) (flameParticles as HTMLElement).style.visibility = 'visible';
             }
 };
 
@@ -7871,7 +7824,7 @@ export class SakuraCraftGame {
         : options.trigger;
       if (triggerEl) {
         triggerEl.addEventListener('click', () => this.start());
-        triggerEl.style.cursor = 'pointer';
+        (triggerEl as HTMLElement).style.cursor = 'pointer';
       }
     }
     
