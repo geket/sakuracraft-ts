@@ -124,81 +124,6 @@
       text-align: center;
     }
 
-    /* Debug Console */
-    .debug-console {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: rgba(0, 0, 0, 0.95);
-      color: #0f0;
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-      padding: 1rem;
-      max-height: 300px;
-      overflow-y: auto;
-      border-top: 2px solid #0f0;
-      z-index: 10000;
-    }
-
-    .debug-console h4 {
-      color: #fff;
-      margin-bottom: 0.5rem;
-      font-size: 14px;
-    }
-    
-    #debugToggle {
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
-      padding: 8px 12px;
-      background: rgba(0, 255, 0, 0.8);
-      color: black;
-      border: 2px solid #0f0;
-      border-radius: 4px;
-      cursor: pointer;
-      font-family: monospace;
-      font-weight: bold;
-      z-index: 10001;
-      font-size: 12px;
-    }
-    
-    #debugToggle:hover {
-      background: rgba(0, 255, 0, 1);
-    }
-
-    .debug-line {
-      margin: 0.25rem 0;
-      padding: 0.25rem;
-      border-left: 2px solid #0f0;
-      padding-left: 0.5rem;
-    }
-
-    .debug-line.error {
-      color: #f00;
-      border-left-color: #f00;
-    }
-
-    .debug-line.success {
-      color: #0f0;
-      border-left-color: #0f0;
-    }
-
-    .debug-line.warning {
-      color: #ff0;
-      border-left-color: #ff0;
-    }
-
-    .debug-line.info {
-      color: #0af;
-      border-left-color: #0af;
-    }
-
-    .debug-timestamp {
-      color: #888;
-      margin-right: 0.5rem;
-    }
-
     .debug-toggle {
       position: fixed;
       bottom: 10px;
@@ -283,183 +208,63 @@
     </div>
   </div>
 
-  <!-- Debug Console -->
-  <button id="debugToggle" onclick="document.getElementById('debugConsole').style.display = document.getElementById('debugConsole').style.display === 'none' ? 'block' : 'none'">🐛 Toggle Debug</button>
-  
-  <div class="debug-console" id="debugConsole">
-    <h4>🐛 Debug Console - Game Initialization Trace</h4>
-    <div id="debugOutput"></div>
-  </div>
-
   <script type="module">
-    // Debug logging system
-    const debugOutput = document.getElementById('debugOutput');
-    const debugConsole = document.getElementById('debugConsole');
-    const debugToggle = document.getElementById('debugToggle');
-    
-    // Show debug console by default
-    debugConsole.style.display = 'block';
-    
-    debugToggle.addEventListener('click', () => {
-      debugConsole.style.display = debugConsole.style.display === 'none' ? 'block' : 'none';
-    });
-
-    function logDebug(message, type = 'info') {
-      const timestamp = new Date().toLocaleTimeString();
-      const line = document.createElement('div');
-      line.className = `debug-line ${type}`;
-      line.innerHTML = `<span class="debug-timestamp">[${timestamp}]</span>${message}`;
-      debugOutput.appendChild(line);
-      debugOutput.scrollTop = debugOutput.scrollHeight;
-      
-      // Also log to console
-      console.log(`[${timestamp}] ${message}`);
-    }
-
-    function logError(message, error) {
-      const timestamp = new Date().toLocaleTimeString();
-      const line = document.createElement('div');
-      line.className = 'debug-line error';
-      line.innerHTML = `<span class="debug-timestamp">[${timestamp}]</span>❌ ${message}`;
-      if (error) {
-        line.innerHTML += `<br>&nbsp;&nbsp;&nbsp;&nbsp;${error.toString()}`;
-        if (error.stack) {
-          line.innerHTML += `<br>&nbsp;&nbsp;&nbsp;&nbsp;${error.stack.split('\n').slice(0, 3).join('<br>&nbsp;&nbsp;&nbsp;&nbsp;')}`;
-        }
-      }
-      debugOutput.appendChild(line);
-      debugOutput.scrollTop = debugOutput.scrollHeight;
-      
-      console.error(message, error);
-    }
-
-    // Start debugging
-    logDebug('🚀 Page loaded, starting initialization...', 'info');
-    logDebug(`📍 Current URL: ${window.location.href}`, 'info');
-    logDebug(`🌐 User Agent: ${navigator.userAgent}`, 'info');
-
-    // Check if running with dev server
-    const isDevServer = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    logDebug(`🔧 Dev Server: ${isDevServer ? 'YES' : 'NO (may need build)'}`, isDevServer ? 'success' : 'warning');
-
-    // Log when DOM is interactive
-    if (document.readyState === 'loading') {
-      logDebug('⏳ DOM is still loading...', 'info');
-    } else {
-      logDebug(`✅ DOM already ${document.readyState}`, 'success');
-    }
-
-    // Import and initialize
-    logDebug('📦 Attempting to import SakuraCraft module...', 'info');
-    
+    // Import and initialize game
     import('./src/index.ts')
       .then(module => {
-        logDebug('✅ Module imported successfully!', 'success');
-        logDebug(`📦 Module exports: ${Object.keys(module).join(', ')}`, 'info');
-        
         const SakuraCraft = module.default || module.SakuraCraftGame;
         
         if (!SakuraCraft) {
-          logError('❌ SakuraCraft class not found in module!', new Error('No default export'));
+          console.error('SakuraCraft class not found in module!');
           return;
         }
         
-        logDebug('✅ SakuraCraft class found', 'success');
-        
         // Wait for DOM
         function initialize() {
-          logDebug('🎮 Starting game initialization...', 'info');
-          
           try {
-            // Check for button
             const playBtn = document.getElementById('playGame');
-            logDebug(`🔍 Play button: ${playBtn ? 'FOUND ✅' : 'NOT FOUND ❌'}`, playBtn ? 'success' : 'error');
             
             if (!playBtn) {
-              logError('Button #playGame not found in DOM!');
+              console.error('Button #playGame not found in DOM!');
               return;
             }
             
-            // Create game instance
-            logDebug('🎲 Creating game instance...', 'info');
+            // Create and initialize game
             const game = new SakuraCraft();
-            logDebug('✅ Game instance created', 'success');
-            logDebug(`🎮 Game object type: ${typeof game}`, 'info');
-            logDebug(`🎮 Game has init method: ${typeof game.init === 'function' ? 'YES ✅' : 'NO ❌'}`, typeof game.init === 'function' ? 'success' : 'error');
-            logDebug(`🎮 Game has start method: ${typeof game.start === 'function' ? 'YES ✅' : 'NO ❌'}`, typeof game.start === 'function' ? 'success' : 'error');
-            
-            // Initialize game
-            logDebug('⚙️ Calling game.init()...', 'info');
             game.init({
               trigger: '#playGame'
             });
-            logDebug('✅ game.init() completed', 'success');
             
-            // Check if game container was created
-            const gameContainer = document.getElementById('minecraftGame');
-            logDebug(`🎮 Game container: ${gameContainer ? 'CREATED ✅' : 'NOT CREATED ❌'}`, gameContainer ? 'success' : 'error');
-            
-            // Store globally
+            // Store globally for debugging
             window.sakuraCraft = game;
-            logDebug('✅ Game stored in window.sakuraCraft', 'success');
-            
-            // Verify button click handler
-            logDebug('🔍 Checking button click handler...', 'info');
-            const buttonHasListeners = playBtn.onclick !== null || playBtn.onclick !== undefined;
-            logDebug(`🎯 Button has click handler: ${buttonHasListeners ? 'MAYBE' : 'CHECKING...'}`, 'info');
-            
-            // Add our own click listener for debugging
-            playBtn.addEventListener('click', function(e) {
-              logDebug('🖱️ BUTTON CLICKED!', 'warning');
-              logDebug(`📍 Click event: ${e.type}`, 'info');
-              logDebug(`📍 Target: ${e.target.id}`, 'info');
-              
-              try {
-                logDebug('🚀 Attempting to start game...', 'info');
-                game.start();
-                logDebug('✅ game.start() called successfully', 'success');
-              } catch (error) {
-                logError('Failed to start game', error);
-              }
-            }, true); // Use capture phase to run first
-            
-            logDebug('✅ Debug click listener added', 'success');
-            logDebug('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'success');
-            logDebug('🎉 INITIALIZATION COMPLETE - READY TO PLAY!', 'success');
-            logDebug('👆 Click the "Play Game" button above to test', 'warning');
-            logDebug('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'success');
             
           } catch (error) {
-            logError('Failed during initialization', error);
+            console.error('Failed during initialization:', error);
           }
         }
         
         // Initialize based on DOM state
         if (document.readyState === 'loading') {
-          logDebug('⏳ Waiting for DOMContentLoaded...', 'info');
-          document.addEventListener('DOMContentLoaded', () => {
-            logDebug('✅ DOMContentLoaded fired', 'success');
-            initialize();
-          });
+          document.addEventListener('DOMContentLoaded', initialize);
         } else {
-          logDebug('✅ DOM already ready, initializing immediately', 'success');
           initialize();
         }
         
       })
       .catch(error => {
-        logError('Failed to import module', error);
-        logDebug('💡 TIP: Make sure you run "npm install" and "npm run dev"', 'warning');
+        console.error('Failed to import module:', error);
+        console.log('TIP: Make sure you run "npm install" and "npm run dev"');
       });
 
     // Catch any global errors
     window.addEventListener('error', (e) => {
-      logError(`Global error: ${e.message}`, e.error);
+      console.error('Global error:', e.message, e.error);
     });
 
     window.addEventListener('unhandledrejection', (e) => {
-      logError(`Unhandled promise rejection: ${e.reason}`, e.reason);
+      console.error('Unhandled promise rejection:', e.reason);
     });
+
 
   </script>
 </body>

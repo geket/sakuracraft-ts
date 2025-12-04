@@ -181,23 +181,25 @@
 
 /* Debug Console */
 .debug-console {
-  position: fixed;
+  position: absolute; /* Changed from fixed to stay in game container */
   top: 50px;
   left: 10px;
-  width: 400px;
-  max-height: 300px;
-  background: rgba(0, 0, 0, 0.9);
+  width: 450px;
+  max-height: 400px;
+  background: rgba(0, 0, 0, 0.95);
   border: 2px solid #4a4;
   border-radius: 4px;
   font-family: monospace;
   font-size: 12px;
   color: #0f0;
-  z-index: 200;
-  display: none;
+  z-index: 99999; /* Much higher than overlay (10000) to be on top of everything */
+  display: none; /* Hidden by default */
+  pointer-events: auto; /* Ensure it captures clicks */
+  flex-direction: column;
 }
 
 .debug-console.active {
-  display: block;
+  display: flex;
 }
 
 .debug-console-header {
@@ -206,16 +208,25 @@
   border-bottom: 1px solid #4a4;
   display: flex;
   justify-content: space-between;
+  cursor: move; /* Show draggable cursor */
+  user-select: none; /* Prevent text selection while dragging */
 }
 
 .debug-console-output {
-  height: 200px;
+  flex: 1;
+  min-height: 150px;
+  max-height: 280px;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 5px 10px;
+  pointer-events: auto; /* Allow scrolling */
+  cursor: text; /* Show text cursor */
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .debug-console-output div {
   margin: 2px 0;
+  word-wrap: break-word;
 }
 
 .debug-console-output .error { color: #f44; }
@@ -225,23 +236,89 @@
 
 .debug-console-input {
   display: flex;
-  border-top: 1px solid #4a4;
+  border-top: 2px solid #4a4;
+  background: rgba(0, 0, 0, 0.5);
+  pointer-events: auto; /* Allow clicking */
+  align-items: center;
+  padding: 2px;
 }
 
 .debug-console-input span {
-  padding: 5px;
-  color: #4a4;
+  padding: 5px 8px;
+  color: #4f4;
+  font-weight: bold;
+  pointer-events: none; /* Prompt symbol doesn't need to capture clicks */
 }
 
 .debug-console-input input {
   flex: 1;
-  background: transparent;
-  border: none;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid #4a4;
+  border-radius: 2px;
   color: #0f0;
   font-family: monospace;
-  font-size: 12px;
-  padding: 5px;
+  font-size: 13px;
+  padding: 6px 8px;
   outline: none;
+  pointer-events: auto; /* Allow clicking and typing */
+  cursor: text; /* Show text cursor */
+  margin-right: 5px;
+}
+
+.debug-console-input input:focus {
+  border-color: #6f6;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.debug-console-suggestions {
+  display: none;
+  position: relative; /* Ensure it's in flow */
+  background: rgba(0, 0, 0, 0.95);
+  border: 1px solid #4a4;
+  border-top: none;
+  max-height: 120px;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 12px;
+  pointer-events: auto; /* Allow clicking and scrolling */
+  z-index: 100000; /* Very high to be visible */
+  width: 100%; /* Fill container width */
+}
+
+.debug-console-suggestions.active {
+  display: block !important; /* Force display */
+}
+
+.debug-suggestion-item {
+  padding: 8px 12px; /* Increased padding */
+  color: #0f0;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  background: rgba(0, 100, 0, 0.2); /* More visible background */
+  margin: 2px 0; /* Add spacing */
+  border: 1px solid #4a4; /* Border for visibility */
+}
+
+.debug-suggestion-item:hover {
+  background: rgba(0, 255, 0, 0.1);
+  border-left-color: #4a4;
+}
+
+.debug-suggestion-item.selected {
+  background: rgba(0, 255, 0, 0.2);
+  border-left-color: #0f0;
+  color: #fff;
+}
+
+.debug-suggestion-item .suggestion-name {
+  color: #4f4;
+  font-weight: bold;
+}
+
+.debug-suggestion-item .suggestion-desc {
+  color: #888;
+  font-size: 11px;
+  margin-left: 8px;
 }
 
 /* Block tooltip */

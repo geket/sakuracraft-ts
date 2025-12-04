@@ -150,7 +150,7 @@ const gameTemplate = `
       <div class="hotbar-slot" data-block="brick"></div>
       <div class="hotbar-slot" data-item="water_bucket"></div>
       <div class="hotbar-slot" data-item="lava_bucket"></div>
-      <div class="hotbar-slot" data-item="ak47"></div>
+      <div class="hotbar-slot" data-item="ka69"></div>
       <div class="hotbar-slot" data-empty="true"></div>
     </div>
     <div class="pickup-notification" id="pickupNotification"></div>
@@ -207,7 +207,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             ctx: null,
             isActive: false,
             isPaused: false,
-            camera: { x: 0, y: 5, z: 0, rotX: 0, rotY: 0, sneaking: false, normalHeight: 1.6, sneakHeight: 1.2 },
+            camera: { x: 0, y: 5, z: 0, rotX: 0, rotY: 0, sneaking: false, normalHeight: 0.6, sneakHeight: 0.2 },
             velocity: { x: 0, y: 0, z: 0 },
             world: {},
             keys: {},
@@ -235,10 +235,47 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             cats: [],
             creepers: [],
             
+            // Dialogue and Quest System
+            dialogueOpen: false,
+            currentDialogueNPC: null,
+            journalOpen: false,
+            quests: [],  // Active and completed quests
+            questData: {
+                // Gunsmith questline
+                'meet_gunsmith': {
+                    id: 'meet_gunsmith',
+                    title: 'The Mysterious Wizard',
+                    description: 'A wandering gunsmith has appeared! Perhaps he knows something about the bird invasion?',
+                    objectives: ['Speak with the Gunsmith'],
+                    status: 'active',  // active, completed, failed
+                    stage: 0,  // 0 = not started, 1 = in progress, 2 = completed
+                    reward: null
+                },
+                'birds_origin': {
+                    id: 'birds_origin',
+                    title: 'Origin of the Feathered Menace',
+                    description: 'The Gunsmith believes there\'s a source to this madness. Find clues about where these birds are coming from.',
+                    objectives: [
+                        'Survive 3 bird waves',
+                        'Collect 50 bird drops',
+                        'Return to the Gunsmith'
+                    ],
+                    status: 'locked',  // Not started yet
+                    stage: 0,
+                    progress: { waves: 0, drops: 0, returned: false },
+                    reward: 'Ancient Map Fragment'
+                }
+            },
+            
+            // Gunsmith dialogue state
+            gunsmithDialogueStage: 0,  // Tracks conversation progress
+            gunsmithMetBefore: false,  // Has player met them?
+            
             // Items and inventory
             selectedSlot: 0,  // 0-8 for hotbar slots
             selectedBlock: 'grass',
-            selectedItem: null,  // For non-block items like ak47
+            selectedItem: null,  // For non-block items like ka69
+            hotbarTooltip: { visible: false, text: '', timestamp: 0 },  // Tooltip when scrolling hotbar
             
             // Inventory system
             inventory: {
@@ -251,7 +288,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     { type: 'block', id: 'brick', count: 64 },
                     { type: 'bucket', id: 'water_bucket', count: 5 },
                     { type: 'bucket', id: 'lava_bucket', count: 5 },
-                    { type: 'weapon', id: 'ak47', count: 1, durability: 100, maxDurability: 100 },
+                    { type: 'weapon', id: 'ka69', count: 1, durability: 100, maxDurability: 100 },
                     null  // Empty slot
                 ],
                 // Main inventory (27 slots - 3 rows of 9)
@@ -372,18 +409,18 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             },
             
             blockColors: {
-                grass: { top: '#7cba5f', side: '#8b6b4a', bottom: '#6b4423' },
-                dirt: { top: '#8b6b4a', side: '#8b6b4a', bottom: '#8b6b4a' },
+                grass: { top: '#7cba5f', side: '#8b6b4a', bottom: '#6b4423', useTexture: true, texture: 'grass' },
+                dirt: { top: '#8b6b4a', side: '#8b6b4a', bottom: '#8b6b4a', useTexture: true, texture: 'dirt' },
                 stone: { top: '#888888', side: '#777777', bottom: '#666666' },
-                wood: { top: '#a0825a', side: '#6b4423', bottom: '#6b4423' },
-                leaves: { top: 'rgba(50, 180, 50, 0.85)', side: 'rgba(40, 160, 40, 0.85)', bottom: 'rgba(30, 140, 30, 0.85)', transparent: true }, // Beautiful transparent leaves
-                appleLeaves: { top: 'rgba(50, 180, 50, 0.85)', side: 'rgba(40, 160, 40, 0.85)', bottom: 'rgba(30, 140, 30, 0.85)', transparent: true }, // Beautiful transparent apple leaves
+                wood: { top: '#a0825a', side: '#6b4423', bottom: '#6b4423', useTexture: true, texture: 'wood' },
+                leaves: { top: 'rgba(50, 180, 50, 0.85)', side: 'rgba(40, 160, 40, 0.85)', bottom: 'rgba(30, 140, 30, 0.85)', transparent: true, useTexture: true, texture: 'leaves' },
+                appleLeaves: { top: 'rgba(50, 180, 50, 0.85)', side: 'rgba(40, 160, 40, 0.85)', bottom: 'rgba(30, 140, 30, 0.85)', transparent: true, useTexture: true, texture: 'leaves' },
                 water: { top: 'rgba(74, 144, 217, 0.7)', side: 'rgba(58, 128, 201, 0.7)', bottom: 'rgba(42, 112, 185, 0.7)', transparent: true, animated: true },
                 sand: { top: '#e6d9a0', side: '#d9cc93', bottom: '#ccbf86' },
-                brick: { top: '#b35050', side: '#a04040', bottom: '#903030' },
+                brick: { top: '#b35050', side: '#a04040', bottom: '#903030', useTexture: true, texture: 'brick' },
                 lava: { top: '#ff6600', side: '#ff4400', bottom: '#cc3300', animated: true },
                 obsidian: { top: '#1a0a2e', side: '#140820', bottom: '#0a0410' },
-                cherryWood: { top: '#c4a07a', side: '#8b5a5a', bottom: '#8b5a5a' },
+                cherryWood: { top: '#c4a07a', side: '#8b5a5a', bottom: '#8b5a5a', useTexture: true, texture: 'wood' },
                 cherryLeaves: { top: 'rgba(255, 183, 197, 0.85)', side: 'rgba(255, 192, 203, 0.85)', bottom: 'rgba(255, 144, 165, 0.85)', transparent: true },
                 chest: { top: '#8b6914', side: '#a0780a', bottom: '#705010' },
                 ritualChest: { top: '#4a0080', side: '#6a00b0', bottom: '#300060' },
@@ -406,6 +443,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 redBrick: { top: '#b35050', side: '#a04040', bottom: '#903030' },
                 glowstone: { top: '#ffdd88', side: '#eebb66', bottom: '#ddaa44' }
             },
+            
+            // Texture cache for procedurally generated patterns
+            textureCache: {},
             
             // Item definitions with properties
             itemTypes: {
@@ -432,7 +472,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 water_bucket: { stackable: true, maxStack: 16 },
                 lava_bucket: { stackable: true, maxStack: 16 },
                 // Tools with durability
-                ak47: { stackable: false, maxStack: 1, durability: 100, maxDurability: 100, description: 'Shoots bullets at birds' },
+                ka69: { stackable: false, maxStack: 1, durability: 100, maxDurability: 100, description: 'Shoots bullets at birds' },
                 seeds: { stackable: true, maxStack: 64, description: 'Calms angry birds temporarily' },
                 berdger: { stackable: false, maxStack: 1, invincible: true, description: 'The legendary bird repellent - infinite uses!' },
                 // Ritual items (Omamori charm components)
@@ -459,7 +499,16 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 // Lightweight init - just get canvas reference
                 // World generation is deferred to start() to avoid lagging main site
                 this.canvas = document.getElementById('gameCanvas');
-                this.ctx = this.canvas.getContext('2d');
+                this.ctx = this.canvas.getContext('2d', {
+                    alpha: false,  // No transparency = better performance
+                    desynchronized: true  // Hint for performance
+                });
+                
+                // RENDERING QUALITY IMPROVEMENTS
+                // Enable anti-aliasing and high-quality rendering
+                this.ctx.imageSmoothingEnabled = true;
+                this.ctx.imageSmoothingQuality = 'high';
+                
                 this.initialized = false;  // Track if world has been generated
                 this.gameLoopId = null;    // Track animation frame for cleanup
                 this.lastFrameTime = 0;    // For FPS limiting
@@ -742,6 +791,16 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             },
             
             tryPlaceBuilding(x, z, buildingTypes) {
+                // Check world bounds - don't spawn near forcefield
+                if (this.worldBounds) {
+                    const buffer = 10; // Stay 10 blocks away from forcefield
+                    const bounds = this.worldBounds;
+                    if (x < bounds.minX + buffer || x > bounds.maxX - buffer ||
+                        z < bounds.minZ + buffer || z > bounds.maxZ - buffer) {
+                        return false; // Too close to world edge
+                    }
+                }
+                
                 const groundY = this.getHighestBlock(x, z);
                 if (!groundY || groundY < 7) return false;
                 
@@ -1171,8 +1230,10 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             
             // Get current eye height based on sneak state
             getEyeHeight() {
-                if (!this.camera.sneaking) return 1.6; // Default height
-                return 1.3; // Sneak height
+                if (!this.camera.sneaking) {
+                    return this.camera.normalHeight || 0.6; // Use camera property
+                }
+                return this.camera.sneakHeight || 0.2; // Use camera property
             },
             initBirds() {
                 this.birds = [];
@@ -1621,6 +1682,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 this.updateBlueBirds();
                 this.updateFish();
                 this.updateCats();
+                this.updateRepairNPC();
                 this.updateCreepers();
                 
                 // Friendly birds can drop items
@@ -1773,6 +1835,182 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         cat.meowTimer = 200 + Math.random() * 400;
                         // Add meow particle/effect if desired
                     }
+                }
+            },
+            
+            // Update wandering repair NPC
+            spawnRepairNPC() {
+                if (this.repairNPC) return; // Only one NPC at a time
+                
+                if (!this.worldBounds) return;
+                
+                // Spawn within safe bounds (10 blocks from forcefield to avoid edge)
+                const bounds = this.worldBounds;
+                const safeMinX = bounds.minX + 10;
+                const safeMaxX = bounds.maxX - 10;
+                const safeMinZ = bounds.minZ + 10;
+                const safeMaxZ = bounds.maxZ - 10;
+                
+                // Find valid spawn location with proper surface block
+                let spawnX = 0, spawnY = 0, spawnZ = 0;
+                let foundValidSpawn = false;
+                const maxAttempts = 100; // Try many times to find valid spot
+                
+                for (let attempts = 0; attempts < maxAttempts; attempts++) {
+                    // Try random position 15-25 blocks from player
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = 15 + Math.random() * 10;
+                    let testX = this.camera.x + Math.cos(angle) * dist;
+                    let testZ = this.camera.z + Math.sin(angle) * dist;
+                    
+                    // Clamp to safe bounds
+                    testX = Math.max(safeMinX, Math.min(safeMaxX, testX));
+                    testZ = Math.max(safeMinZ, Math.min(safeMaxZ, testZ));
+                    
+                    const bx = Math.floor(testX);
+                    const bz = Math.floor(testZ);
+                    
+                    // Search downward from Y=25 to find valid surface
+                    for (let y = 25; y >= 1; y--) {
+                        const blockType = this.getBlock(bx, y, bz);
+                        
+                        // MUST be grass or sand - nothing else is valid!
+                        if (blockType === 'grass' || blockType === 'sand') {
+                            // Check that there's air above (3 blocks clearance)
+                            const air1 = !this.getBlock(bx, y + 1, bz);
+                            const air2 = !this.getBlock(bx, y + 2, bz);
+                            const air3 = !this.getBlock(bx, y + 3, bz);
+                            
+                            if (air1 && air2 && air3) {
+                                // Found perfect spot! Spawn standing on this block
+                                spawnX = testX;
+                                spawnY = y + 1; // Stand on top of the grass/sand block
+                                spawnZ = testZ;
+                                foundValidSpawn = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (foundValidSpawn) break; // Success!
+                }
+                
+                if (!foundValidSpawn) {
+                    this.debugLog('⚠️ Failed to find valid spawn location for gunsmith after 100 attempts', 'warn');
+                    return;
+                }
+                
+                // Spawn at the validated position (not Y=30!)
+                this.repairNPC = {
+                    x: spawnX,
+                    y: spawnY, // Actual validated ground level + 1
+                    z: spawnZ,
+                    vx: 0,
+                    vy: 0,
+                    vz: 0,
+                    onGround: true, // Already on ground
+                    wanderTargetX: spawnX,
+                    wanderTargetZ: spawnZ,
+                    nextWanderTime: Date.now() + 3000,
+                    showPrompt: false,
+                    lastSpoke: 0
+                };
+                
+                const blockBelow = this.getBlock(Math.floor(spawnX), Math.floor(spawnY - 1), Math.floor(spawnZ));
+                this.debugLog('✨ A wandering gunsmith has appeared!', 'success');
+                this.debugLog(`Spawned at (${spawnX.toFixed(1)}, ${spawnY}, ${spawnZ.toFixed(1)}) on ${blockBelow}`, 'info');
+            },
+            
+            updateRepairNPC() {
+                if (!this.repairNPC) {
+                    // Spawn NPC occasionally (1% chance per update if none exists)
+                    // Spawns after wave 0 (immediately available)
+                    if (Math.random() < 0.01) {
+                        this.spawnRepairNPC();
+                    }
+                    return;
+                }
+                
+                const npc = this.repairNPC;
+                
+                // Keep NPC within safe bounds
+                if (this.worldBounds) {
+                    const bounds = this.worldBounds;
+                    const safeMinX = bounds.minX + 3;
+                    const safeMaxX = bounds.maxX - 3;
+                    const safeMinZ = bounds.minZ + 3;
+                    const safeMaxZ = bounds.maxZ - 3;
+                    
+                    // Clamp position
+                    npc.x = Math.max(safeMinX, Math.min(safeMaxX, npc.x));
+                    npc.z = Math.max(safeMinZ, Math.min(safeMaxZ, npc.z));
+                    
+                    // If wander target is outside bounds, pick a new one
+                    if (npc.wanderTargetX && (
+                        npc.wanderTargetX < safeMinX || npc.wanderTargetX > safeMaxX ||
+                        npc.wanderTargetZ < safeMinZ || npc.wanderTargetZ > safeMaxZ
+                    )) {
+                        npc.wanderTargetX = null; // Force new target
+                    }
+                }
+                
+                // Gravity
+                npc.vy -= 0.03;
+                npc.y += npc.vy;
+                
+                // Ground collision
+                const groundY = this.getGroundHeightBelow(npc.x, npc.z, npc.y);
+                if (npc.y <= groundY) {
+                    npc.y = groundY;
+                    npc.vy = 0;
+                    npc.onGround = true;
+                } else {
+                    npc.onGround = false;
+                }
+                
+                // Wandering behavior
+                if (Date.now() > npc.nextWanderTime || !npc.wanderTargetX) {
+                    // Pick new random target nearby
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = 5 + Math.random() * 10;
+                    npc.wanderTargetX = npc.x + Math.cos(angle) * dist;
+                    npc.wanderTargetZ = npc.z + Math.sin(angle) * dist;
+                    npc.nextWanderTime = Date.now() + (3000 + Math.random() * 4000);
+                }
+                
+                // Move toward wander target
+                if (npc.wanderTargetX !== null) {
+                    const dx = npc.wanderTargetX - npc.x;
+                    const dz = npc.wanderTargetZ - npc.z;
+                    const dist = Math.sqrt(dx * dx + dz * dz);
+                    
+                    if (dist > 0.5) {
+                        const speed = 0.04;
+                        npc.vx = (dx / dist) * speed;
+                        npc.vz = (dz / dist) * speed;
+                    } else {
+                        npc.vx = 0;
+                        npc.vz = 0;
+                        npc.wanderTargetX = null; // Reached target
+                    }
+                }
+                
+                // Apply movement
+                npc.x += npc.vx;
+                npc.z += npc.vz;
+                
+                // Check for player interaction distance
+                const distToPlayer = Math.sqrt(
+                    (npc.x - this.camera.x) ** 2 + 
+                    (npc.z - this.camera.z) ** 2
+                );
+                
+                npc.showPrompt = distToPlayer < 3;
+                
+                // Despawn if too far from player
+                if (distToPlayer > 60) {
+                    this.repairNPC = null;
+                    this.debugLog('The repair NPC wandered away...', 'info');
                 }
             },
             
@@ -2283,10 +2521,38 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             setupControls() {
                 // Keyboard controls
                 document.addEventListener('keydown', (e) => {
+                    // Debug console accessible even when paused/inactive
+                    if (e.key === '`' || e.key === '~') {
+                        e.preventDefault();
+                        this.toggleDebugConsole();
+                        return;
+                    }
+                    
                     if (!this.isActive) return;
+                    
+                    // Block all game input when debug console is open
+                    if (this.debugConsoleOpen) return;
+                    
+                    // CRITICAL: Prevent Ctrl+W from closing tab (standard for browser games)
+                    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'w') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // W key still registered for movement below
+                    }
                     
                     if (e.key === 'Escape') {
                         e.preventDefault();
+                        
+                        // Priority order: dialogue > journal > inventory > pause
+                        if (this.dialogueOpen) {
+                            this.closeDialogue();
+                            return;
+                        }
+                        
+                        if (this.journalOpen) {
+                            this.toggleJournal();
+                            return;
+                        }
                         
                         // If inventory is open, close it instead of pausing
                         if (this.inventoryOpen) {
@@ -2324,9 +2590,29 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         this.updateHotbar();
                     }
                     
-                    // Toggle inventory with E
+                    // E key - Check for NPC interaction first, then inventory
                     if (e.key.toLowerCase() === 'e') {
+                        // Check if near repair NPC
+                        if (this.repairNPC) {
+                            const distToNPC = Math.sqrt(
+                                (this.repairNPC.x - this.camera.x) ** 2 + 
+                                (this.repairNPC.z - this.camera.z) ** 2
+                            );
+                            
+                            if (distToNPC < 3) {
+                                // Player is near NPC - open dialogue
+                                this.openDialogue('gunsmith');
+                                return; // Don't open inventory
+                            }
+                        }
+                        
+                        // Normal inventory toggle
                         this.toggleInventory();
+                    }
+                    
+                    // J key - Open journal/quest log
+                    if (e.key.toLowerCase() === 'j' && !e.repeat) {
+                        this.toggleJournal();
                     }
                     
                     // Toggle sneak with C
@@ -2354,12 +2640,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         }
                     }
                     
-                    // Toggle debug console with backtick
-                    if (e.key === '`' || e.key === '~') {
-                        e.preventDefault();
-                        this.toggleDebugConsole();
-                        return;
-                    }
+
                     
                     // Jump is handled in update() for continuous jumping while holding space
                     
@@ -2392,9 +2673,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         document.getElementById('clickToPlay').classList.remove('active');
                     } else {
                         // Lock released (user pressed ESC or we exited)
-                        // If game is active and not paused and inventory is NOT open
+                        // If game is active and not paused and inventory/console/dialogue is NOT open
                         // and we didn't just close the inventory, pause
-                        if (this.isActive && !this.isPaused && !this.inventoryOpen && !this.justClosedInventory) {
+                        if (this.isActive && !this.isPaused && !this.inventoryOpen && !this.debugConsoleOpen && !this.dialogueOpen && !this.journalOpen && !this.justClosedInventory) {
                             this.pause();
                         }
                     }
@@ -2412,6 +2693,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 // Mouse button handler - works during pointer lock
                 this.canvas.addEventListener('mousedown', (e) => {
                     if (!this.isActive || this.isPaused) return;
+                    
+                    // Don't break/place blocks while debug console is open
+                    if (this.debugConsoleOpen) return;
                     
                     // If inventory is open, handle inventory clicks
                     if (this.inventoryOpen) {
@@ -2511,8 +2795,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         const heldSlot = this.inventory.hotbar[this.selectedSlot];
                         const heldId = heldSlot ? heldSlot.id : null;
                         
-                        if (this.selectedItem === 'ak47') {
-                            // Shoot the AK-47!
+                        if (this.selectedItem === 'ka69') {
+                            // Shoot the KA-69!
                             this.shootAK47();
                         } else if (heldId === 'berdger') {
                             // Shoot the Berdger! (infinite burgers)
@@ -2573,10 +2857,21 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                             // Place block
                             const hit = this.raycast();
                             if (hit && hit.place) {
+                                const placePos = hit.place;
+                                
+                                // CRITICAL: Check what's at the placement position
+                                const existingBlock = this.getBlock(placePos.x, placePos.y, placePos.z);
+                                
+                                // Only allow placement if position is air, water, or lava
+                                // NEVER replace solid blocks!
+                                if (existingBlock && existingBlock !== 'water' && existingBlock !== 'lava') {
+                                    // There's a solid block here - cannot place!
+                                    return;
+                                }
+                                
                                 // Don't place block inside player
                                 const px = Math.floor(this.camera.x);
                                 const pz = Math.floor(this.camera.z);
-                                const placePos = hit.place;
                                 
                                 // Check if placement would be inside player body
                                 const feetY = Math.floor(this.camera.y - this.playerEyeHeight);
@@ -2617,7 +2912,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 
                 // Scroll wheel - change hotbar selection
                 this.canvas.addEventListener('wheel', (e) => {
-                    if (!this.isActive || this.isPaused || this.inventoryOpen) return;
+                    if (!this.isActive || this.isPaused || this.inventoryOpen || this.debugConsoleOpen) return;
                     e.preventDefault();
                     
                     // Scroll down = next slot, scroll up = previous slot
@@ -2640,6 +2935,28 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                             this.selectedItem = slot.id;
                             this.selectedBlock = null;
                         }
+                        
+                        // Show hotbar tooltip
+                        const itemNames = {
+                            grass: 'Grass Block', dirt: 'Dirt', stone: 'Stone', wood: 'Wood',
+                            leaves: 'Leaves', water: 'Water', sand: 'Sand', brick: 'Brick',
+                            ka69: 'KA-69', water_bucket: 'Water Bucket', lava_bucket: 'Lava Bucket',
+                            seed: 'Seed', berdger: 'Berdger', cherry_wood: 'Cherry Wood',
+                            cherry_leaves: 'Cherry Leaves', glowstone: 'Glowstone', 
+                            ritual_item: 'Omamori Charm', lava: 'Lava', ice: 'Ice'
+                        };
+                        const itemId = slot.id || slot.type;
+                        const itemName = itemNames[itemId] || itemId;
+                        this.hotbarTooltip.text = itemName;
+                        this.hotbarTooltip.visible = true;
+                        this.hotbarTooltip.timestamp = Date.now();
+                        
+                        // Auto-hide after 1.5 seconds
+                        setTimeout(() => {
+                            if (Date.now() - this.hotbarTooltip.timestamp >= 1500) {
+                                this.hotbarTooltip.visible = false;
+                            }
+                        }, 1500);
                     } else {
                         this.selectedBlock = null;
                         this.selectedItem = null;
@@ -2650,7 +2967,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 // Also catch wheel events on the game container to prevent page scroll
                 const gameContainer = document.getElementById('minecraftGame');
                 gameContainer.addEventListener('wheel', (e) => {
-                    if (this.isActive) {
+                    // Allow scrolling when console or inventory is open
+                    if (this.isActive && !this.debugConsoleOpen && !this.inventoryOpen) {
                         e.preventDefault();
                         e.stopPropagation();
                     }
@@ -2658,7 +2976,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 
                 // Mouse movement - use movementX/Y deltas (works across screen boundaries)
                 document.addEventListener('mousemove', (e) => {
-                    if (!this.isActive || this.isPaused || !this.pointerLocked) return;
+                    if (!this.isActive || this.isPaused || !this.pointerLocked || this.debugConsoleOpen) return;
                     
                     // movementX/Y provide delta movement even across screen edges
                     this.camera.rotY -= e.movementX * 0.003;
@@ -2902,25 +3220,25 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 });
             },
             
-            // Shoot the AK-47
+            // Shoot the KA-69
             shootAK47() {
                 if (this.shootCooldown > 0) return;
                 
                 // Check durability and reduce it
                 const slot = this.inventory.hotbar[this.selectedSlot];
-                if (slot && slot.id === 'ak47') {
+                if (slot && slot.id === 'ka69') {
                     if (slot.durability !== undefined && slot.durability <= 0) {
-                        // Gun is broken!
+                        // Gun is broken - can't shoot!
+                        this.debugLog('KA-69 is broken! Find the Repair NPC to fix it (15 seeds)', 'warn');
                         return;
                     }
                     // Reduce durability
                     if (slot.durability !== undefined) {
                         slot.durability--;
                         if (slot.durability <= 0) {
-                            // Gun breaks
-                            this.inventory.hotbar[this.selectedSlot] = null;
-                            this.selectedItem = null;
-                            this.showPickupNotification('ak47', -1); // Show break notification
+                            // Gun breaks but stays in inventory
+                            slot.durability = 0; // Set to exactly 0
+                            this.debugLog('Your KA-69 broke! Find the Repair NPC (trade 15 seeds)', 'error');
                         }
                         this.updateHotbarDisplay();
                     }
@@ -3450,7 +3768,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             addToInventory(type, count) {
                 // Determine item category
                 let itemType = 'block';  // Default
-                if (type === 'ak47' || type === 'berdger') itemType = 'weapon';
+                if (type === 'ka69' || type === 'berdger') itemType = 'weapon';
                 if (type === 'water_bucket' || type === 'lava_bucket') itemType = 'bucket';
                 if (this.ritualItems && this.ritualItems.includes(type)) itemType = 'item';
                 if (type === 'seeds' || type === 'apple') itemType = 'item';
@@ -3531,7 +3849,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     const itemNames = {
                         grass: 'Grass Block', dirt: 'Dirt', stone: 'Stone', wood: 'Wood',
                         appleLeaves: 'Apple Leaves', leaves: 'Leaves', sand: 'Sand', brick: 'Brick',
-                        ak47: 'AK-47', water_bucket: 'Water Bucket', lava_bucket: 'Lava Bucket',
+                        ka69: 'KA-69', water_bucket: 'Water Bucket', lava_bucket: 'Lava Bucket',
                         obsidian: 'Obsidian', cherryWood: 'Cherry Wood', cherryLeaves: 'Cherry Leaves',
                         chest: 'Chest', seeds: 'Seeds', berdger: 'The Berdger', apple: 'Apple',
                         sakuraPetal: 'Cherry Petal', shimenawa: 'Sacred Rope', omamori: 'Charm',
@@ -3603,7 +3921,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                             ctx.ellipse(sx, sy, 3, 5, angle, 0, Math.PI * 2);
                             ctx.fill();
                         }
-                    } else if (type === 'ak47') {
+                    } else if (type === 'ka69') {
                         ctx.fillStyle = '#333';
                         ctx.fillRect(-size * 0.6, -size * 0.1, size * 1.2, size * 0.25);
                         ctx.fillStyle = '#8b4513';
@@ -3789,7 +4107,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                             ctx.ellipse(sx, sy, size * 0.2, size * 0.1, angle, 0, Math.PI * 2);
                             ctx.fill();
                         }
-                    } else if (type === 'ak47') {
+                    } else if (type === 'ka69') {
                         // Gun silhouette
                         ctx.fillStyle = '#333';
                         ctx.fillRect(-size * 0.8, -size * 0.15, size * 1.6, size * 0.3);
@@ -4259,42 +4577,519 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             debugConsoleOpen: false,
             debugNoclip: false,
             debugGodMode: false,
-            debugShowCoords: false,
+            // Debug settings
+            debugSettings: {
+                showFPS: false,
+                showCoords: false,
+                showDepthOrder: false,
+                showFaceNormals: false,
+                showBoundingBoxes: false,
+                showRaycastVector: false,
+                showProjectionTest: false,
+                wireframeOnly: false,
+                disableFaceCulling: false,
+                showOverdraw: false,
+                highlightZFighting: false,
+                renderAlgorithm: 'painter' as 'painter' | 'zbuffer' | 'bsp'
+            },
             debugFly: false,
             debugMoveSpeed: null,
             
             toggleDebugConsole() {
                 this.debugConsoleOpen = !this.debugConsoleOpen;
                 const consoleEl = document.getElementById('debugConsole');
+                const canvas = document.getElementById('renderCanvas') as HTMLCanvasElement;
+                
+                console.log('[Console] Toggle debug console, now open:', this.debugConsoleOpen);
+                console.log('[Console] isPaused:', this.isPaused);
+                console.log('[Console] isActive:', this.isActive);
+                
                 if (consoleEl) {
-                    consoleEl.classList.toggle('active', this.debugConsoleOpen);
                     if (this.debugConsoleOpen) {
-                        const input = document.getElementById('debugInput');
-                        if (input) {
-                            setTimeout(() => input.focus(), 50);
+                        // Open console
+                        consoleEl.classList.add('active');
+                        consoleEl.style.display = 'flex';
+                        
+                        // Exit pointer lock (unlock cursor)
+                        if (document.pointerLockElement) {
+                            document.exitPointerLock();
                         }
+                        this.pointerLocked = false;
+                        
+                        // Blur game canvas to lose focus
+                        if (canvas) {
+                            canvas.blur();
+                        }
+                        
+                        // Scroll output to bottom when opening (longer timeout for reliability)
+                        const output = document.getElementById('debugOutput');
+                        const input = document.getElementById('debugInput') as HTMLInputElement;
+                        
+                        // Log welcome message first
                         this.debugLog('Debug console opened. Type "help" for commands.', 'info');
+                        
+                        // Then scroll and focus with enough delay
+                        setTimeout(() => {
+                            if (output) {
+                                output.scrollTop = output.scrollHeight;
+                            }
+                            if (input) {
+                                input.focus();
+                                input.select(); // Select any text for immediate typing
+                            }
+                        }, 100); // Increased from 50ms to 100ms
+                        
+                    } else {
+                        // Close console
+                        consoleEl.classList.remove('active');
+                        consoleEl.style.display = 'none';
+                        
+                        // Hide suggestions
+                        const suggestions = document.getElementById('debugSuggestions');
+                        if (suggestions) {
+                            suggestions.classList.remove('active');
+                        }
+                        
+                        // Return focus to game canvas
+                        if (canvas) {
+                            canvas.focus();
+                            
+                            // Request pointer lock after a short delay
+                            setTimeout(() => {
+                                if (this.isActive && !this.isPaused) {
+                                    canvas.requestPointerLock();
+                                }
+                            }, 100);
+                        }
                     }
                 }
             },
             
             setupDebugConsole() {
-                const input = document.getElementById('debugInput') as HTMLInputElement;
-                if (input) {
-                    input.addEventListener('keydown', (e) => {
-                        if (e.key === 'Enter') {
-                            const cmd = input.value.trim();
-                            if (cmd) {
-                                this.executeDebugCommand(cmd);
-                                input.value = '';
+                console.log('[Autocomplete] Setting up debug console...');
+                
+                // Ensure console is hidden on initialization
+                const consoleEl = document.getElementById('debugConsole');
+                if (consoleEl) {
+                    consoleEl.classList.remove('active');
+                    consoleEl.style.display = 'none';
+                }
+                
+                // Store reference to this for setTimeout
+                const self = this;
+                
+                // Wait a bit to ensure HTML is fully loaded
+                setTimeout(function() {
+                    console.log('[Autocomplete] setTimeout fired, calling setupDebugConsoleActual...');
+                    self.setupDebugConsoleActual();
+                }, 100);
+            },
+            
+            setupDebugConsoleActual() {
+                console.log('[Autocomplete] Setting up autocomplete (delayed)...');
+                
+                // Verify critical elements exist
+                const debugConsole = document.getElementById('debugConsole');
+                const debugInput = document.getElementById('debugInput') as HTMLInputElement;
+                let debugSuggestions = document.getElementById('debugSuggestions');
+                
+                console.log('[Autocomplete] Element check:');
+                console.log('  - debugConsole:', debugConsole);
+                console.log('  - debugInput:', debugInput);
+                console.log('  - debugSuggestions:', debugSuggestions);
+                
+                if (!debugConsole || !debugInput) {
+                    console.error('[Autocomplete] ERROR: Required elements not found! Cannot proceed.');
+                    return;
+                }
+                
+                // ═══════════════════════════════════════════════════════════
+                // MAKE CONSOLE DRAGGABLE AND RESIZABLE
+                // ═══════════════════════════════════════════════════════════
+                const header = debugConsole.querySelector('.debug-console-header') as HTMLElement;
+                if (header) {
+                    // DRAGGING
+                    let isDragging = false;
+                    let currentX = 0;
+                    let currentY = 0;
+                    let initialX = 0;
+                    let initialY = 0;
+                    
+                    // Initialize offsets from current CSS position
+                    const computedStyle = window.getComputedStyle(debugConsole);
+                    let xOffset = parseInt(computedStyle.left) || 10;
+                    let yOffset = parseInt(computedStyle.top) || 50;
+                    
+                    header.addEventListener('mousedown', (e) => {
+                        // Don't drag if clicking on FPS counter or other interactive elements
+                        if ((e.target as HTMLElement).id === 'debugFps') return;
+                        
+                        initialX = e.clientX - xOffset;
+                        initialY = e.clientY - yOffset;
+                        isDragging = true;
+                        header.style.cursor = 'grabbing';
+                    });
+                    
+                    // RESIZING
+                    let isResizing = false;
+                    let resizeEdge = '';
+                    let startWidth = 0;
+                    let startHeight = 0;
+                    let startX = 0;
+                    let startY = 0;
+                    let startLeft = 0;
+                    let startTop = 0;
+                    
+                    const handleMouseMove = (e: MouseEvent) => {
+                        if (isResizing) {
+                            e.preventDefault();
+                            
+                            let newWidth = startWidth;
+                            let newHeight = startHeight;
+                            let newLeft = startLeft;
+                            let newTop = startTop;
+                            
+                            const dx = e.clientX - startX;
+                            const dy = e.clientY - startY;
+                            
+                            // Handle horizontal resizing
+                            if (resizeEdge.includes('e')) {
+                                newWidth = Math.max(300, startWidth + dx);
+                            } else if (resizeEdge.includes('w')) {
+                                newWidth = Math.max(300, startWidth - dx);
+                                newLeft = startLeft + (startWidth - newWidth);
+                            }
+                            
+                            // Handle vertical resizing
+                            if (resizeEdge.includes('s')) {
+                                newHeight = Math.max(200, startHeight + dy);
+                            } else if (resizeEdge.includes('n')) {
+                                newHeight = Math.max(200, startHeight - dy);
+                                newTop = startTop + (startHeight - newHeight);
+                            }
+                            
+                            debugConsole.style.width = `${newWidth}px`;
+                            debugConsole.style.maxHeight = `${newHeight}px`;
+                            debugConsole.style.left = `${newLeft}px`;
+                            debugConsole.style.top = `${newTop}px`;
+                            
+                            // Update drag offsets
+                            xOffset = newLeft;
+                            yOffset = newTop;
+                        } else if (isDragging) {
+                            e.preventDefault();
+                            currentX = e.clientX - initialX;
+                            currentY = e.clientY - initialY;
+                            xOffset = currentX;
+                            yOffset = currentY;
+                            
+                            // Keep console within viewport bounds
+                            const maxX = window.innerWidth - 100;
+                            const maxY = window.innerHeight - 50;
+                            const clampedX = Math.max(0, Math.min(currentX, maxX));
+                            const clampedY = Math.max(0, Math.min(currentY, maxY));
+                            
+                            debugConsole.style.left = `${clampedX}px`;
+                            debugConsole.style.top = `${clampedY}px`;
+                            
+                            xOffset = clampedX;
+                            yOffset = clampedY;
+                        } else {
+                            // Update cursor based on position
+                            const rect = debugConsole.getBoundingClientRect();
+                            const edge = 10; // pixels from edge to trigger resize
+                            
+                            const atTop = e.clientY - rect.top < edge;
+                            const atBottom = rect.bottom - e.clientY < edge;
+                            const atLeft = e.clientX - rect.left < edge;
+                            const atRight = rect.right - e.clientX < edge;
+                            
+                            if ((atTop && atLeft) || (atBottom && atRight)) {
+                                debugConsole.style.cursor = 'nwse-resize';
+                            } else if ((atTop && atRight) || (atBottom && atLeft)) {
+                                debugConsole.style.cursor = 'nesw-resize';
+                            } else if (atTop || atBottom) {
+                                debugConsole.style.cursor = 'ns-resize';
+                            } else if (atLeft || atRight) {
+                                debugConsole.style.cursor = 'ew-resize';
+                            } else {
+                                debugConsole.style.cursor = 'default';
                             }
                         }
-                        if (e.key === '`' || e.key === '~') {
+                    };
+                    
+                    debugConsole.addEventListener('mousedown', (e) => {
+                        // Don't resize if clicking header (that's for dragging)
+                        if ((e.target as HTMLElement).closest('.debug-console-header')) return;
+                        
+                        const rect = debugConsole.getBoundingClientRect();
+                        const edge = 10;
+                        
+                        const atTop = e.clientY - rect.top < edge;
+                        const atBottom = rect.bottom - e.clientY < edge;
+                        const atLeft = e.clientX - rect.left < edge;
+                        const atRight = rect.right - e.clientX < edge;
+                        
+                        if (atTop || atBottom || atLeft || atRight) {
+                            isResizing = true;
+                            resizeEdge = '';
+                            if (atTop) resizeEdge += 'n';
+                            if (atBottom) resizeEdge += 's';
+                            if (atLeft) resizeEdge += 'w';
+                            if (atRight) resizeEdge += 'e';
+                            
+                            startX = e.clientX;
+                            startY = e.clientY;
+                            startWidth = rect.width;
+                            startHeight = rect.height;
+                            startLeft = rect.left;
+                            startTop = rect.top;
+                            
+                            e.preventDefault();
+                        }
+                    });
+                    
+                    document.addEventListener('mousemove', handleMouseMove);
+                    
+                    document.addEventListener('mouseup', () => {
+                        if (isDragging) {
+                            isDragging = false;
+                            header.style.cursor = 'move';
+                        }
+                        if (isResizing) {
+                            isResizing = false;
+                            debugConsole.style.cursor = 'default';
+                        }
+                    });
+                    
+                    console.log('[Console] Made draggable and resizable!');
+                }
+                // ═══════════════════════════════════════════════════════════
+                // END DRAGGABLE & RESIZABLE
+                // ═══════════════════════════════════════════════════════════
+                
+                // If debugSuggestions doesn't exist, create it dynamically
+                if (!debugSuggestions) {
+                    console.log('[Autocomplete] debugSuggestions not found, creating dynamically...');
+                    debugSuggestions = document.createElement('div');
+                    debugSuggestions.id = 'debugSuggestions';
+                    debugSuggestions.className = 'debug-console-suggestions';
+                    
+                    // Insert after the input element's parent
+                    const inputContainer = debugInput.parentElement;
+                    if (inputContainer && inputContainer.nextSibling) {
+                        debugConsole.insertBefore(debugSuggestions, inputContainer.nextSibling);
+                    } else {
+                        debugConsole.appendChild(debugSuggestions);
+                    }
+                    console.log('[Autocomplete] Created debugSuggestions:', debugSuggestions);
+                }
+                
+                console.log('[Autocomplete] All elements ready, proceeding with setup...');
+                
+                // Available commands with descriptions
+                const commands = [
+                    { name: 'help', desc: 'Show all available commands' },
+                    { name: 'noclip', desc: 'Toggle flying through walls' },
+                    { name: 'god', desc: 'Toggle invincibility' },
+                    { name: 'coords', desc: 'Toggle coordinate display' },
+                    { name: 'tp', desc: 'Teleport to position or landmark' },
+                    { name: 'give', desc: 'Give yourself items' },
+                    { name: 'time', desc: 'Set game time' },
+                    { name: 'wave', desc: 'Set wave number' },
+                    { name: 'fly', desc: 'Toggle fly mode' },
+                    { name: 'speed', desc: 'Set movement speed' },
+                    { name: 'clear', desc: 'Clear console output' },
+                    { name: 'fps', desc: 'Toggle FPS display' },
+                    { name: 'render', desc: 'Rendering debug: wireframe|depthorder|normals|bounds|raycast|projection|culling|overdraw|all|none' },
+                    { name: 'algo', desc: 'Set render algorithm: painter|zbuffer|bsp' }
+                ];
+                
+                let selectedSuggestionIndex = -1;
+                let currentSuggestions: typeof commands = [];
+                
+                const input = document.getElementById('debugInput') as HTMLInputElement;
+                
+                const showSuggestions = (query: string) => {
+                    // Query element fresh each time to ensure it exists
+                    const suggestionsEl = document.getElementById('debugSuggestions');
+                    
+                    console.log('[Autocomplete] Query:', query);
+                    console.log('[Autocomplete] suggestionsEl:', suggestionsEl);
+                    
+                    if (!suggestionsEl || !query) {
+                        if (suggestionsEl) suggestionsEl.classList.remove('active');
+                        currentSuggestions = [];
+                        selectedSuggestionIndex = -1;
+                        return;
+                    }
+                    
+                    // Filter commands
+                    currentSuggestions = commands.filter(cmd => 
+                        cmd.name.toLowerCase().startsWith(query.toLowerCase())
+                    );
+                    
+                    console.log('[Autocomplete] Current suggestions:', currentSuggestions);
+                    
+                    if (currentSuggestions.length === 0) {
+                        suggestionsEl.classList.remove('active');
+                        return;
+                    }
+                    
+                    // Render suggestions
+                    suggestionsEl.innerHTML = '';
+                    currentSuggestions.forEach((cmd, index) => {
+                        const item = document.createElement('div');
+                        item.className = 'debug-suggestion-item';
+                        if (index === selectedSuggestionIndex) {
+                            item.classList.add('selected');
+                        }
+                        item.innerHTML = `<span class="suggestion-name">${cmd.name}</span><span class="suggestion-desc">${cmd.desc}</span>`;
+                        
+                        // Click to select
+                        item.addEventListener('click', () => {
+                            input.value = cmd.name + ' ';
+                            input.focus();
+                            suggestionsEl.classList.remove('active');
+                            currentSuggestions = [];
+                            selectedSuggestionIndex = -1;
+                        });
+                        
+                        suggestionsEl.appendChild(item);
+                    });
+                    
+                    console.log('[Autocomplete] Added active class, innerHTML:', suggestionsEl.innerHTML.substring(0, 100));
+                    suggestionsEl.classList.add('active');
+                };
+                
+                const selectSuggestion = (index: number) => {
+                    const suggestionsEl = document.getElementById('debugSuggestions');
+                    if (!suggestionsEl || currentSuggestions.length === 0) return;
+                    
+                    // Update selection
+                    selectedSuggestionIndex = index;
+                    
+                    // Update UI
+                    const items = suggestionsEl.querySelectorAll('.debug-suggestion-item');
+                    items.forEach((item, i) => {
+                        if (i === selectedSuggestionIndex) {
+                            item.classList.add('selected');
+                        } else {
+                            item.classList.remove('selected');
+                        }
+                    });
+                };
+                
+                const applySuggestion = () => {
+                    if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < currentSuggestions.length) {
+                        input.value = currentSuggestions[selectedSuggestionIndex].name + ' ';
+                        const suggestionsEl = document.getElementById('debugSuggestions');
+                        if (suggestionsEl) {
+                            suggestionsEl.classList.remove('active');
+                        }
+                        currentSuggestions = [];
+                        selectedSuggestionIndex = -1;
+                    }
+                };
+                
+                if (input) {
+                    console.log('[Autocomplete] Input element found, attaching listeners');
+                    console.log('[Autocomplete] Input element:', input);
+                    
+                    const testSuggestions = document.getElementById('debugSuggestions');
+                    console.log('[Autocomplete] Suggestions element on setup:', testSuggestions);
+                    
+                    // Input event for live suggestions
+                    input.addEventListener('input', (e) => {
+                        const query = input.value.trim().split(' ')[0];
+                        console.log('[Autocomplete] Input event fired, query:', query);
+                        showSuggestions(query);
+                    });
+                    
+                    input.addEventListener('keydown', (e) => {
+                        // Arrow key navigation
+                        if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            if (currentSuggestions.length > 0) {
+                                selectedSuggestionIndex = (selectedSuggestionIndex + 1) % currentSuggestions.length;
+                                selectSuggestion(selectedSuggestionIndex);
+                            }
+                        } else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            if (currentSuggestions.length > 0) {
+                                selectedSuggestionIndex = selectedSuggestionIndex <= 0 
+                                    ? currentSuggestions.length - 1 
+                                    : selectedSuggestionIndex - 1;
+                                selectSuggestion(selectedSuggestionIndex);
+                            }
+                        } else if (e.key === 'Tab') {
+                            // Tab to apply suggestion immediately
+                            e.preventDefault();
+                            if (currentSuggestions.length > 0) {
+                                // If nothing selected, select first
+                                if (selectedSuggestionIndex < 0) {
+                                    selectedSuggestionIndex = 0;
+                                }
+                                
+                                if (e.shiftKey) {
+                                    // Shift+Tab cycles backwards
+                                    selectedSuggestionIndex = selectedSuggestionIndex <= 0 
+                                        ? currentSuggestions.length - 1 
+                                        : selectedSuggestionIndex - 1;
+                                } else {
+                                    // Tab cycles forward
+                                    selectedSuggestionIndex = (selectedSuggestionIndex + 1) % currentSuggestions.length;
+                                }
+                                
+                                // Apply the selected suggestion
+                                input.value = currentSuggestions[selectedSuggestionIndex].name + ' ';
+                                const suggestionsEl = document.getElementById('debugSuggestions');
+                                if (suggestionsEl) {
+                                    suggestionsEl.classList.remove('active');
+                                }
+                                currentSuggestions = [];
+                                selectedSuggestionIndex = -1;
+                                input.focus();
+                            }
+                        } else if (e.key === 'Enter') {
+                            e.preventDefault();
+                            
+                            // If suggestion selected, apply it
+                            if (selectedSuggestionIndex >= 0) {
+                                applySuggestion();
+                            } else {
+                                // Execute command
+                                const cmd = input.value.trim();
+                                if (cmd) {
+                                    this.executeDebugCommand(cmd);
+                                    input.value = '';
+                                    const suggestionsEl = document.getElementById('debugSuggestions');
+                                    if (suggestionsEl) {
+                                        suggestionsEl.classList.remove('active');
+                                    }
+                                    currentSuggestions = [];
+                                    selectedSuggestionIndex = -1;
+                                }
+                            }
+                        } else if (e.key === '`' || e.key === '~') {
                             e.preventDefault();
                             this.toggleDebugConsole();
+                        } else if (e.key === 'Escape') {
+                            // Escape closes suggestions or console
+                            if (currentSuggestions.length > 0) {
+                                e.preventDefault();
+                                const suggestionsEl = document.getElementById('debugSuggestions');
+                                if (suggestionsEl) {
+                                    suggestionsEl.classList.remove('active');
+                                }
+                                currentSuggestions = [];
+                                selectedSuggestionIndex = -1;
+                            }
                         }
+                        
                         e.stopPropagation();
                     });
+                    
                     input.addEventListener('keyup', (e) => e.stopPropagation());
                 }
             },
@@ -4329,9 +5124,11 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         this.debugLog('  god - Toggle invincibility', 'info');
                         this.debugLog('  coords - Toggle coordinate display', 'info');
                         this.debugLog('  tp <x> <y> <z> - Teleport to position', 'info');
+                        this.debugLog('  tp <landmark> - Teleport to landmark', 'info');
+                        this.debugLog('    landmarks: ritual, gunsmith, spawn', 'info');
                         this.debugLog('  give <item> [count] - Give item', 'info');
                         this.debugLog('  spawn <mob> [count] - Spawn mobs', 'info');
-                        this.debugLog('    mobs: bird, fish, cat, creeper, bluebird', 'info');
+                        this.debugLog('    mobs: bird, fish, cat, creeper, bluebird, gunsmith', 'info');
                         this.debugLog('  time <ms> - Set bird event timer', 'info');
                         this.debugLog('  kill - Kill all mobs', 'info');
                         this.debugLog('  clear - Clear console', 'info');
@@ -4340,7 +5137,21 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         this.debugLog('  speed <value> - Set move speed', 'info');
                         this.debugLog('  ritual - Complete ritual instantly', 'info');
                         this.debugLog('  score <value> - Set score', 'info');
-                        this.debugLog('  temple - Teleport to ritual temple', 'info');
+                        this.debugLog('  algo <type> - Set render algorithm', 'info');
+                        this.debugLog('    painter|zbuffer|bsp', 'info');
+                        this.debugLog('', 'info');
+                        this.debugLog('Rendering Debug:', 'info');
+                        this.debugLog('  render <option> - Toggle render debug', 'info');
+                        this.debugLog('    wireframe - Wireframe-only mode', 'info');
+                        this.debugLog('    depthorder - Show depth sorting', 'info');
+                        this.debugLog('    normals - Show face normals', 'info');
+                        this.debugLog('    bounds - Show bounding boxes', 'info');
+                        this.debugLog('    raycast - Show raycast vector', 'info');
+                        this.debugLog('    projection - Test projection', 'info');
+                        this.debugLog('    culling - Disable face culling', 'info');
+                        this.debugLog('    overdraw - Show overdraw heatmap', 'info');
+                        this.debugLog('    all - Toggle all render debug', 'info');
+                        this.debugLog('    none - Turn all render debug OFF', 'info');
                         break;
                         
                     case 'noclip':
@@ -4354,8 +5165,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         break;
                         
                     case 'coords':
-                        this.debugShowCoords = !this.debugShowCoords;
-                        this.debugLog(`Coords display: ${this.debugShowCoords ? 'ON' : 'OFF'}`, 'success');
+                        this.debugSettings.showCoords = !this.debugSettings.showCoords;
+                        this.debugLog(`Coords display: ${this.debugSettings.showCoords ? 'ON' : 'OFF'}`, 'success');
                         break;
                         
                     case 'fly':
@@ -4364,21 +5175,60 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         break;
                         
                     case 'tp':
-                        if (args.length >= 3) {
-                            const x = parseFloat(args[0]);
-                            const y = parseFloat(args[1]);
-                            const z = parseFloat(args[2]);
-                            if (!isNaN(x) && !isNaN(y) && !isNaN(z)) {
-                                this.camera.x = x;
-                                this.camera.y = y;
-                                this.camera.z = z;
+                        if (args.length >= 1) {
+                            // Check if first argument is a landmark
+                            const landmark = args[0].toLowerCase();
+                            
+                            if (landmark === 'ritual' || landmark === 'temple') {
+                                // Teleport to ritual temple
+                                if (this.ritualTempleLocation) {
+                                    this.camera.x = this.ritualTempleLocation.x + 5;
+                                    this.camera.y = this.ritualTempleLocation.y + 3;
+                                    this.camera.z = this.ritualTempleLocation.z + 5;
+                                    this.velocity = { x: 0, y: 0, z: 0 };
+                                    this.debugLog('Teleported to Ritual Temple', 'success');
+                                } else {
+                                    this.debugLog('Ritual temple not found', 'error');
+                                }
+                            } else if (landmark === 'gunsmith' || landmark === 'npc' || landmark === 'repair') {
+                                // Teleport to repair NPC
+                                if (this.repairNPC) {
+                                    this.camera.x = this.repairNPC.x;
+                                    this.camera.y = this.repairNPC.y + 2;
+                                    this.camera.z = this.repairNPC.z;
+                                    this.velocity = { x: 0, y: 0, z: 0 };
+                                    this.debugLog('Teleported to Gunsmith NPC', 'success');
+                                } else {
+                                    this.debugLog('Gunsmith NPC not found (not spawned yet)', 'error');
+                                }
+                            } else if (landmark === 'spawn' || landmark === 'home') {
+                                // Teleport to spawn
+                                this.camera.x = 0;
+                                this.camera.y = 10;
+                                this.camera.z = 0;
                                 this.velocity = { x: 0, y: 0, z: 0 };
-                                this.debugLog(`Teleported to ${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}`, 'success');
+                                this.debugLog('Teleported to spawn', 'success');
+                            } else if (args.length >= 3) {
+                                // Numeric coordinates
+                                const x = parseFloat(args[0]);
+                                const y = parseFloat(args[1]);
+                                const z = parseFloat(args[2]);
+                                if (!isNaN(x) && !isNaN(y) && !isNaN(z)) {
+                                    this.camera.x = x;
+                                    this.camera.y = y;
+                                    this.camera.z = z;
+                                    this.velocity = { x: 0, y: 0, z: 0 };
+                                    this.debugLog(`Teleported to ${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}`, 'success');
+                                } else {
+                                    this.debugLog('Invalid coordinates', 'error');
+                                }
                             } else {
-                                this.debugLog('Invalid coordinates', 'error');
+                                this.debugLog('Usage: tp <x> <y> <z> OR tp <landmark>', 'error');
+                                this.debugLog('Landmarks: ritual, gunsmith, spawn', 'info');
                             }
                         } else {
-                            this.debugLog('Usage: tp <x> <y> <z>', 'error');
+                            this.debugLog('Usage: tp <x> <y> <z> OR tp <landmark>', 'error');
+                            this.debugLog('Landmarks: ritual, gunsmith, spawn', 'info');
                         }
                         break;
                         
@@ -4418,7 +5268,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     case 'spawn':
                         const mobType = args[0];
                         const spawnCount = args.length >= 2 ? parseInt(args[1]) : 1;
-                        const validMobs = ['bird', 'pest', 'fish', 'cat', 'creeper', 'bluebird'];
+                        const validMobs = ['bird', 'pest', 'fish', 'cat', 'creeper', 'bluebird', 'gunsmith'];
                         
                         if (mobType === 'bird' || mobType === 'pest') {
                             for (let i = 0; i < spawnCount; i++) this.spawnPestBird();
@@ -4435,6 +5285,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         } else if (mobType === 'bluebird') {
                             for (let i = 0; i < spawnCount; i++) this.spawnBlueBird();
                             this.debugLog(`Spawned ${spawnCount} blue bird(s)`, 'success');
+                        } else if (mobType === 'gunsmith' || mobType === 'npc' || mobType === 'repair') {
+                            this.spawnRepairNPC();
+                            this.debugLog('Spawned gunsmith NPC', 'success');
                         } else {
                             this.debugLog('Usage: spawn <mob> [count]', 'error');
                             this.debugLog('Mobs: ' + validMobs.join(', '), 'info');
@@ -4496,6 +5349,114 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                             this.updateSurvivalHUD();
                             this.debugLog(`Score set to ${this.survivalStats.score}`, 'success');
                         }
+                        break;
+                        
+                    // Rendering debug commands
+                    case 'render':
+                        const subcommand = args[0] ? args[0].toLowerCase() : '';
+                        
+                        if (!subcommand) {
+                            this.debugLog('Usage: render <option>', 'error');
+                            this.debugLog('Options: wireframe, depthorder, normals, bounds, raycast, projection, culling, overdraw, all, none', 'info');
+                            this.debugLog('Example: render wireframe', 'info');
+                            break;
+                        }
+                        
+                        switch (subcommand) {
+                            case 'wireframe':
+                                this.debugSettings.wireframeOnly = !this.debugSettings.wireframeOnly;
+                                this.debugLog(`Wireframe mode: ${this.debugSettings.wireframeOnly ? 'ON' : 'OFF'}`, 'success');
+                                break;
+                                
+                            case 'depthorder':
+                                this.debugSettings.showDepthOrder = !this.debugSettings.showDepthOrder;
+                                this.debugLog(`Depth order display: ${this.debugSettings.showDepthOrder ? 'ON' : 'OFF'}`, 'success');
+                                break;
+                                
+                            case 'normals':
+                                this.debugSettings.showFaceNormals = !this.debugSettings.showFaceNormals;
+                                this.debugLog(`Face normals: ${this.debugSettings.showFaceNormals ? 'ON' : 'OFF'}`, 'success');
+                                break;
+                                
+                            case 'bounds':
+                                this.debugSettings.showBoundingBoxes = !this.debugSettings.showBoundingBoxes;
+                                this.debugLog(`Bounding boxes: ${this.debugSettings.showBoundingBoxes ? 'ON' : 'OFF'}`, 'success');
+                                break;
+                                
+                            case 'raycast':
+                                this.debugSettings.showRaycastVector = !this.debugSettings.showRaycastVector;
+                                this.debugLog(`Raycast vector: ${this.debugSettings.showRaycastVector ? 'ON' : 'OFF'}`, 'success');
+                                break;
+                                
+                            case 'projection':
+                                this.debugSettings.showProjectionTest = !this.debugSettings.showProjectionTest;
+                                this.debugLog(`Projection test: ${this.debugSettings.showProjectionTest ? 'ON' : 'OFF'}`, 'success');
+                                this.debugLog('A test point will be shown at camera center', 'info');
+                                break;
+                                
+                            case 'culling':
+                                this.debugSettings.disableFaceCulling = !this.debugSettings.disableFaceCulling;
+                                this.debugLog(`Face culling: ${this.debugSettings.disableFaceCulling ? 'DISABLED' : 'ENABLED'}`, this.debugSettings.disableFaceCulling ? 'warn' : 'success');
+                                break;
+                                
+                            case 'overdraw':
+                                this.debugSettings.showOverdraw = !this.debugSettings.showOverdraw;
+                                this.debugLog(`Overdraw visualization: ${this.debugSettings.showOverdraw ? 'ON' : 'OFF'}`, 'success');
+                                break;
+                                
+                            case 'all':
+                                const newState = !this.debugSettings.wireframeOnly;
+                                this.debugSettings.wireframeOnly = newState;
+                                this.debugSettings.showDepthOrder = newState;
+                                this.debugSettings.showFaceNormals = newState;
+                                this.debugSettings.showBoundingBoxes = newState;
+                                this.debugSettings.showRaycastVector = newState;
+                                this.debugSettings.showProjectionTest = newState;
+                                this.debugSettings.showOverdraw = newState;
+                                this.debugLog(`All render debug: ${newState ? 'ON' : 'OFF'}`, newState ? 'success' : 'warn');
+                                break;
+                                
+                            case 'none':
+                                // Turn everything off
+                                this.debugSettings.wireframeOnly = false;
+                                this.debugSettings.showDepthOrder = false;
+                                this.debugSettings.showFaceNormals = false;
+                                this.debugSettings.showBoundingBoxes = false;
+                                this.debugSettings.showRaycastVector = false;
+                                this.debugSettings.showProjectionTest = false;
+                                this.debugSettings.showOverdraw = false;
+                                this.debugSettings.disableFaceCulling = false;
+                                this.debugLog('All render debug: OFF', 'warn');
+                                break;
+                                
+                            default:
+                                this.debugLog(`Unknown render option: ${subcommand}`, 'error');
+                                this.debugLog('Options: wireframe, depthorder, normals, bounds, raycast, projection, culling, overdraw, all, none', 'info');
+                        }
+                        break;
+                        
+                    case 'algo':
+                        // Top-level algorithm selection command
+                        const algoType = args[0] ? args[0].toLowerCase() : '';
+                        if (!algoType || !['painter', 'zbuffer', 'bsp'].includes(algoType)) {
+                            this.debugLog('Usage: algo <type>', 'error');
+                            this.debugLog('Types: painter, zbuffer, bsp', 'info');
+                            this.debugLog('  painter  - Classic painter\'s algorithm (sort back-to-front)', 'info');
+                            this.debugLog('  zbuffer  - Z-buffer simulation (sub-pixel depth precision)', 'info');
+                            this.debugLog('  bsp      - Binary Space Partitioning (spatial tree)', 'info');
+                            this.debugLog(`Current: ${this.debugSettings.renderAlgorithm}`, 'info');
+                            break;
+                        }
+                        this.debugSettings.renderAlgorithm = algoType as 'painter' | 'zbuffer' | 'bsp';
+                        this.debugLog(`Render algorithm: ${algoType.toUpperCase()}`, 'success');
+                        
+                        // Show algorithm description
+                        const descriptions = {
+                            painter: 'Sorts blocks and faces by distance, renders back-to-front',
+                            zbuffer: 'Enhanced depth sorting with sub-pixel precision',
+                            bsp: 'Spatial tree traversal for optimal rendering order'
+                        };
+                        this.debugLog(descriptions[algoType], 'info');
                         break;
                         
                     default:
@@ -4580,7 +5541,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 const itemNames = {
                     grass: 'Grass Block', dirt: 'Dirt', stone: 'Stone', wood: 'Wood',
                     appleLeaves: 'Apple Leaves', leaves: 'Leaves', sand: 'Sand', brick: 'Brick',
-                    ak47: 'AK-47', water_bucket: 'Water Bucket', lava_bucket: 'Lava Bucket',
+                    ka69: 'KA-69', water_bucket: 'Water Bucket', lava_bucket: 'Lava Bucket',
                     obsidian: 'Obsidian', cherryWood: 'Cherry Wood', cherryLeaves: 'Cherry Leaves',
                     chest: 'Chest', seeds: 'Seeds', berdger: 'The Berdger', apple: 'Apple',
                     sakuraPetal: 'Cherry Petal', shimenawa: 'Sacred Rope', omamori: 'Charm',
@@ -4785,6 +5746,429 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 }
             },
             
+            // Attempt to repair KA-69 with NPC (costs 15 seeds)
+            attemptRepair() {
+                // Check if player has seeds
+                const seedCount = this.getItemCount('seed');
+                const REPAIR_COST = 15;
+                
+                if (seedCount < REPAIR_COST) {
+                    this.debugLog(`Repair NPC: "Need ${REPAIR_COST} seeds! You only have ${seedCount}."`, 'warn');
+                    return;
+                }
+                
+                // Find broken KA-69 in inventory
+                let repairedSomething = false;
+                
+                // Check hotbar
+                for (let i = 0; i < this.inventory.hotbar.length; i++) {
+                    const slot = this.inventory.hotbar[i];
+                    if (slot && slot.id === 'ka69' && slot.durability !== undefined && slot.durability === 0) {
+                        // Repair it!
+                        slot.durability = slot.maxDurability || 100;
+                        repairedSomething = true;
+                        this.debugLog('✨ Repair NPC: "Your KA-69 is good as new!"', 'success');
+                        break;
+                    }
+                }
+                
+                // Check main inventory if not found in hotbar
+                if (!repairedSomething) {
+                    for (let i = 0; i < this.inventory.main.length; i++) {
+                        const slot = this.inventory.main[i];
+                        if (slot && slot.id === 'ka69' && slot.durability !== undefined && slot.durability === 0) {
+                            // Repair it!
+                            slot.durability = slot.maxDurability || 100;
+                            repairedSomething = true;
+                            this.debugLog('✨ Repair NPC: "Your KA-69 is good as new!"', 'success');
+                            break;
+                        }
+                    }
+                }
+                
+                if (repairedSomething) {
+                    // Remove seeds
+                    this.removeItemFromInventory('seed', REPAIR_COST);
+                    this.updateHotbarDisplay();
+                    
+                    // Make NPC speak
+                    if (this.repairNPC) {
+                        this.repairNPC.lastSpoke = Date.now();
+                    }
+                } else {
+                    this.debugLog('Repair NPC: "You don\'t have a broken KA-69 to fix!"', 'warn');
+                }
+            },
+            
+            // Open dialogue with NPC
+            openDialogue(npcType) {
+                if (npcType === 'gunsmith') {
+                    this.dialogueOpen = true;
+                    this.currentDialogueNPC = 'gunsmith';
+                    this.isPaused = true;
+                    
+                    // Release pointer lock so player can click dialogue options
+                    if (document.pointerLockElement) {
+                        document.exitPointerLock();
+                    }
+                    
+                    // Mark as met
+                    if (!this.gunsmithMetBefore) {
+                        this.gunsmithMetBefore = true;
+                        // Activate first quest
+                        if (this.questData['meet_gunsmith']) {
+                            this.questData['meet_gunsmith'].stage = 1;
+                            this.quests.push(this.questData['meet_gunsmith']);
+                        }
+                    }
+                    
+                    this.renderDialogue();
+                }
+            },
+            
+            // Close dialogue
+            closeDialogue() {
+                this.dialogueOpen = false;
+                this.currentDialogueNPC = null;
+                this.isPaused = false;
+                
+                const dialogue = document.getElementById('dialogueScreen');
+                if (dialogue) dialogue.style.display = 'none';
+                
+                // Don't auto-request pointer lock - browser blocks it for security
+                // Show click-to-play overlay instead
+                const clickToPlay = document.getElementById('clickToPlay');
+                if (clickToPlay) {
+                    clickToPlay.classList.add('active');
+                }
+            },
+            
+            // Toggle journal
+            toggleJournal() {
+                this.journalOpen = !this.journalOpen;
+                
+                if (this.journalOpen) {
+                    this.isPaused = true;
+                    
+                    // Release pointer lock
+                    if (document.pointerLockElement) {
+                        document.exitPointerLock();
+                    }
+                    
+                    this.renderJournal();
+                } else {
+                    this.isPaused = false;
+                    const journal = document.getElementById('journalScreen');
+                    if (journal) journal.style.display = 'none';
+                    
+                    // Show click-to-play overlay instead of auto-requesting pointer lock
+                    const clickToPlay = document.getElementById('clickToPlay');
+                    if (clickToPlay) {
+                        clickToPlay.classList.add('active');
+                    }
+                }
+            },
+            
+            // Render dialogue UI
+            renderDialogue() {
+                let dialogueHTML = document.getElementById('dialogueScreen');
+                if (!dialogueHTML) {
+                    // Create dialogue screen element
+                    dialogueHTML = document.createElement('div');
+                    dialogueHTML.id = 'dialogueScreen';
+                    dialogueHTML.style.cssText = `
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        width: 600px;
+                        max-height: 500px;
+                        background: rgba(30, 20, 40, 0.95);
+                        border: 3px solid #8b7355;
+                        border-radius: 8px;
+                        padding: 25px;
+                        color: #fff;
+                        font-family: 'Courier New', monospace;
+                        z-index: 9999;
+                        overflow-y: auto;
+                        box-shadow: 0 0 30px rgba(0,0,0,0.7);
+                    `;
+                    document.body.appendChild(dialogueHTML);
+                }
+                
+                dialogueHTML.style.display = 'block';
+                
+                // Gunsmith dialogue
+                if (this.currentDialogueNPC === 'gunsmith') {
+                    const stage = this.gunsmithDialogueStage;
+                    let npcName = '🧙 Gunsmith Wizard';
+                    let dialogue = '';
+                    let options = '';
+                    
+                    // First meeting
+                    if (!this.gunsmithMetBefore || stage === 0) {
+                        dialogue = `
+                            <div style="margin-bottom: 20px;">
+                                <h2 style="color: #ffd700; margin: 0 0 15px 0;">${npcName}</h2>
+                                <p style="line-height: 1.6; font-size: 14px;">
+                                    <em>*The wizard adjusts his pointed hat and grins*</em>
+                                </p>
+                                <p style="line-height: 1.6; font-size: 14px;">
+                                    "Ah! A fellow survivor of the Great Feathering! Welcome, welcome!"
+                                </p>
+                                <p style="line-height: 1.6; font-size: 14px;">
+                                    "You know, I've been debugging—er, I mean, <em>studying</em>—these birds for quite some time. 
+                                    The patterns are fascinating! Aggressive spawning rates, coordinated attacks, 
+                                    suspiciously optimized pathfinding..."
+                                </p>
+                                <p style="line-height: 1.6; font-size: 14px;">
+                                    <em>*He pulls out a worn notebook covered in sketches and calculations*</em>
+                                </p>
+                                <p style="line-height: 1.6; font-size: 14px;">
+                                    "Between you and me, I think there's a <strong>source</strong> to all this madness. 
+                                    Something—or someone—is spawning these creatures at an unnaturally high rate. 
+                                    It's almost as if someone set the spawn chance to 1.0 instead of 0.001!"
+                                </p>
+                                <p style="line-height: 1.6; font-size: 14px;">
+                                    <em>*He chuckles nervously*</em>
+                                </p>
+                                <p style="line-height: 1.6; font-size: 14px;">
+                                    "But where are my manners! I'm a traveling gunsmith—I can repair that KA-69 of yours. 
+                                    And hey, if you're interested in actually <em>solving</em> this bird problem once and for all, 
+                                    I could use someone with your... survival skills."
+                                </p>
+                            </div>
+                        `;
+                    } else {
+                        // Subsequent meetings
+                        dialogue = `
+                            <div style="margin-bottom: 20px;">
+                                <h2 style="color: #ffd700; margin: 0 0 15px 0;">${npcName}</h2>
+                                <p style="line-height: 1.6; font-size: 14px;">
+                                    "Ah, back again! How's the bird-battling going?"
+                                </p>
+                                <p style="line-height: 1.6; font-size: 14px;">
+                                    <em>*He peers at you with curious eyes*</em>
+                                </p>
+                                <p style="line-height: 1.6; font-size: 14px;">
+                                    "I'm still working on tracking down the source of all these birds. 
+                                    The more data we gather, the closer we get to the truth!"
+                                </p>
+                            </div>
+                        `;
+                    }
+                    
+                    // Dialogue options
+                    options = `
+                        <div style="border-top: 2px solid #8b7355; padding-top: 20px; margin-top: 20px;">
+                            <div onclick="window.game.handleDialogueChoice('speak')" 
+                                 style="padding: 12px; margin: 8px 0; background: rgba(139, 115, 85, 0.3); 
+                                        border: 2px solid #8b7355; border-radius: 4px; cursor: pointer; 
+                                        transition: all 0.2s;"
+                                 onmouseover="this.style.background='rgba(139, 115, 85, 0.5)'"
+                                 onmouseout="this.style.background='rgba(139, 115, 85, 0.3)'">
+                                💬 <strong>Speak</strong> - "Tell me more about your quest"
+                            </div>
+                            
+                            <div onclick="window.game.handleDialogueChoice('repair')" 
+                                 style="padding: 12px; margin: 8px 0; background: rgba(65, 105, 225, 0.3); 
+                                        border: 2px solid #4169e1; border-radius: 4px; cursor: pointer;
+                                        transition: all 0.2s;"
+                                 onmouseover="this.style.background='rgba(65, 105, 225, 0.5)'"
+                                 onmouseout="this.style.background='rgba(65, 105, 225, 0.3)'">
+                                🔧 <strong>Repair KA-69</strong> - Cost: 15 seeds
+                            </div>
+                            
+                            <div onclick="window.game.handleDialogueChoice('exit')" 
+                                 style="padding: 12px; margin: 8px 0; background: rgba(139, 0, 0, 0.3); 
+                                        border: 2px solid #8b0000; border-radius: 4px; cursor: pointer;
+                                        transition: all 0.2s;"
+                                 onmouseover="this.style.background='rgba(139, 0, 0, 0.5)'"
+                                 onmouseout="this.style.background='rgba(139, 0, 0, 0.3)'">
+                                🚪 <strong>[Exit Dialogue]</strong>
+                            </div>
+                        </div>
+                    `;
+                    
+                    dialogueHTML.innerHTML = dialogue + options;
+                }
+            },
+            
+            // Handle dialogue choice
+            handleDialogueChoice(choice) {
+                if (choice === 'speak') {
+                    // Quest dialogue
+                    this.showQuestDialogue();
+                } else if (choice === 'repair') {
+                    // Repair function
+                    this.attemptRepair();
+                    // Update dialogue to show result
+                    setTimeout(() => {
+                        if (this.dialogueOpen) {
+                            this.renderDialogue();
+                        }
+                    }, 100);
+                } else if (choice === 'exit') {
+                    this.closeDialogue();
+                }
+            },
+            
+            // Show quest-related dialogue
+            showQuestDialogue() {
+                const dialogueHTML = document.getElementById('dialogueScreen');
+                if (!dialogueHTML) return;
+                
+                let questDialogue = `
+                    <div style="margin-bottom: 20px;">
+                        <h2 style="color: #ffd700; margin: 0 0 15px 0;">🧙 Gunsmith Wizard</h2>
+                        <p style="line-height: 1.6; font-size: 14px;">
+                            "Excellent! I knew you had that collaborative spirit!"
+                        </p>
+                        <p style="line-height: 1.6; font-size: 14px;">
+                            <em>*He spreads out a map with various markings*</em>
+                        </p>
+                        <p style="line-height: 1.6; font-size: 14px;">
+                            "Here's what I'm thinking: These birds aren't just randomly spawning. 
+                            There's <em>intelligence</em> behind this. Maybe a cursed artifact, maybe a rogue wizard, 
+                            maybe even a bug in the fabric of reality itself—I've seen weirder things!"
+                        </p>
+                        <p style="line-height: 1.6; font-size: 14px;">
+                            "What I need from you is <strong>data</strong>. Real field data. Survive some waves, 
+                            gather drops from defeated birds, and come back to me. I'll analyze the samples and 
+                            we'll piece together where they're coming from."
+                        </p>
+                        <p style="line-height: 1.6; font-size: 14px; color: #ffd700;">
+                            <strong>QUEST UNLOCKED: Origin of the Feathered Menace</strong>
+                        </p>
+                        <p style="line-height: 1.6; font-size: 14px;">
+                            📜 Survive 3 bird waves<br>
+                            📦 Collect 50 bird drops<br>
+                            🔄 Return to the Gunsmith
+                        </p>
+                        <p style="line-height: 1.6; font-size: 14px;">
+                            "Press <strong>J</strong> to open your journal and track your progress. Good luck out there!"
+                        </p>
+                    </div>
+                    
+                    <div style="border-top: 2px solid #8b7355; padding-top: 20px; margin-top: 20px;">
+                        <div onclick="window.game.handleDialogueChoice('exit')" 
+                             style="padding: 12px; margin: 8px 0; background: rgba(65, 105, 225, 0.3); 
+                                    border: 2px solid #4169e1; border-radius: 4px; cursor: pointer;
+                                    transition: all 0.2s;"
+                             onmouseover="this.style.background='rgba(65, 105, 225, 0.5)'"
+                             onmouseout="this.style.background='rgba(65, 105, 225, 0.3)'">
+                            ✓ <strong>Accept Quest</strong> - "Let's do this!"
+                        </div>
+                    </div>
+                `;
+                
+                dialogueHTML.innerHTML = questDialogue;
+                
+                // Unlock the quest
+                if (this.questData['birds_origin'].status === 'locked') {
+                    this.questData['birds_origin'].status = 'active';
+                    this.questData['birds_origin'].stage = 1;
+                    this.quests.push(this.questData['birds_origin']);
+                }
+                
+                // Mark first quest as completed
+                if (this.questData['meet_gunsmith']) {
+                    this.questData['meet_gunsmith'].stage = 2;
+                    this.questData['meet_gunsmith'].status = 'completed';
+                }
+            },
+            
+            // Render journal UI
+            renderJournal() {
+                let journalHTML = document.getElementById('journalScreen');
+                if (!journalHTML) {
+                    // Create journal screen element
+                    journalHTML = document.createElement('div');
+                    journalHTML.id = 'journalScreen';
+                    journalHTML.style.cssText = `
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        width: 700px;
+                        max-height: 600px;
+                        background: rgba(40, 30, 20, 0.95);
+                        border: 4px solid #8b7355;
+                        border-radius: 8px;
+                        padding: 30px;
+                        color: #fff;
+                        font-family: 'Courier New', monospace;
+                        z-index: 9999;
+                        overflow-y: auto;
+                        box-shadow: 0 0 40px rgba(0,0,0,0.8);
+                    `;
+                    document.body.appendChild(journalHTML);
+                }
+                
+                journalHTML.style.display = 'block';
+                
+                let html = `
+                    <div style="border-bottom: 3px solid #8b7355; padding-bottom: 20px; margin-bottom: 20px;">
+                        <h1 style="color: #ffd700; margin: 0; font-size: 28px;">📖 Quest Journal</h1>
+                        <p style="color: #aaa; margin: 5px 0 0 0; font-size: 12px;">Press J to close</p>
+                    </div>
+                `;
+                
+                // Active quests
+                const activeQuests = this.quests.filter(q => q.status === 'active');
+                if (activeQuests.length > 0) {
+                    html += `<h2 style="color: #4169e1; margin: 20px 0 10px 0;">Active Quests</h2>`;
+                    activeQuests.forEach(quest => {
+                        html += `
+                            <div style="background: rgba(65, 105, 225, 0.2); border: 2px solid #4169e1; 
+                                        border-radius: 6px; padding: 15px; margin: 10px 0;">
+                                <h3 style="color: #ffd700; margin: 0 0 10px 0;">${quest.title}</h3>
+                                <p style="line-height: 1.5; margin: 8px 0;">${quest.description}</p>
+                                <div style="margin-top: 12px;">
+                                    <strong style="color: #4169e1;">Objectives:</strong>
+                                    <ul style="margin: 5px 0; padding-left: 20px;">
+                                        ${quest.objectives.map(obj => `<li>${obj}</li>`).join('')}
+                                    </ul>
+                                </div>
+                                ${quest.progress ? `
+                                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #4169e1;">
+                                        <strong>Progress:</strong> 
+                                        Waves: ${quest.progress.waves}/3 | 
+                                        Drops: ${quest.progress.drops}/50
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    });
+                }
+                
+                // Completed quests
+                const completedQuests = this.quests.filter(q => q.status === 'completed');
+                if (completedQuests.length > 0) {
+                    html += `<h2 style="color: #228b22; margin: 30px 0 10px 0;">Completed Quests</h2>`;
+                    completedQuests.forEach(quest => {
+                        html += `
+                            <div style="background: rgba(34, 139, 34, 0.2); border: 2px solid #228b22; 
+                                        border-radius: 6px; padding: 15px; margin: 10px 0; opacity: 0.7;">
+                                <h3 style="color: #90ee90; margin: 0 0 10px 0;">✓ ${quest.title}</h3>
+                                <p style="line-height: 1.5; margin: 8px 0; font-size: 13px;">${quest.description}</p>
+                            </div>
+                        `;
+                    });
+                }
+                
+                if (this.quests.length === 0) {
+                    html += `
+                        <div style="text-align: center; padding: 40px; color: #888;">
+                            <p style="font-size: 16px;">No quests yet...</p>
+                            <p style="font-size: 13px;">Talk to NPCs to discover new quests!</p>
+                        </div>
+                    `;
+                }
+                
+                journalHTML.innerHTML = html;
+            },
+            
             // Render inventory UI
             renderInventory() {
                 const invScreen = document.getElementById('inventoryScreen');
@@ -4797,7 +6181,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     const names = {
                         grass: 'Grass Block', dirt: 'Dirt', stone: 'Stone', wood: 'Wood',
                         leaves: 'Leaves', water: 'Water', sand: 'Sand', brick: 'Brick',
-                        ak47: 'AK-47', water_bucket: 'Water Bucket', lava_bucket: 'Lava Bucket',
+                        ka69: 'KA-69', water_bucket: 'Water Bucket', lava_bucket: 'Lava Bucket',
                         lava: 'Lava', obsidian: 'Obsidian', cherryWood: 'Cherry Wood',
                         cherryLeaves: 'Cherry Leaves', chest: 'Chest',
                         ritualChest: 'Ritual Chest', buildingChest: 'Building Chest',
@@ -5043,7 +6427,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 const emojis = {
                     grass: '🌿', dirt: '🟫', stone: '🪨', wood: '🪵',
                     leaves: '🌸', water: '💧', sand: '🏖️', brick: '🧱',
-                    ak47: '🔫', water_bucket: '🪣', lava_bucket: '🫧',
+                    ka69: '🔫', water_bucket: '🪣', lava_bucket: '🫧',
                     lava: '🔥', obsidian: '🟣', cherryWood: '🪵', cherryLeaves: '🌸',
                     chest: '📦', ritualChest: '📦', buildingChest: '📦',
                     seeds: '🌾', berdger: '🍔',
@@ -5141,18 +6525,20 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             
             raycast() {
                 // Calculate ray direction from camera angles
-                // rotY = yaw (horizontal), rotX = pitch (vertical)
-                const pitch = this.camera.rotX;
-                const yaw = this.camera.rotY;
+                // CRITICAL: Must use NEGATIVE angles to match projection coordinate system!
+                // Projection uses -rotX and -rotY, so raycast must too
+                const pitch = -this.camera.rotX;
+                const yaw = -this.camera.rotY;
                 
                 const cosPitch = Math.cos(pitch);
                 const sinPitch = Math.sin(pitch);
                 const cosYaw = Math.cos(yaw);
                 const sinYaw = Math.sin(yaw);
                 
-                // Direction vector (matches movement and projection)
-                const dx = -sinYaw * cosPitch;
-                const dy = -sinPitch;
+                // Direction vector in projection's coordinate system
+                // This MUST produce the ray that goes through screen center
+                const dx = sinYaw * cosPitch;  // Note: positive sinYaw (not negative)
+                const dy = sinPitch;           // Note: positive sinPitch
                 const dz = cosYaw * cosPitch;
                 
                 // Normalize direction (important for accurate distance calculation)
@@ -5161,11 +6547,10 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 const dirY = dy / len;
                 const dirZ = dz / len;
                 
-                // Ray origin - start slightly in front of camera to avoid self-intersection
-                const startOffset = 0.1;
-                let x = this.camera.x + dirX * startOffset;
-                let y = this.camera.y + dirY * startOffset;
-                let z = this.camera.z + dirZ * startOffset;
+                // Ray origin - start from camera eye position
+                let x = this.camera.x;
+                let y = this.camera.y;
+                let z = this.camera.z;
                 
                 // Current voxel position
                 let voxelX = Math.floor(x);
@@ -5212,8 +6597,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 // Track the face we entered from (for block placement)
                 let enteredFace = null;
                 
-                // Maximum reach distance (in blocks)
-                const maxDistance = 6;
+                // Maximum reach distance - 4 blocks (Minecraft-like)
+                const maxDistance = 4;
                 let t = 0;
                 
                 // Track last non-fluid entry face for proper placement
@@ -5239,7 +6624,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                             let placePos = null;
                             // Use lastSolidFace if we came through fluids, otherwise use enteredFace
                             const placeFace = lastSolidFace || enteredFace;
-                            if (placeFace) {
+                            if (placeFace && (placeFace.x !== 0 || placeFace.y !== 0 || placeFace.z !== 0)) {
                                 placePos = {
                                     x: voxelX + placeFace.x,
                                     y: voxelY + placeFace.y,
@@ -5689,6 +7074,22 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 return 0;
             },
             
+            // Get ground height at position (searches from top down)
+            getGroundHeight(x, z) {
+                const bx = Math.floor(x);
+                const bz = Math.floor(z);
+                
+                // Search from reasonable max height down to bedrock
+                for (let y = 40; y >= 0; y--) {
+                    const block = this.getBlock(bx, y, bz);
+                    // Found solid ground (not air, water, or lava)
+                    if (block && block !== 'water' && block !== 'lava') {
+                        return y;
+                    }
+                }
+                return 0; // Fallback to bedrock level
+            },
+            
             // Get ceiling above player
             getCeilingAbove(x, z, currentY) {
                 const bx = Math.floor(x);
@@ -5891,15 +7292,182 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 visibleTransparent.sort((a, b) => b.dist - a.dist);
                 opaqueBlocks.sort((a, b) => b.dist - a.dist);
                 
-                // CORRECT ORDER: Draw opaque blocks FIRST, then transparent blocks
-                // This allows transparent blocks to see opaque blocks behind them
+                // PROPER RENDERING ORDER for canvas 2D rendering:
+                // Sort ALL blocks by distance (back-to-front) and draw in that order
+                // This prevents transparent blocks from rendering through walls incorrectly
                 const allBlocks = [...opaqueBlocks, ...visibleTransparent];
+                
+                // ═══════════════════════════════════════════════════════════
+                // RENDERING ALGORITHM SELECTION
+                // ═══════════════════════════════════════════════════════════
+                // Three algorithms available: painter, zbuffer, bsp
+                const algorithm = this.debugSettings.renderAlgorithm;
+                
+                if (algorithm === 'painter') {
+                    // ═══════════════════════════════════════════════════════════
+                    // PAINTER'S ALGORITHM (Classic)
+                    // ═══════════════════════════════════════════════════════════
+                    // Sort blocks by distance, then sort faces within each block
+                    // Simple and effective for most voxel scenes
+                    
+                    // INDUSTRY-STANDARD STABLE SORT to prevent Z-fighting
+                    allBlocks.sort((a, b) => {
+                        const distDiff = b.dist - a.dist;
+                        
+                        // Primary sort by distance
+                        if (Math.abs(distDiff) > 0.001) {
+                            return distDiff;
+                        }
+                        
+                        // Multi-level tiebreaking for stability
+                        if (a.y !== b.y) return a.y - b.y;
+                        if (a.z !== b.z) return a.z - b.z;
+                        if (a.x !== b.x) return a.x - b.x;
+                        return a.type.localeCompare(b.type);
+                    });
+                    
+                } else if (algorithm === 'zbuffer') {
+                    // ═══════════════════════════════════════════════════════════
+                    // Z-BUFFER SIMULATION (Enhanced Precision)
+                    // ═══════════════════════════════════════════════════════════
+                    // Simulates Z-buffer by sorting with higher precision
+                    // Uses block corners for more accurate depth calculation
+                    
+                    // Calculate min depth for each block (closest corner to camera)
+                    allBlocks.forEach(block => {
+                        const { x, y, z } = block;
+                        
+                        // Check all 8 corners of the block
+                        const corners = [
+                            [x, y, z], [x+1, y, z], [x, y+1, z], [x+1, y+1, z],
+                            [x, y, z+1], [x+1, y, z+1], [x, y+1, z+1], [x+1, y+1, z+1]
+                        ];
+                        
+                        let minDist = Infinity;
+                        for (const [cx, cy, cz] of corners) {
+                            const dx = cx - camX;
+                            const dy = cy - camY;
+                            const dz = cz - camZ;
+                            const dist = dx * dx + dy * dy + dz * dz;
+                            if (dist < minDist) minDist = dist;
+                        }
+                        
+                        block.minDist = minDist;
+                    });
+                    
+                    // Sort by closest point (simulates per-pixel depth testing)
+                    allBlocks.sort((a, b) => {
+                        const distDiff = (b.minDist || b.dist) - (a.minDist || a.dist);
+                        
+                        // Higher precision threshold for Z-buffer
+                        if (Math.abs(distDiff) > 0.0001) {
+                            return distDiff;
+                        }
+                        
+                        // Tiebreaking
+                        if (a.y !== b.y) return a.y - b.y;
+                        if (a.z !== b.z) return a.z - b.z;
+                        if (a.x !== b.x) return a.x - b.x;
+                        return a.type.localeCompare(b.type);
+                    });
+                    
+                } else if (algorithm === 'bsp') {
+                    // ═══════════════════════════════════════════════════════════
+                    // BINARY SPACE PARTITIONING (Spatial Tree)
+                    // ═══════════════════════════════════════════════════════════
+                    // Uses spatial tree structure for optimal rendering order
+                    // Automatically handles arbitrary camera positions
+                    
+                    // Build simple BSP tree using axis-aligned planes
+                    const buildBSPTree = (blocks: any[]): any => {
+                        if (blocks.length === 0) return null;
+                        if (blocks.length === 1) return { block: blocks[0], front: null, back: null };
+                        
+                        // Find median along longest axis
+                        const minX = Math.min(...blocks.map(b => b.x));
+                        const maxX = Math.max(...blocks.map(b => b.x));
+                        const minY = Math.min(...blocks.map(b => b.y));
+                        const maxY = Math.max(...blocks.map(b => b.y));
+                        const minZ = Math.min(...blocks.map(b => b.z));
+                        const maxZ = Math.max(...blocks.map(b => b.z));
+                        
+                        const rangeX = maxX - minX;
+                        const rangeY = maxY - minY;
+                        const rangeZ = maxZ - minZ;
+                        
+                        // Split along longest axis
+                        let axis: 'x' | 'y' | 'z';
+                        if (rangeX >= rangeY && rangeX >= rangeZ) axis = 'x';
+                        else if (rangeY >= rangeZ) axis = 'y';
+                        else axis = 'z';
+                        
+                        // Sort and split
+                        blocks.sort((a, b) => a[axis] - b[axis]);
+                        const mid = Math.floor(blocks.length / 2);
+                        const pivot = blocks[mid];
+                        
+                        const front = blocks.filter((b, i) => i < mid);
+                        const back = blocks.filter((b, i) => i > mid);
+                        
+                        return {
+                            block: pivot,
+                            axis,
+                            value: pivot[axis],
+                            front: buildBSPTree(front),
+                            back: buildBSPTree(back)
+                        };
+                    };
+                    
+                    // Traverse BSP tree based on camera position
+                    const traverseBSP = (node: any, result: any[]): void => {
+                        if (!node) return;
+                        
+                        if (!node.axis) {
+                            // Leaf node
+                            result.push(node.block);
+                            return;
+                        }
+                        
+                        // Determine which side of splitting plane camera is on
+                        const camPos = node.axis === 'x' ? camX : (node.axis === 'y' ? camY : camZ);
+                        const isInFront = camPos < node.value;
+                        
+                        if (isInFront) {
+                            // Camera in front: render back first, then front
+                            traverseBSP(node.back, result);
+                            result.push(node.block);
+                            traverseBSP(node.front, result);
+                        } else {
+                            // Camera in back: render front first, then back
+                            traverseBSP(node.front, result);
+                            result.push(node.block);
+                            traverseBSP(node.back, result);
+                        }
+                    };
+                    
+                    // Build and traverse tree
+                    const bspTree = buildBSPTree(allBlocks.slice());
+                    const sortedBlocks: any[] = [];
+                    traverseBSP(bspTree, sortedBlocks);
+                    
+                    // Replace allBlocks with BSP-sorted order
+                    allBlocks.length = 0;
+                    allBlocks.push(...sortedBlocks);
+                }
+                // ═══════════════════════════════════════════════════════════
+                // END ALGORITHM SELECTION
+                // ═══════════════════════════════════════════════════════════
                 
                 for (let i = 0; i < allBlocks.length; i++) {
                     const block = allBlocks[i];
                     const { x, y, z, type } = block;
                     const colors = this.blockColors[type];
                     if (!colors) continue;
+                    
+                    // CRITICAL: Disable stroking entirely for block faces
+                    // This prevents any accidental edge rendering
+                    ctx.lineWidth = 0;
+                    ctx.strokeStyle = 'transparent';
                     
                     const isFluid = this.fluidBlocks.includes(type);
                     const fluidLevel = isFluid ? getFluidLevel(x, y, z) : 8;
@@ -5916,7 +7484,10 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     
                     let hasTop, hasBottom, hasFront, hasBack, hasLeft, hasRight;
                     
-                    if (isFluid) {
+                    // DEBUG: Disable face culling - show all faces
+                    if (this.debugSettings.disableFaceCulling) {
+                        hasTop = hasBottom = hasFront = hasBack = hasLeft = hasRight = true;
+                    } else if (isFluid) {
                         // For fluids, show top if not covered by same fluid above
                         hasTop = !adjTop || adjTop !== type;
                         hasBottom = !adjBottom || !this.fluidBlocks.includes(adjBottom);
@@ -5967,11 +7538,11 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     
                     // Front face (+Z)
                     if (hasFront) {
-                        faces.push({ v: [[x, y, z+1], [x+1, y, z+1], [x+1, topY, z+1], [x, topY, z+1]], color: colors.side, dark: 1, isTop: false });
+                        faces.push({ v: [[x, y, z+1], [x+1, y, z+1], [x+1, topY, z+1], [x, topY, z+1]], color: colors.side, dark: 0.95, isTop: false });
                     }
                     // Back face (-Z)
                     if (hasBack) {
-                        faces.push({ v: [[x+1, y, z], [x, y, z], [x, topY, z], [x+1, topY, z]], color: colors.side, dark: 0.7, isTop: false });
+                        faces.push({ v: [[x+1, y, z], [x, y, z], [x, topY, z], [x+1, topY, z]], color: colors.side, dark: 0.75, isTop: false });
                     }
                     // Top face (+Y)
                     if (hasTop) {
@@ -5979,7 +7550,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     }
                     // Bottom face (-Y)
                     if (hasBottom) {
-                        faces.push({ v: [[x, y, z+1], [x+1, y, z+1], [x+1, y, z], [x, y, z]], color: colors.bottom, dark: 0.7, isTop: false });
+                        faces.push({ v: [[x, y, z+1], [x+1, y, z+1], [x+1, y, z], [x, y, z]], color: colors.bottom, dark: 0.6, isTop: false });
                     }
                     // Left face (-X)
                     if (hasLeft) {
@@ -5987,12 +7558,32 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     }
                     // Right face (+X)
                     if (hasRight) {
-                        faces.push({ v: [[x+1, y, z+1], [x+1, y, z], [x+1, topY, z], [x+1, topY, z+1]], color: colors.side, dark: 0.85, isTop: false });
+                        faces.push({ v: [[x+1, y, z+1], [x+1, y, z], [x+1, topY, z], [x+1, topY, z+1]], color: colors.side, dark: 0.9, isTop: false });
                     }
                     
                     // Render visible faces
-                    for (let f = 0; f < faces.length; f++) {
-                        const face = faces[f];
+                    // CRITICAL: Sort faces by distance from camera (back-to-front)
+                    // This ensures correct rendering from ANY viewing angle
+                    const facesWithDist = faces.map(face => {
+                        // Calculate center of face
+                        const centerX = (face.v[0][0] + face.v[1][0] + face.v[2][0] + face.v[3][0]) / 4;
+                        const centerY = (face.v[0][1] + face.v[1][1] + face.v[2][1] + face.v[3][1]) / 4;
+                        const centerZ = (face.v[0][2] + face.v[1][2] + face.v[2][2] + face.v[3][2]) / 4;
+                        
+                        // Distance from camera to face center
+                        const dx = centerX - camX;
+                        const dy = centerY - camY;
+                        const dz = centerZ - camZ;
+                        const distSq = dx * dx + dy * dy + dz * dz;
+                        
+                        return { face, distSq };
+                    });
+                    
+                    // Sort far to near (painter's algorithm)
+                    facesWithDist.sort((a, b) => b.distSq - a.distSq);
+                    
+                    for (let f = 0; f < facesWithDist.length; f++) {
+                        const { face } = facesWithDist[f];
                         const pts = [];
                         let valid = true;
                         
@@ -6122,23 +7713,287 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                             }
                         }
                         
-                        ctx.fillStyle = fillColor;
-                        ctx.beginPath();
-                        ctx.moveTo(pts[0].x, pts[0].y);
-                        ctx.lineTo(pts[1].x, pts[1].y);
-                        ctx.lineTo(pts[2].x, pts[2].y);
-                        ctx.lineTo(pts[3].x, pts[3].y);
-                        ctx.closePath();
-                        ctx.fill();
+                        // TEXTURE RENDERING with proper blend modes to avoid over-darkening
+                        // Determine which face type this is for texture selection
+                        const faceType = face.isTop ? 'top' : 'side';
                         
-                        // Add subtle edge lines for better depth perception (not for fluids)
-                        if (!isFluid) {
-                            ctx.strokeStyle = this.darkenColor(fillColor, 0.7);
-                            ctx.lineWidth = 0.5;
+                        // Check if this block uses textures
+                        if (colors.useTexture && colors.texture && !isFluid) {
+                            // Apply shadow darkening to the base color BEFORE filling
+                            let baseFillColor = fillColor;
+                            if (this.settings.shadows && face.dark < 1) {
+                                // Parse and darken the base color
+                                if (fillColor.startsWith('#')) {
+                                    baseFillColor = this.darkenColor(fillColor, face.dark);
+                                } else if (fillColor.startsWith('rgb')) {
+                                    // For rgb colors, extract and darken
+                                    const match = fillColor.match(/\d+/g);
+                                    if (match) {
+                                        const r = Math.floor(parseInt(match[0]) * face.dark);
+                                        const g = Math.floor(parseInt(match[1]) * face.dark);
+                                        const b = Math.floor(parseInt(match[2]) * face.dark);
+                                        baseFillColor = `rgb(${r},${g},${b})`;
+                                    }
+                                }
+                            }
+                            
+                            // DEBUG: Wireframe-only mode - skip fills
+                            if (this.debugSettings.wireframeOnly) {
+                                // Only draw wireframe
+                                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                                ctx.lineWidth = 1.5;
+                                ctx.beginPath();
+                                ctx.moveTo(pts[0].x, pts[0].y);
+                                ctx.lineTo(pts[1].x, pts[1].y);
+                                ctx.lineTo(pts[2].x, pts[2].y);
+                                ctx.lineTo(pts[3].x, pts[3].y);
+                                ctx.closePath();
+                                ctx.stroke();
+                                continue; // Skip fill rendering
+                            }
+                            
+                            // STEP 1: Fill the polygon with darkened base color (provides solid base)
+                            ctx.fillStyle = baseFillColor;
+                            ctx.beginPath();
+                            ctx.moveTo(pts[0].x, pts[0].y);
+                            ctx.lineTo(pts[1].x, pts[1].y);
+                            ctx.lineTo(pts[2].x, pts[2].y);
+                            ctx.lineTo(pts[3].x, pts[3].y);
+                            // REMOVED closePath() - causes visible edge artifacts on external faces
+                            ctx.fill();
+                            
+                            // STEP 2: Generate or get cached texture pattern
+                            const texture = this.generateTexture(colors.texture, baseFillColor, faceType);
+                            
+                            // STEP 3: Apply texture overlay with proper blending
+                            ctx.save();
+                            
+                            // Create clipping path for this face
+                            ctx.beginPath();
+                            ctx.moveTo(pts[0].x, pts[0].y);
+                            ctx.lineTo(pts[1].x, pts[1].y);
+                            ctx.lineTo(pts[2].x, pts[2].y);
+                            ctx.lineTo(pts[3].x, pts[3].y);
+                            ctx.closePath();
+                            ctx.clip();
+                            
+                            // Calculate bounding box for texture fill
+                            const minX = Math.min(pts[0].x, pts[1].x, pts[2].x, pts[3].x);
+                            const maxX = Math.max(pts[0].x, pts[1].x, pts[2].x, pts[3].x);
+                            const minY = Math.min(pts[0].y, pts[1].y, pts[2].y, pts[3].y);
+                            const maxY = Math.max(pts[0].y, pts[1].y, pts[2].y, pts[3].y);
+                            
+                            // Apply texture with OVERLAY blend for detail without over-darkening
+                            ctx.globalCompositeOperation = 'overlay';
+                            ctx.globalAlpha = 0.4; // Subtle texture overlay
+                            ctx.fillStyle = texture;
+                            ctx.fillRect(minX - 5, minY - 5, maxX - minX + 10, maxY - minY + 10);
+                            
+                            ctx.restore();
+                            
+                            // STEP 4: Add edge lines for depth perception (only for special cases)
+                            // REMOVED: Edge lines on all faces caused "hollow block" appearance
+                            // Solid blocks don't need edge lines - the texture provides depth
+                        } else {
+                            // Standard solid color rendering
+                            ctx.fillStyle = fillColor;
+                            ctx.beginPath();
+                            ctx.moveTo(pts[0].x, pts[0].y);
+                            ctx.lineTo(pts[1].x, pts[1].y);
+                            ctx.lineTo(pts[2].x, pts[2].y);
+                            ctx.lineTo(pts[3].x, pts[3].y);
+                            // REMOVED closePath() - causes visible edge artifacts on external faces
+                            ctx.fill();
+                            
+                            // REMOVED: Edge lines caused "hollow block" appearance
+                            // Solid blocks look better without edge lines
+                        }
+                    }
+                }
+                
+                // ═══════════════════════════════════════════════════════════
+                // DEBUG VISUALIZATIONS (Phase 2)
+                // ═══════════════════════════════════════════════════════════
+                
+                // 1. RAYCAST VECTOR - Show where raycast is pointing
+                if (this.debugSettings.showRaycastVector) {
+                    const hit = this.raycast();
+                    if (hit) {
+                        // Draw line from camera to hit point
+                        const startProj = project(camX, camY, camZ);
+                        const endProj = project(hit.hit.x + 0.5, hit.hit.y + 0.5, hit.hit.z + 0.5);
+                        
+                        if (startProj && endProj) {
+                            ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+                            ctx.lineWidth = 3;
+                            ctx.setLineDash([5, 5]);
+                            ctx.beginPath();
+                            ctx.moveTo(startProj.x, startProj.y);
+                            ctx.lineTo(endProj.x, endProj.y);
+                            ctx.stroke();
+                            ctx.setLineDash([]);
+                            
+                            // Draw dot at hit point
+                            ctx.fillStyle = 'rgba(255, 0, 0, 0.9)';
+                            ctx.beginPath();
+                            ctx.arc(endProj.x, endProj.y, 5, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                }
+                
+                // 2. PROJECTION TEST - Show marker at screen center
+                if (this.debugSettings.showProjectionTest) {
+                    // Draw crosshair marker at exact screen center
+                    // This is where the projection SHOULD be aiming
+                    const centerX = halfW;
+                    const centerY = halfH;
+                    
+                    // Large visible crosshair
+                    ctx.strokeStyle = 'rgba(0, 255, 0, 1)';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(centerX - 20, centerY);
+                    ctx.lineTo(centerX + 20, centerY);
+                    ctx.moveTo(centerX, centerY - 20);
+                    ctx.lineTo(centerX, centerY + 20);
+                    ctx.stroke();
+                    
+                    // Center dot
+                    ctx.fillStyle = 'rgba(0, 255, 0, 1)';
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Label
+                    ctx.fillStyle = 'rgba(0, 255, 0, 1)';
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+                    ctx.font = 'bold 14px monospace';
+                    ctx.lineWidth = 3;
+                    ctx.strokeText('SCREEN CENTER', centerX + 25, centerY - 15);
+                    ctx.fillText('SCREEN CENTER', centerX + 25, centerY - 15);
+                }
+                
+                // 3. DEPTH ORDER - Show render order numbers
+                if (this.debugSettings.showDepthOrder) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
+                    ctx.font = 'bold 14px monospace';
+                    ctx.lineWidth = 3;
+                    
+                    for (let i = 0; i < Math.min(allBlocks.length, 50); i++) {
+                        const block = allBlocks[i];
+                        const centerProj = project(block.x + 0.5, block.y + 0.5, block.z + 0.5);
+                        if (centerProj) {
+                            const text = `#${i}`;
+                            ctx.strokeText(text, centerProj.x - 15, centerProj.y + 5);
+                            ctx.fillText(text, centerProj.x - 15, centerProj.y + 5);
+                        }
+                    }
+                }
+                
+                // 4. FACE NORMALS - Show normal vectors
+                if (this.debugSettings.showFaceNormals) {
+                    ctx.strokeStyle = 'rgba(255, 255, 0, 0.8)';
+                    ctx.lineWidth = 2;
+                    
+                    for (let i = 0; i < Math.min(allBlocks.length, 20); i++) {
+                        const block = allBlocks[i];
+                        const { x, y, z } = block;
+                        
+                        // Draw normals for each visible face
+                        const normals = [
+                            { center: [x + 0.5, y + 1, z + 0.5], dir: [0, 1, 0], name: 'Top' },
+                            { center: [x + 0.5, y, z + 0.5], dir: [0, -1, 0], name: 'Bottom' },
+                            { center: [x + 0.5, y + 0.5, z + 1], dir: [0, 0, 1], name: 'Front' },
+                            { center: [x + 0.5, y + 0.5, z], dir: [0, 0, -1], name: 'Back' },
+                            { center: [x, y + 0.5, z + 0.5], dir: [-1, 0, 0], name: 'Left' },
+                            { center: [x + 1, y + 0.5, z + 0.5], dir: [1, 0, 0], name: 'Right' }
+                        ];
+                        
+                        for (const normal of normals) {
+                            const startProj = project(normal.center[0], normal.center[1], normal.center[2]);
+                            const endProj = project(
+                                normal.center[0] + normal.dir[0] * 0.5,
+                                normal.center[1] + normal.dir[1] * 0.5,
+                                normal.center[2] + normal.dir[2] * 0.5
+                            );
+                            
+                            if (startProj && endProj) {
+                                ctx.beginPath();
+                                ctx.moveTo(startProj.x, startProj.y);
+                                ctx.lineTo(endProj.x, endProj.y);
+                                ctx.stroke();
+                                
+                                // Arrow head
+                                const angle = Math.atan2(endProj.y - startProj.y, endProj.x - startProj.x);
+                                ctx.beginPath();
+                                ctx.moveTo(endProj.x, endProj.y);
+                                ctx.lineTo(
+                                    endProj.x - 8 * Math.cos(angle - Math.PI / 6),
+                                    endProj.y - 8 * Math.sin(angle - Math.PI / 6)
+                                );
+                                ctx.lineTo(
+                                    endProj.x - 8 * Math.cos(angle + Math.PI / 6),
+                                    endProj.y - 8 * Math.sin(angle + Math.PI / 6)
+                                );
+                                ctx.lineTo(endProj.x, endProj.y);
+                                ctx.fill();
+                            }
+                        }
+                    }
+                }
+                
+                // 5. BOUNDING BOXES - Show block bounds
+                if (this.debugSettings.showBoundingBoxes) {
+                    ctx.strokeStyle = 'rgba(0, 255, 255, 0.6)';
+                    ctx.lineWidth = 1;
+                    
+                    for (let i = 0; i < Math.min(allBlocks.length, 30); i++) {
+                        const block = allBlocks[i];
+                        const { x, y, z } = block;
+                        
+                        // Define 8 corners
+                        const corners = [
+                            [x, y, z], [x+1, y, z], [x+1, y+1, z], [x, y+1, z],
+                            [x, y, z+1], [x+1, y, z+1], [x+1, y+1, z+1], [x, y+1, z+1]
+                        ];
+                        
+                        const projected = corners.map(c => project(c[0], c[1], c[2])).filter(p => p !== null);
+                        
+                        if (projected.length === 8) {
+                            // Draw box edges
+                            const edges = [
+                                [0,1], [1,2], [2,3], [3,0], // Back face
+                                [4,5], [5,6], [6,7], [7,4], // Front face
+                                [0,4], [1,5], [2,6], [3,7]  // Connecting edges
+                            ];
+                            
+                            ctx.beginPath();
+                            for (const [a, b] of edges) {
+                                ctx.moveTo(projected[a].x, projected[a].y);
+                                ctx.lineTo(projected[b].x, projected[b].y);
+                            }
                             ctx.stroke();
                         }
                     }
                 }
+                
+                // 6. OVERDRAW HEATMAP - Track pixel draw counts
+                if (this.debugSettings.showOverdraw) {
+                    // This is complex - for now show a simple indicator
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
+                    ctx.font = 'bold 16px monospace';
+                    ctx.lineWidth = 3;
+                    const text = `OVERDRAW: ${allBlocks.length} blocks rendered`;
+                    ctx.strokeText(text, 10, 100);
+                    ctx.fillText(text, 10, 100);
+                }
+                
+                // ═══════════════════════════════════════════════════════════
+                // END DEBUG VISUALIZATIONS
+                // ═══════════════════════════════════════════════════════════
                 
                 // Render world boundary forcefield
                 if (this.worldBounds) {
@@ -6219,6 +8074,40 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                 }
                                 if (!valid || pts.length < 4) continue;
                                 
+                                // OCCLUSION CHECK: Don't render if behind solid blocks
+                                // Raycast from camera to segment center
+                                const segCenterX = (corners[0][0] + corners[2][0]) / 2;
+                                const segCenterY = (corners[0][1] + corners[2][1]) / 2;
+                                const segCenterZ = (corners[0][2] + corners[2][2]) / 2;
+                                
+                                const dx = segCenterX - camX;
+                                const dy = segCenterY - camY;
+                                const dz = segCenterZ - camZ;
+                                const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                                
+                                // Check points along ray for solid blocks
+                                let occluded = false;
+                                const steps = Math.max(8, Math.floor(dist / 2));
+                                for (let i = 1; i < steps; i++) {
+                                    const t = i / steps;
+                                    const checkX = Math.floor(camX + dx * t);
+                                    const checkY = Math.floor(camY + dy * t);
+                                    const checkZ = Math.floor(camZ + dz * t);
+                                    
+                                    const checkBlock = this.world[`${checkX},${checkY},${checkZ}`];
+                                    if (checkBlock && !this.fluidBlocks.includes(checkBlock)) {
+                                        // Check if it's a transparent block
+                                        const blockProps = this.blockColors[checkBlock];
+                                        if (!blockProps || !blockProps.transparent) {
+                                            // Solid opaque block occludes
+                                            occluded = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                                if (occluded) continue; // Skip this forcefield segment
+                                
                                 // Calculate animated glow intensity
                                 const gridPhase = ((p + y) * 0.2 + time) % (Math.PI * 2);
                                 const alpha = 0.15 + 0.1 * Math.sin(gridPhase);
@@ -6270,6 +8159,37 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                 pts.push(pt);
                             }
                             if (!valid || pts.length < 4) continue;
+                            
+                            // OCCLUSION CHECK: Don't render floor if player has blocks below them
+                            const segCenterX = x + segmentSize / 2;
+                            const segCenterZ = z + segmentSize / 2;
+                            
+                            const dx = segCenterX - camX;
+                            const dy = bottomY - camY;
+                            const dz = segCenterZ - camZ;
+                            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                            
+                            // Raycast from camera to floor segment
+                            let occluded = false;
+                            const steps = Math.max(8, Math.floor(dist / 2));
+                            for (let i = 1; i < steps; i++) {
+                                const t = i / steps;
+                                const checkX = Math.floor(camX + dx * t);
+                                const checkY = Math.floor(camY + dy * t);
+                                const checkZ = Math.floor(camZ + dz * t);
+                                
+                                const checkBlock = this.world[`${checkX},${checkY},${checkZ}`];
+                                if (checkBlock && !this.fluidBlocks.includes(checkBlock)) {
+                                    const blockProps = this.blockColors[checkBlock];
+                                    if (!blockProps || !blockProps.transparent) {
+                                        // Solid block blocks view of floor
+                                        occluded = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            if (occluded) continue; // Skip this floor segment
                             
                             const gridPhase = ((x + z) * 0.2 + time) % (Math.PI * 2);
                             const alpha = 0.1 + 0.08 * Math.sin(gridPhase);
@@ -6636,6 +8556,66 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     }
                 }
                 
+                // Render Repair NPC (wise man)
+                if (this.repairNPC) {
+                    const npc = this.repairNPC;
+                    const center = project(npc.x, npc.y + 0.9, npc.z);
+                    if (center) {
+                        const screenSize = Math.max(20, 60 / center.z);
+                        
+                        // Body - blue robes
+                        ctx.fillStyle = '#4169e1';
+                        ctx.fillRect(center.x - screenSize * 0.35, center.y - screenSize * 0.3, screenSize * 0.7, screenSize * 0.8);
+                        
+                        // Head - tan/beige
+                        ctx.fillStyle = '#d2b48c';
+                        ctx.beginPath();
+                        ctx.arc(center.x, center.y - screenSize * 0.6, screenSize * 0.3, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Wizard hat - dark blue
+                        ctx.fillStyle = '#191970';
+                        ctx.beginPath();
+                        ctx.moveTo(center.x - screenSize * 0.35, center.y - screenSize * 0.8);
+                        ctx.lineTo(center.x, center.y - screenSize * 1.3);
+                        ctx.lineTo(center.x + screenSize * 0.35, center.y - screenSize * 0.8);
+                        ctx.closePath();
+                        ctx.fill();
+                        
+                        // Hat brim
+                        ctx.fillRect(center.x - screenSize * 0.4, center.y - screenSize * 0.85, screenSize * 0.8, screenSize * 0.1);
+                        
+                        // Beard - white/gray
+                        ctx.fillStyle = '#ddd';
+                        ctx.beginPath();
+                        ctx.moveTo(center.x - screenSize * 0.2, center.y - screenSize * 0.5);
+                        ctx.lineTo(center.x - screenSize * 0.15, center.y - screenSize * 0.2);
+                        ctx.lineTo(center.x + screenSize * 0.15, center.y - screenSize * 0.2);
+                        ctx.lineTo(center.x + screenSize * 0.2, center.y - screenSize * 0.5);
+                        ctx.closePath();
+                        ctx.fill();
+                        
+                        // Eyes - wise expression
+                        ctx.fillStyle = '#000';
+                        ctx.beginPath();
+                        ctx.arc(center.x - screenSize * 0.12, center.y - screenSize * 0.65, screenSize * 0.05, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.arc(center.x + screenSize * 0.12, center.y - screenSize * 0.65, screenSize * 0.05, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Interaction prompt if close
+                        if (npc.showPrompt) {
+                            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                            ctx.fillRect(center.x - 80, center.y - screenSize - 40, 160, 30);
+                            ctx.fillStyle = '#ffd700';
+                            ctx.font = '14px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.fillText('[E] Talk to Gunsmith', center.x, center.y - screenSize - 22);
+                        }
+                    }
+                }
+                
                 // Render particles (only those in front of visible blocks)
                 for (const p of this.particles) {
                     const center = project(p.x, p.y, p.z);
@@ -6913,9 +8893,11 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 }
                 
                 // Draw block highlight (targeted block wireframe)
+                // Only shows if block is within reach (4 blocks)
                 if (!this.isPaused && this.pointerLocked) {
                     const hit = this.raycast();
                     if (hit && hit.hit) {
+                        // Show wireframe around the block you're POINTING at
                         const bx = hit.hit.x;
                         const by = hit.hit.y;
                         const bz = hit.hit.z;
@@ -6937,16 +8919,15 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         
                         // Draw edges if all corners are visible
                         if (projected.every(p => p !== null)) {
-                            // Change color based on what we're looking through
+                            // Simple black wireframe
                             let strokeColor = 'rgba(0, 0, 0, 0.8)';
                             let lineWidth = 2;
                             
+                            // Color variation when looking through fluids
                             if (hit.throughWater) {
-                                // Blue tint when looking through water
                                 strokeColor = 'rgba(74, 144, 217, 0.7)';
                                 lineWidth = 3;
                             } else if (hit.throughLava) {
-                                // Orange tint when looking through lava
                                 strokeColor = 'rgba(255, 100, 0, 0.7)';
                                 lineWidth = 3;
                             }
@@ -6968,16 +8949,17 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                             ctx.stroke();
                         }
                         
-                        // Show tooltip for ritual socket blocks
+                        // Show tooltip for targeted block
                         const targetBlock = this.getBlock(bx, by, bz);
                         this.updateBlockTooltip(targetBlock);
                     } else {
+                        // No hit within reach - hide tooltip
                         this.updateBlockTooltip(null);
                     }
                 }
                 
                 // Debug info display
-                if (this.debugShowCoords) {
+                if (this.debugSettings.showCoords) {
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
                     ctx.fillRect(width - 200, 10, 190, 80);
                     ctx.fillStyle = '#0f0';
@@ -7053,8 +9035,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     ctx.restore();
                 }
                 
-                // Render AK-47 if selected - Traditional FPS horizontal gun
-                if (this.selectedItem === 'ak47' && !this.isPaused) {
+                // Render KA-69 if selected - Traditional FPS horizontal gun
+                if (this.selectedItem === 'ka69' && !this.isPaused) {
                     const s = Math.min(width, height) * 0.0055;
                     
                     // Position gun in lower right corner, pointing left toward center
@@ -7235,6 +9217,45 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     }
                     
                     ctx.restore();
+                }
+                
+                // Render hotbar tooltip (pulsing name when scrolling)
+                if (this.hotbarTooltip.visible) {
+                    const age = Date.now() - this.hotbarTooltip.timestamp;
+                    const fadeStart = 1000; // Start fading after 1 second
+                    const fadeDuration = 500; // Fade over 0.5 seconds
+                    
+                    let alpha = 1;
+                    if (age > fadeStart) {
+                        alpha = 1 - Math.min(1, (age - fadeStart) / fadeDuration);
+                    }
+                    
+                    if (alpha > 0) {
+                        // Pulse effect
+                        const pulse = 1 + Math.sin(age * 0.01) * 0.1;
+                        const fontSize = 24 * pulse;
+                        
+                        // Position above hotbar center
+                        const tooltipX = width / 2;
+                        const tooltipY = height - 120;
+                        
+                        ctx.save();
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        
+                        // Shadow for readability
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+                        ctx.shadowBlur = 8;
+                        ctx.shadowOffsetX = 2;
+                        ctx.shadowOffsetY = 2;
+                        
+                        // Text with fade
+                        ctx.font = `bold ${fontSize}px Arial`;
+                        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                        ctx.fillText(this.hotbarTooltip.text, tooltipX, tooltipY);
+                        
+                        ctx.restore();
+                    }
                 }
                 
                 // Fluid overlay effects - only when HEAD is submerged
@@ -7445,7 +9466,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     ctx.fill();
                 } else {
                     // Non-block item
-                    if (itemId === 'ak47') {
+                    if (itemId === 'ka69') {
                         ctx.fillStyle = '#333';
                         ctx.fillRect(-30, -20, 80, 15);
                         ctx.fillStyle = '#8b4513';
@@ -7600,6 +9621,214 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 ctx.restore();
             },
             
+            
+            // Procedural texture generation for realistic block appearance
+            generateTexture(type, baseColor, face) {
+                const key = `${type}_${face}_${baseColor}`;
+                if (this.textureCache[key]) return this.textureCache[key];
+                
+                // Create offscreen canvas for texture
+                const size = 32; // Texture resolution
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                
+                // Parse base color
+                const parseColor = (color) => {
+                    if (color.startsWith('rgba')) {
+                        const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+                        return { r: parseInt(match[1]), g: parseInt(match[2]), b: parseInt(match[3]) };
+                    }
+                    const r = parseInt(color.slice(1, 3), 16);
+                    const g = parseInt(color.slice(3, 5), 16);
+                    const b = parseInt(color.slice(5, 7), 16);
+                    return { r, g, b };
+                };
+                
+                const base = parseColor(baseColor);
+                
+                // Seeded random for consistency
+                const random = (seed) => {
+                    const x = Math.sin(seed) * 10000;
+                    return x - Math.floor(x);
+                };
+                
+                if (type === 'grass') {
+                    // Grass texture with organic variation
+                    for (let y = 0; y < size; y++) {
+                        for (let x = 0; x < size; x++) {
+                            const seed = x * 1000 + y;
+                            const noise = random(seed) * 0.3 - 0.15; // ±15% variation
+                            const r = Math.max(0, Math.min(255, base.r + base.r * noise));
+                            const g = Math.max(0, Math.min(255, base.g + base.g * noise));
+                            const b = Math.max(0, Math.min(255, base.b + base.b * noise));
+                            ctx.fillStyle = `rgb(${Math.floor(r)},${Math.floor(g)},${Math.floor(b)})`;
+                            ctx.fillRect(x, y, 1, 1);
+                        }
+                    }
+                    
+                    // Add grass blades on top face
+                    if (face === 'top') {
+                        ctx.fillStyle = 'rgba(90, 160, 70, 0.4)';
+                        for (let i = 0; i < 12; i++) {
+                            const x = Math.floor(random(i * 123) * size);
+                            const y = Math.floor(random(i * 456) * size);
+                            ctx.fillRect(x, y, 2, 3);
+                        }
+                    }
+                } else if (type === 'dirt') {
+                    // Dirt texture with clumpy noise
+                    for (let y = 0; y < size; y++) {
+                        for (let x = 0; x < size; x++) {
+                            const seed = x * 1000 + y;
+                            const noise1 = random(seed) * 0.25 - 0.125;
+                            const noise2 = random(seed + 999) * 0.15 - 0.075;
+                            const combined = noise1 + noise2;
+                            const r = Math.max(0, Math.min(255, base.r + base.r * combined));
+                            const g = Math.max(0, Math.min(255, base.g + base.g * combined));
+                            const b = Math.max(0, Math.min(255, base.b + base.b * combined));
+                            ctx.fillStyle = `rgb(${Math.floor(r)},${Math.floor(g)},${Math.floor(b)})`;
+                            ctx.fillRect(x, y, 1, 1);
+                        }
+                    }
+                    
+                    // Add small pebbles
+                    ctx.fillStyle = 'rgba(100, 80, 60, 0.3)';
+                    for (let i = 0; i < 8; i++) {
+                        const x = Math.floor(random(i * 789) * size);
+                        const y = Math.floor(random(i * 321) * size);
+                        ctx.fillRect(x, y, 2, 2);
+                    }
+                } else if (type === 'brick') {
+                    // Brick pattern with mortar
+                    const brickH = 8;
+                    const brickW = 16;
+                    const mortarSize = 2;
+                    
+                    // Mortar (darker background)
+                    ctx.fillStyle = `rgb(${Math.floor(base.r * 0.6)},${Math.floor(base.g * 0.6)},${Math.floor(base.b * 0.6)})`;
+                    ctx.fillRect(0, 0, size, size);
+                    
+                    // Draw bricks in pattern
+                    for (let row = 0; row < Math.ceil(size / brickH); row++) {
+                        const offset = (row % 2) * (brickW / 2);
+                        for (let col = -1; col < Math.ceil(size / brickW) + 1; col++) {
+                            const bx = col * brickW + offset;
+                            const by = row * brickH;
+                            
+                            // Each brick has slight variation
+                            const seed = row * 100 + col;
+                            const noise = random(seed) * 0.15 - 0.075;
+                            const r = Math.max(0, Math.min(255, base.r + base.r * noise));
+                            const g = Math.max(0, Math.min(255, base.g + base.g * noise));
+                            const b = Math.max(0, Math.min(255, base.b + base.b * noise));
+                            ctx.fillStyle = `rgb(${Math.floor(r)},${Math.floor(g)},${Math.floor(b)})`;
+                            ctx.fillRect(bx, by, brickW - mortarSize, brickH - mortarSize);
+                            
+                            // Add texture to brick
+                            ctx.fillStyle = `rgba(0,0,0,${random(seed + 50) * 0.1})`;
+                            ctx.fillRect(bx, by, brickW - mortarSize, brickH - mortarSize);
+                        }
+                    }
+                } else if (type === 'leaves') {
+                    // Leaves texture with organic patterns
+                    for (let y = 0; y < size; y++) {
+                        for (let x = 0; x < size; x++) {
+                            const seed = x * 1000 + y;
+                            const noise = random(seed) * 0.4 - 0.2; // More variation for leaves
+                            const r = Math.max(0, Math.min(255, base.r + base.r * noise));
+                            const g = Math.max(0, Math.min(255, base.g + base.g * noise));
+                            const b = Math.max(0, Math.min(255, base.b + base.b * noise));
+                            ctx.fillStyle = `rgb(${Math.floor(r)},${Math.floor(g)},${Math.floor(b)})`;
+                            ctx.fillRect(x, y, 1, 1);
+                        }
+                    }
+                    
+                    // Add darker veins/gaps between leaves
+                    ctx.fillStyle = 'rgba(0, 50, 0, 0.3)';
+                    for (let i = 0; i < 15; i++) {
+                        const x = Math.floor(random(i * 234) * size);
+                        const y = Math.floor(random(i * 567) * size);
+                        const w = 2 + Math.floor(random(i * 890) * 3);
+                        const h = 2 + Math.floor(random(i * 345) * 3);
+                        ctx.fillRect(x, y, w, h);
+                    }
+                } else if (type === 'wood') {
+                    // Wood texture with grain and rings
+                    if (face === 'top') {
+                        // TOP FACE: Tree rings (circular pattern)
+                        // Fill with base wood color
+                        for (let y = 0; y < size; y++) {
+                            for (let x = 0; x < size; x++) {
+                                const seed = x * 1000 + y;
+                                const noise = random(seed) * 0.15 - 0.075;
+                                const r = Math.max(0, Math.min(255, base.r + base.r * noise));
+                                const g = Math.max(0, Math.min(255, base.g + base.g * noise));
+                                const b = Math.max(0, Math.min(255, base.b + base.b * noise));
+                                ctx.fillStyle = `rgb(${Math.floor(r)},${Math.floor(g)},${Math.floor(b)})`;
+                                ctx.fillRect(x, y, 1, 1);
+                            }
+                        }
+                        
+                        // Add tree rings (concentric circles from center)
+                        const centerX = size / 2;
+                        const centerY = size / 2;
+                        for (let ring = 1; ring < 6; ring++) {
+                            const radius = ring * 4 + random(ring * 50) * 3;
+                            ctx.strokeStyle = `rgba(0, 0, 0, ${0.1 + random(ring * 100) * 0.1})`;
+                            ctx.lineWidth = 0.5 + random(ring * 200) * 1;
+                            ctx.beginPath();
+                            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                            ctx.stroke();
+                        }
+                    } else {
+                        // SIDE FACES: Vertical bark texture (wood grain)
+                        for (let y = 0; y < size; y++) {
+                            for (let x = 0; x < size; x++) {
+                                const seed = x * 10 + y * 1000; // Emphasize vertical variation
+                                const noise = random(seed) * 0.2 - 0.1;
+                                const r = Math.max(0, Math.min(255, base.r + base.r * noise));
+                                const g = Math.max(0, Math.min(255, base.g + base.g * noise));
+                                const b = Math.max(0, Math.min(255, base.b + base.b * noise));
+                                ctx.fillStyle = `rgb(${Math.floor(r)},${Math.floor(g)},${Math.floor(b)})`;
+                                ctx.fillRect(x, y, 1, 1);
+                            }
+                        }
+                        
+                        // Add vertical grain lines (darker streaks)
+                        ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+                        ctx.lineWidth = 1;
+                        for (let i = 0; i < 8; i++) {
+                            const x = Math.floor(random(i * 333) * size);
+                            const waveOffset = random(i * 444) * 3;
+                            ctx.beginPath();
+                            ctx.moveTo(x, 0);
+                            for (let y = 0; y < size; y += 2) {
+                                const wave = Math.sin(y * 0.3 + i) * waveOffset;
+                                ctx.lineTo(x + wave, y);
+                            }
+                            ctx.stroke();
+                        }
+                        
+                        // Add horizontal cracks/knots occasionally
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                        for (let i = 0; i < 3; i++) {
+                            if (random(i * 555) > 0.7) {
+                                const y = Math.floor(random(i * 666) * size);
+                                const x = Math.floor(random(i * 777) * size * 0.8);
+                                ctx.fillRect(x, y, 4, 1);
+                            }
+                        }
+                    }
+                }
+                
+                // Create pattern from canvas
+                const pattern = ctx.createPattern(canvas, 'repeat');
+                this.textureCache[key] = pattern;
+                return pattern;
+            },
+            
             darkenColor(hex, factor) {
                 // Use cache to avoid repeated hex parsing
                 const key = hex + factor;
@@ -7667,6 +9896,21 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                             this.ctx.fillText(`${this.fpsCounter.fps} FPS`, this.canvas.width - 10, this.canvas.height - 10);
                             this.ctx.textAlign = 'left';
                         }
+                        
+                        // Display active rendering algorithm (top-right, always visible)
+                        const algoName = this.debugSettings.renderAlgorithm.toUpperCase();
+                        const algoColors = {
+                            PAINTER: '#00ff00',
+                            ZBUFFER: '#00ffff',
+                            BSP: '#ff00ff'
+                        };
+                        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                        this.ctx.fillRect(this.canvas.width - 90, 5, 85, 20);
+                        this.ctx.fillStyle = algoColors[algoName] || '#ffffff';
+                        this.ctx.font = 'bold 12px monospace';
+                        this.ctx.textAlign = 'right';
+                        this.ctx.fillText(algoName, this.canvas.width - 10, 18);
+                        this.ctx.textAlign = 'left';
                     }
                 }
                 
@@ -7677,6 +9921,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             start() {
                 // Initialize world on first start (deferred from page load)
                 this.fullInit();
+                
+                // Expose game instance for dialogue onclick handlers
+                (window as any).game = this;
                 
                 this.isActive = true;
                 this.isPaused = false;
@@ -7705,9 +9952,44 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         
                         if (groundY === null) return null; // No ground found
                         
+                        // Check if there are blocks ABOVE ground (buildings, trees)
+                        // Scan upward to make sure player is truly outside
+                        let hasRoof = false;
+                        for (let checkY = groundY + 1; checkY <= groundY + 10; checkY++) {
+                            const block = this.getBlock(x, checkY, z);
+                            if (block && block !== 'water' && block !== 'lava') {
+                                hasRoof = true;
+                                break; // Found structure above
+                            }
+                        }
+                        
+                        // Reject if there's a roof/structure above
+                        if (hasRoof) return null;
+                        
+                        // Check surrounding area for structures (avoid spawning next to buildings)
+                        let nearStructure = false;
+                        for (let dx = -2; dx <= 2; dx++) {
+                            for (let dz = -2; dz <= 2; dz++) {
+                                // Check if there are tall structures nearby
+                                for (let dy = 1; dy <= 5; dy++) {
+                                    const block = this.getBlock(x + dx, groundY + dy, z + dz);
+                                    if (block && block !== 'water' && block !== 'lava') {
+                                        nearStructure = true;
+                                        break;
+                                    }
+                                }
+                                if (nearStructure) break;
+                            }
+                            if (nearStructure) break;
+                        }
+                        
+                        // Prefer open areas away from structures
+                        if (nearStructure) {
+                            return null; // Skip this location
+                        }
+                        
                         const feetY = groundY + 1;
                         const bodyY = groundY + 2;
-                        const headY = groundY + 3;
                         
                         // Check if there's space for the player (2 blocks of air above ground)
                         const feetBlock = this.getBlock(x, feetY, z);
@@ -7717,11 +9999,36 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         const feetClear = !feetBlock || feetBlock === 'water' || feetBlock === 'lava';
                         const bodyClear = !bodyBlock || bodyBlock === 'water' || bodyBlock === 'lava';
                         
-                        // Prefer spawning on dry land
+                        // Check for flat ground (prefer stable, flat terrain)
                         const groundBlock = this.getBlock(x, groundY, z);
                         const isDryLand = groundBlock !== 'water' && groundBlock !== 'lava' && groundBlock !== 'sand';
                         
-                        if (feetClear && bodyClear) {
+                        // Check if ground is reasonably flat (check adjacent blocks)
+                        let isFlat = true;
+                        for (let dx = -1; dx <= 1; dx++) {
+                            for (let dz = -1; dz <= 1; dz++) {
+                                if (dx === 0 && dz === 0) continue;
+                                
+                                // Find ground at adjacent position (inline logic)
+                                let adjGroundY = null;
+                                for (let checkY = 40; checkY >= 0; checkY--) {
+                                    const adjBlock = this.getBlock(x + dx, checkY, z + dz);
+                                    if (adjBlock && adjBlock !== 'water' && adjBlock !== 'lava') {
+                                        adjGroundY = checkY;
+                                        break;
+                                    }
+                                }
+                                
+                                // If can't find adjacent ground or too steep, not flat
+                                if (adjGroundY === null || Math.abs(adjGroundY - groundY) > 1) {
+                                    isFlat = false; // Too steep/uneven or no ground
+                                    break;
+                                }
+                            }
+                            if (!isFlat) break;
+                        }
+                        
+                        if (feetClear && bodyClear && isFlat) {
                             return {
                                 x: x,
                                 y: feetY + this.playerEyeHeight,
