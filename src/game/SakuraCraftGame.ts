@@ -207,7 +207,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             ctx: null,
             isActive: false,
             isPaused: false,
-            camera: { x: 0, y: 50, z: 0, rotX: 0, rotY: 0 },
+            camera: { x: 0, y: 5, z: 0, rotX: 0, rotY: 0, sneaking: false, normalHeight: 1.6, sneakHeight: 1.2 },
             velocity: { x: 0, y: 0, z: 0 },
             world: {},
             keys: {},
@@ -591,9 +591,19 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         if (height > waterLevel + 1 && !isDesert && !isBeach) {
                             const treeNoise = this.noise2D(x * 0.4 + 300, z * 0.4 + 300);
                             if (treeNoise > 0.5 && Math.random() < 0.12) {
-                                // Check if area is clear (no overlapping structures)
-                                const treeSize = 5; // Trees are roughly 5x5
-                                if (!this.checkStructureCollision(x - 2, height + 1, z - 2, treeSize, 8, treeSize)) {
+                                // Check if area is clear (no overlapping structures) AND within bounds
+                                const treeSize = 5;
+                                const treeX = x - 2;
+                                const treeZ = z - 2;
+                                
+                                // Check if tree would be within world bounds
+                                const inBounds = this.worldBounds && 
+                                    treeX >= this.worldBounds.minX + 2 &&
+                                    treeX + treeSize <= this.worldBounds.maxX - 2 &&
+                                    treeZ >= this.worldBounds.minZ + 2 &&
+                                    treeZ + treeSize <= this.worldBounds.maxZ - 2;
+                                
+                                if (inBounds && !this.checkStructureCollision(treeX, height + 1, treeZ, treeSize, 8, treeSize)) {
                                     // 25% chance for cherry blossom tree
                                     if (Math.random() < 0.25) {
                                         this.generateCherryTree(x, height + 1, z);
@@ -2319,6 +2329,19 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         this.toggleInventory();
                     }
                     
+                    // Toggle sneak with C
+                    if (e.key.toLowerCase() === 'c' && !e.repeat) {
+                        this.toggleSneak();
+                    }
+                    
+                    // Hold to sneak with Ctrl
+                    if (e.key === 'Control' && !e.repeat) {
+                        if (!this.camera.sneaking) {
+                            this.toggleSneak();
+                            this.camera.sneakingWithCtrl = true; // Track that we enabled via Ctrl
+                        }
+                    }
+                    
                     // Drop item with Q
                     if (e.key.toLowerCase() === 'q') {
                         this.dropHeldItem();
@@ -2345,6 +2368,14 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 
                 document.addEventListener('keyup', (e) => {
                     this.keys[e.key.toLowerCase()] = false;
+                    
+                    // Release Ctrl sneak
+                    if (e.key === 'Control' && this.camera.sneakingWithCtrl) {
+                        this.camera.sneakingWithCtrl = false;
+                        if (this.camera.sneaking) {
+                            this.toggleSneak(); // Turn off sneak
+                        }
+                    }
                 });
                 
                 // ===== POINTER LOCK CONTROLS (Industry Standard for Browser FPS) =====
@@ -5758,7 +5789,23 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 
                 // Render blocks with face culling
                 const getBlock = (x, y, z) => this.world[`${x},${y},${z}`];
-                const isTransparent = (block) => !block || this.fluidBlocks.includes(block);
+                
+                // Check if a face should be rendered - includes transparent solid blocks
+                const isTransparent = (block) => {
+                    if (!block) return true; // No block = show face
+                    if (this.fluidBlocks.includes(block)) return true; // Fluid = transparent
+                    // Check if block has transparency property (leaves, glass, etc.)
+                    const blockProps = this.blockColors[block];
+                    if (blockProps && blockProps.transparent) return true;
+                    return false; // Solid opaque block
+                };
+                
+                // For transparent blocks, check if adjacent is SAME type (only hide if same)
+                const shouldHideFace = (currentType, adjacentType) => {
+                    if (!adjacentType) return false; // No adjacent = show face
+                    return currentType === adjacentType; // Only hide if same type
+                };
+                
                 const getFluidLevel = (x, y, z) => this.fluidLevels[`${x},${y},${z}`] || 8;
                 const animTime = Date.now() * 0.002; // Animation time for flowing effect
                 
@@ -5890,13 +5937,26 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         hasLeft = !adjLeft || (adjLeft !== type) || (leftLevel < myLevel);
                         hasRight = !adjRight || (adjRight !== type) || (rightLevel < myLevel);
                     } else {
-                        // Solid blocks: show face if adjacent is empty OR is transparent (fluid)
-                        hasTop = isTransparent(adjTop);
-                        hasBottom = isTransparent(adjBottom);
-                        hasFront = isTransparent(adjFront);
-                        hasBack = isTransparent(adjBack);
-                        hasLeft = isTransparent(adjLeft);
-                        hasRight = isTransparent(adjRight);
+                        // Solid blocks: check if block has transparency
+                        const isCurrentTransparent = this.blockColors[type] && this.blockColors[type].transparent;
+                        
+                        if (isCurrentTransparent) {
+                            // Transparent solid blocks (leaves, glass) - only hide if same type adjacent
+                            hasTop = !shouldHideFace(type, adjTop);
+                            hasBottom = !shouldHideFace(type, adjBottom);
+                            hasFront = !shouldHideFace(type, adjFront);
+                            hasBack = !shouldHideFace(type, adjBack);
+                            hasLeft = !shouldHideFace(type, adjLeft);
+                            hasRight = !shouldHideFace(type, adjRight);
+                        } else {
+                            // Opaque solid blocks: show face if adjacent is empty OR transparent
+                            hasTop = isTransparent(adjTop);
+                            hasBottom = isTransparent(adjBottom);
+                            hasFront = isTransparent(adjFront);
+                            hasBack = isTransparent(adjBack);
+                            hasLeft = isTransparent(adjLeft);
+                            hasRight = isTransparent(adjRight);
+                        }
                     }
                     
                     // Skip fully hidden blocks

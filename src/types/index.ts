@@ -18,6 +18,10 @@ export interface Vector3 {
 export interface Camera extends Vector3 {
   rotX: number;
   rotY: number;
+  sneaking?: boolean;
+  normalHeight?: number;
+  sneakHeight?: number;
+  sneakingWithCtrl?: boolean;
 }
 
 // Block colors
