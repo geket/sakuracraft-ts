@@ -6,33 +6,25 @@
  */
 
 import type {
-  Camera,
-  Vector3,
-  BlockType,
-  BlockColor,
-  InventoryItem,
-  Inventory,
-  Recipe,
-  ItemProperties,
   GameStats,
   GameSettings,
-  FPSCounter,
-  Bird,
-  PestBird,
-  Fish,
-  Cat,
-  Creeper,
-  Particle,
-  DroppedItem,
-  WorldBounds,
-  Wind,
-  BirdEvent,
-  SurvivalStats,
   SakuraCraftInitOptions,
   ISakuraCraftEngine
 } from '../types';
 
 import '../styles/game.css';
+
+// Extend Document and HTMLElement interfaces for webkit fullscreen APIs
+declare global {
+  interface Document {
+    webkitFullscreenElement?: Element;
+    webkitExitFullscreen?: () => Promise<void>;
+  }
+  
+  interface HTMLElement {
+    webkitRequestFullscreen?: () => Promise<void>;
+  }
+}
 
 // Game HTML template
 const gameTemplate = `
@@ -2244,7 +2236,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     
                     if (this.pointerLocked) {
                         // Successfully locked - hide overlay
-                        document.getElementById('clickToPlay').classList.remove('active');
+                        document.getElementById('clickToPlay')!.classList.remove('active');
                     } else {
                         // Lock released (user pressed ESC or we exited)
                         // If game is active and not paused and inventory is NOT open
@@ -2260,7 +2252,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     console.log('Pointer lock failed');
                     // Show the click overlay so user can try again
                     if (this.isActive && !this.isPaused) {
-                        document.getElementById('clickToPlay').classList.add('active');
+                        document.getElementById('clickToPlay')!.classList.add('active');
                     }
                 });
                 
@@ -2558,10 +2550,10 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             
             setupMenus() {
                 // Resume button
-                document.getElementById('btnResume').addEventListener('click', () => this.resume());
+                document.getElementById('btnResume')!.addEventListener('click', () => this.resume());
                 
                 // Fullscreen toggle button
-                document.getElementById('btnFullscreen').addEventListener('click', (e) => {
+                document.getElementById('btnFullscreen')!.addEventListener('click', (e) => {
                     e.preventDefault();
                     const container = document.getElementById('minecraftGame');
                     const isFs = document.fullscreenElement || document.webkitFullscreenElement;
@@ -2591,40 +2583,40 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 document.addEventListener('webkitfullscreenchange', () => this.updateFullscreenButton());
                 
                 // Account button (disabled)
-                document.getElementById('btnAccount').addEventListener('click', (e) => {
+                document.getElementById('btnAccount')!.addEventListener('click', (e) => {
                     e.preventDefault();
                 });
                 
                 // Stats button
-                document.getElementById('btnStats').addEventListener('click', () => {
+                document.getElementById('btnStats')!.addEventListener('click', () => {
                     this.showSubmenu('menuStats');
                     this.updateStatsDisplay();
                 });
                 
                 // Options button
-                document.getElementById('btnOptions').addEventListener('click', () => {
+                document.getElementById('btnOptions')!.addEventListener('click', () => {
                     this.showSubmenu('menuOptions');
                 });
                 
                 // Quit button
-                document.getElementById('btnQuit').addEventListener('click', () => this.stop());
+                document.getElementById('btnQuit')!.addEventListener('click', () => this.stop());
                 
                 // Back buttons
-                document.getElementById('statsBack').addEventListener('click', () => this.showSubmenu('menuMain'));
-                document.getElementById('optionsBack').addEventListener('click', () => this.showSubmenu('menuMain'));
+                document.getElementById('statsBack')!.addEventListener('click', () => this.showSubmenu('menuMain'));
+                document.getElementById('optionsBack')!.addEventListener('click', () => this.showSubmenu('menuMain'));
                 
                 // Options controls
-                document.getElementById('optBrightness').addEventListener('input', (e) => {
+                document.getElementById('optBrightness')!.addEventListener('input', (e) => {
                     this.settings.brightness = parseInt(e.target.value);
                     this.applyFilters();
                 });
                 
-                document.getElementById('optFilter').addEventListener('change', (e) => {
+                document.getElementById('optFilter')!.addEventListener('change', (e) => {
                     this.settings.filter = e.target.value;
                     this.applyFilters();
                 });
                 
-                document.getElementById('optRenderDist').addEventListener('change', (e) => {
+                document.getElementById('optRenderDist')!.addEventListener('change', (e) => {
                     this.settings.renderDistance = parseInt(e.target.value);
                 });
                 
@@ -2647,10 +2639,10 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 });
                 
                 // Target FPS slider
-                document.getElementById('optTargetFps').addEventListener('input', (e) => {
+                document.getElementById('optTargetFps')!.addEventListener('input', (e) => {
                     const fps = parseInt(e.target.value);
                     this.settings.targetFps = fps;
-                    document.getElementById('targetFpsValue').textContent = fps;
+                    document.getElementById('targetFpsValue')!.textContent = fps;
                 });
             },
             
@@ -2660,15 +2652,15 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             },
             
             updateStatsDisplay() {
-                document.getElementById('statPlaced').textContent = this.stats.blocksPlaced;
-                document.getElementById('statBroken').textContent = this.stats.blocksBroken;
-                document.getElementById('statDistance').textContent = Math.floor(this.stats.distance) + 'm';
-                document.getElementById('statJumps').textContent = this.stats.jumps;
+                document.getElementById('statPlaced')!.textContent = this.stats.blocksPlaced;
+                document.getElementById('statBroken')!.textContent = this.stats.blocksBroken;
+                document.getElementById('statDistance')!.textContent = Math.floor(this.stats.distance) + 'm';
+                document.getElementById('statJumps')!.textContent = this.stats.jumps;
                 
                 const elapsed = Math.floor((Date.now() - this.stats.startTime) / 1000);
                 const mins = Math.floor(elapsed / 60);
                 const secs = elapsed % 60;
-                document.getElementById('statTime').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+                document.getElementById('statTime')!.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
             },
             
             applyFilters() {
@@ -4458,7 +4450,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         <span class="pickup-icon"></span>
                         <span>+${count} ${itemNames[type] || type}</span>
                     `;
-                    notification.querySelector('.pickup-icon').appendChild(miniCanvas);
+                    notification.querySelector('.pickup-icon')!.appendChild(miniCanvas);
                     
                     container.appendChild(notification);
                     
@@ -5562,7 +5554,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             render() {
                 if (!this.isActive) return;
                 
-                const ctx = this.ctx;
+                const ctx = this.ctx!;
                 const width = this.canvas.width;
                 const height = this.canvas.height;
                 
@@ -7165,9 +7157,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 const info = blockType ? socketInfo[blockType] : null;
                 if (info) {
                     tooltip.classList.add('active');
-                    tooltip.querySelector('.tooltip-title').textContent = info.name;
+                    tooltip.querySelector('.tooltip-title')!.textContent = info.name;
                     const isFilled = info.item === 'FILLED';
-                    tooltip.querySelector('.tooltip-desc').innerHTML = 
+                    tooltip.querySelector('.tooltip-desc')!.innerHTML = 
                         `<span style="color:${isFilled ? '#4f4' : '#ffd700'}">${info.item}</span><br>${info.desc}`;
                 } else {
                     tooltip.classList.remove('active');
@@ -7476,13 +7468,13 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         
                         // Render FPS counter
                         if (this.settings.showFps) {
-                            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-                            this.ctx.fillRect(this.canvas.width - 70, this.canvas.height - 25, 65, 20);
-                            this.ctx.fillStyle = '#00ff00';
-                            this.ctx.font = '12px monospace';
-                            this.ctx.textAlign = 'right';
-                            this.ctx.fillText(`${this.fpsCounter.fps} FPS`, this.canvas.width - 10, this.canvas.height - 10);
-                            this.ctx.textAlign = 'left';
+                            this.ctx!.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                            this.ctx!.fillRect(this.canvas.width - 70, this.canvas.height - 25, 65, 20);
+                            this.ctx!.fillStyle = '#00ff00';
+                            this.ctx!.font = '12px monospace';
+                            this.ctx!.textAlign = 'right';
+                            this.ctx!.fillText(`${this.fpsCounter.fps} FPS`, this.canvas.width - 10, this.canvas.height - 10);
+                            this.ctx!.textAlign = 'left';
                         }
                     }
                 }
@@ -7499,9 +7491,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 this.isPaused = false;
                 this.pointerLocked = false;
                 this.stats = { blocksPlaced: 0, blocksBroken: 0, distance: 0, jumps: 0, startTime: Date.now() };
-                document.getElementById('minecraftGame').classList.add('active');
-                document.getElementById('pauseMenu').classList.remove('active');
-                document.getElementById('gameUI').style.display = 'flex';
+                document.getElementById('minecraftGame')!.classList.add('active');
+                document.getElementById('pauseMenu')!.classList.remove('active');
+                document.getElementById('gameUI')!.style.display = 'flex';
                 
                 // Find safe spawn location using a spiral search
                 const findSafeSpawn = () => {
@@ -7666,7 +7658,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 document.documentElement.style.overflow = 'hidden';
                 
                 // Show click-to-play - user must click to lock pointer
-                document.getElementById('clickToPlay').classList.add('active');
+                document.getElementById('clickToPlay')!.classList.add('active');
                 
                 // Start game loop (cancel any existing one first)
                 if (this.gameLoopId) {
@@ -7685,9 +7677,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             pause() {
                 if (!this.isActive) return;
                 this.isPaused = true;
-                document.getElementById('pauseMenu').classList.add('active');
-                document.getElementById('gameUI').style.display = 'none';
-                document.getElementById('clickToPlay').classList.remove('active');
+                document.getElementById('pauseMenu')!.classList.add('active');
+                document.getElementById('gameUI')!.style.display = 'none';
+                document.getElementById('clickToPlay')!.classList.remove('active');
                 this.showSubmenu('menuMain');
                 
                 // Exit pointer lock if still locked
@@ -7698,12 +7690,12 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             
             resume() {
                 this.isPaused = false;
-                document.getElementById('pauseMenu').classList.remove('active');
-                document.getElementById('gameUI').style.display = 'flex';
+                document.getElementById('pauseMenu')!.classList.remove('active');
+                document.getElementById('gameUI')!.style.display = 'flex';
                 
                 // Must show click-to-play because we need a new user gesture to re-lock
                 // (Browser security: can't re-lock immediately after ESC release)
-                document.getElementById('clickToPlay').classList.add('active');
+                document.getElementById('clickToPlay')!.classList.add('active');
             },
             
             updateFullscreenButton() {
@@ -7757,13 +7749,13 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 this.canvas.height = 450;
                 
                 // Clear the canvas to free GPU memory
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx!.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 
                 // Hide UI elements
-                document.getElementById('minecraftGame').classList.remove('active');
-                document.getElementById('pauseMenu').classList.remove('active');
-                document.getElementById('clickToPlay').classList.remove('active');
-                document.getElementById('inventoryScreen').classList.remove('active');
+                document.getElementById('minecraftGame')!.classList.remove('active');
+                document.getElementById('pauseMenu')!.classList.remove('active');
+                document.getElementById('clickToPlay')!.classList.remove('active');
+                document.getElementById('inventoryScreen')!.classList.remove('active');
                 this.inventoryOpen = false;
                 this.canvas.style.filter = '';
                 
@@ -7816,7 +7808,7 @@ export class SakuraCraftGame {
    */
   init(options: SakuraCraftInitOptions = {}): this {
     // Inject HTML if not present
-    if (!document.getElementById('minecraftGame')) {
+    if (!document.getElementById('minecraftGame')!) {
       let container: HTMLElement = document.body;
       if (options.container) {
         container = typeof options.container === 'string'
@@ -7842,10 +7834,10 @@ export class SakuraCraftGame {
     }
     
     // Setup close button
-    document.getElementById('closeMinecraft')?.addEventListener('click', () => this.stop());
+    document.getElementById('closeMinecraft')!?.addEventListener('click', () => this.stop());
     
     // Setup click to play
-    document.getElementById('clickToPlay')?.addEventListener('click', () => {
+    document.getElementById('clickToPlay')!?.addEventListener('click', () => {
       if (this._game.isActive && !this._game.isPaused && this._game.canvas) {
         this._game.canvas.requestPointerLock();
       }

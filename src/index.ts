@@ -10,12 +10,6 @@
  */
 
 import { SakuraCraftGame, minecraftGame } from './game/SakuraCraftGame';
-import type { 
-  SakuraCraftInitOptions, 
-  GameStats, 
-  GameSettings,
-  ISakuraCraftEngine 
-} from './types';
 
 // Re-export types
 export type * from './types';
