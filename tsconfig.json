@@ -22,22 +22,14 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     
-    /* Type Checking - STRICT MODE */
-    "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "strictBindCallApply": true,
-    "strictPropertyInitialization": true,
-    "noImplicitThis": true,
-    "alwaysStrict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": false,
+    /* Type Checking - RELAXED MODE (for rapid game development) */
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,  // Keep this for safety
+    "allowJs": true,  // Allow mixing JS and TS
     
     /* Completeness */
     "skipLibCheck": true,
@@ -55,6 +47,7 @@
   /* Files */
   "include": [
     "src/**/*.ts",
+    "src/**/*.js",
     "src/**/*.d.ts",
     "src/**/*.tsx"
   ],
@@ -62,8 +55,6 @@
   "exclude": [
     "node_modules",
     "dist",
-    "build",
-    "**/*.spec.ts",
-    "**/*.test.ts"
+    "build"
   ]
 }
