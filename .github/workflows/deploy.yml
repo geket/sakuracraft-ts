@@ -1,16 +1,13 @@
-name: Build and Deploy SakuraCraft
+name: Build and Deploy
 
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:  # Allow manual trigger
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
-    permissions:
-      contents: write  # Required for same-repo deployment
     
     steps:
       - name: Checkout source code
@@ -24,42 +21,42 @@ jobs:
           node-version: '20'
           cache: 'npm'
       
+      # Use npm install instead of npm ci to handle lock file sync issues
       - name: Install dependencies
-        run: npm ci
+        run: npm install
       
       - name: Build project
-        run: npm run build
         env:
           NODE_ENV: production
+        run: npm run build
       
-      # OPTION 1: Deploy to gh-pages branch (same repo)
-      # Uncomment this for standalone game hosting at: https://geket.github.io/sakuracraft-ts/
-      # - name: Deploy to GitHub Pages (same repo)
-      #   uses: JamesIves/github-pages-deploy-action@v4
-      #   with:
-      #     folder: dist
-      #     branch: gh-pages
-      #     clean: true
+      - name: Report build size
+        run: |
+          echo "## Build Complete! 🎉" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Output" >> $GITHUB_STEP_SUMMARY
+          du -sh dist >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Files Generated" >> $GITHUB_STEP_SUMMARY
+          ls -lh dist/ >> $GITHUB_STEP_SUMMARY
       
-      # OPTION 2: Deploy to portfolio site (external repo)
-      # This deploys to: https://geket.github.io/games/sakuracraft/
+      # Deploy to external repository
       - name: Deploy to geket.github.io
         uses: peaceiris/actions-gh-pages@v3
         with:
-          personal_token: ${{ secrets.DEPLOY_TOKEN }}
+          deploy_key: ${{ secrets.DEPLOY_TOKEN }}
           external_repository: geket/geket.github.io
           publish_branch: main
           publish_dir: ./dist
           destination_dir: games/sakuracraft
           keep_files: true
-          commit_message: 'Deploy SakuraCraft ${{ github.sha }}'
-          user_name: 'github-actions[bot]'
-          user_email: 'github-actions[bot]@users.noreply.github.com'
           enable_jekyll: false
+          commit_message: 'Deploy SakuraCraft ${{ github.sha }}'
       
       - name: Deployment summary
         run: |
-          echo "✅ SakuraCraft deployed successfully!"
-          echo "🎮 Game URL: https://geket.github.io/games/sakuracraft/"
-          echo "📦 Build commit: ${{ github.sha }}"
-          echo "📊 Build size: $(du -sh dist | cut -f1)"
+          echo "## Deployment Complete! 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Game URL:** https://geket.github.io/games/sakuracraft/" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Time:** $(date)" >> $GITHUB_STEP_SUMMARY
