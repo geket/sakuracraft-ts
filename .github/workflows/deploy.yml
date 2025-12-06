@@ -44,7 +44,7 @@ jobs:
       - name: Deploy to geket.github.io
         uses: peaceiris/actions-gh-pages@v3
         with:
-          deploy_key: ${{ secrets.DEPLOY_TOKEN }}
+          personal_token: ${{ secrets.DEPLOY_TOKEN }}
           external_repository: geket/geket.github.io
           publish_branch: main
           publish_dir: ./dist
