@@ -1,24 +1,60 @@
 {
   "compilerOptions": {
+    /* Language and Environment */
     "target": "ES2020",
-    "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "useDefineForClassFields": true,
+    
+    /* Modules */
     "module": "ESNext",
-    "skipLibCheck": true,
-
-    /* Bundler mode */
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
     "isolatedModules": true,
-    "noEmit": true,
-
-    /* Linting - RELAXED FOR GAME DEVELOPMENT */
+    
+    /* Emit */
+    "noEmit": true,  // Vite handles compilation
+    "declaration": false,
+    "sourceMap": false,
+    
+    /* Interop Constraints */
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    
+    /* Type Checking - RELAXED MODE (for rapid game development) */
     "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noFallthroughCasesInSwitch": true,
-    "allowJs": true
+    "noFallthroughCasesInSwitch": true,  // Keep this for safety
+    "allowJs": true,  // Allow mixing JS and TS
+    
+    /* Completeness */
+    "skipLibCheck": true,
+    
+    /* Path Mapping - matches vite.config.ts */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@game/*": ["./src/game/*"],
+      "@assets/*": ["./src/assets/*"],
+      "@utils/*": ["./src/utils/*"]
+    }
   },
-  "include": ["src"]
+  
+  /* Files */
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.js",
+    "src/**/*.d.ts",
+    "src/**/*.tsx"
+  ],
+  
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build"
+  ]
 }
