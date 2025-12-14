@@ -125,6 +125,14 @@ const gameTemplate = `
             <div class="option-toggle" id="optAA" data-on="false"></div>
           </div>
           <div class="option-row">
+            <span>Tree Style</span>
+            <select class="option-select" id="optTreeStyle">
+              <option value="simple" selected>Simple (Fast)</option>
+              <option value="transparent">Fancy</option>
+              <option value="bushy">Fancy + Wind</option>
+            </select>
+          </div>
+          <div class="option-row">
             <span>Show FPS</span>
             <div class="option-toggle on" id="optShowFps" data-on="true"></div>
           </div>
@@ -347,7 +355,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 lighting: true,
                 antialiasing: false,
                 showFps: true,
-                targetFps: 60
+                targetFps: 60,
+                treeStyle: 'simple' as 'simple' | 'transparent' | 'bushy'
             },
             
             // FPS tracking
@@ -639,7 +648,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         
                         if (height > waterLevel + 1 && !isDesert && !isBeach) {
                             const treeNoise = this.noise2D(x * 0.4 + 300, z * 0.4 + 300);
-                            if (treeNoise > 0.5 && Math.random() < 0.12) {
+                            if (treeNoise > 0.4 && Math.random() < 0.25) {
                                 // Check if area is clear (no overlapping structures) AND within bounds
                                 const treeSize = 5;
                                 const treeX = x - 2;
@@ -814,9 +823,16 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 const h4 = this.getHighestBlock(x, z - 3) || groundY;
                 if (Math.max(Math.abs(h1 - groundY), Math.abs(h2 - groundY), Math.abs(h3 - groundY), Math.abs(h4 - groundY)) > 2) return false;
                 
-                // Check overlap
+                // Check overlap with other buildings
                 for (const b of this.buildings) {
                     if (Math.sqrt((x - b.x) ** 2 + (z - b.z) ** 2) < 15) return false;
+                }
+                
+                // Check for existing structures (trees, other blocks) in build area
+                // Buildings are roughly 8x8x10, check a bit larger area
+                const buildWidth = 10, buildHeight = 12, buildDepth = 10;
+                if (this.checkStructureCollision(x - 1, groundY, z - 1, buildWidth, buildHeight, buildDepth)) {
+                    return false; // Area has existing blocks (likely trees)
                 }
                 
                 const type = buildingTypes[Math.floor(Math.random() * buildingTypes.length)];
@@ -3174,6 +3190,10 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     this.settings.renderDistance = parseInt((e.target as HTMLInputElement).value);
                 });
                 
+                document.getElementById('optTreeStyle').addEventListener('change', (e) => {
+                    this.settings.treeStyle = (e.target as HTMLSelectElement).value as 'simple' | 'transparent' | 'bushy';
+                });
+                
                 // Toggle switches
                 ['optShadows', 'optLighting', 'optAA', 'optShowFps'].forEach(id => {
                     document.getElementById(id).addEventListener('click', (e) => {
@@ -3964,8 +3984,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             drawMiniBlock(canvas, type) {
                 const ctx = canvas.getContext('2d');
                 const colors = this.blockColors[type];
-                const w = this.canvas.width;
-                const h = this.canvas.height;
+                const w = canvas.width;
+                const h = canvas.height;
                 
                 ctx.clearRect(0, 0, w, h);
                 
@@ -7712,16 +7732,38 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         hasRight = !adjRight || (adjRight !== type) || (rightLevel < myLevel);
                     } else {
                         // Solid blocks: check if block has transparency
-                        const isCurrentTransparent = this.blockColors[type] && this.blockColors[type].transparent;
+                        const blockIsTransparent = this.blockColors[type] && this.blockColors[type].transparent;
+                        // Check if this is a leaf in fancy mode (show internal faces but stay opaque)
+                        const isLeafType = type === 'leaves' || type === 'appleLeaves' || type === 'cherryLeaves';
+                        const leafFancyMode = isLeafType && (this.settings.treeStyle === 'transparent' || this.settings.treeStyle === 'bushy');
                         
-                        if (isCurrentTransparent) {
-                            // Transparent solid blocks (leaves, glass) - only hide if adjacent is OPAQUE
+                        if (blockIsTransparent) {
+                            // Actually transparent blocks (water, glass) - only hide if adjacent is OPAQUE
                             hasTop = !shouldHideFaceTransparent(adjTop);
                             hasBottom = !shouldHideFaceTransparent(adjBottom);
                             hasFront = !shouldHideFaceTransparent(adjFront);
                             hasBack = !shouldHideFaceTransparent(adjBack);
                             hasLeft = !shouldHideFaceTransparent(adjLeft);
                             hasRight = !shouldHideFaceTransparent(adjRight);
+                        } else if (leafFancyMode) {
+                            // Fancy leaves: show face unless adjacent is an OPAQUE non-leaf block
+                            // This renders internal leaf faces for depth, like Minecraft fancy mode
+                            const shouldShowFancyLeafFace = (adjType) => {
+                                if (!adjType) return true; // Air = show
+                                // Hide only if adjacent to opaque non-leaf solid
+                                const adjIsLeaf = adjType === 'leaves' || adjType === 'appleLeaves' || adjType === 'cherryLeaves';
+                                if (adjIsLeaf) return true; // Adjacent leaf = show face for depth
+                                const adjProps = this.blockColors[adjType];
+                                if (adjProps && adjProps.transparent) return true; // Transparent = show
+                                if (this.fluidBlocks.includes(adjType)) return true; // Fluid = show
+                                return false; // Opaque solid = hide
+                            };
+                            hasTop = shouldShowFancyLeafFace(adjTop);
+                            hasBottom = shouldShowFancyLeafFace(adjBottom);
+                            hasFront = shouldShowFancyLeafFace(adjFront);
+                            hasBack = shouldShowFancyLeafFace(adjBack);
+                            hasLeft = shouldShowFancyLeafFace(adjLeft);
+                            hasRight = shouldShowFancyLeafFace(adjRight);
                         } else {
                             // Opaque solid blocks: show face if adjacent is empty OR transparent
                             hasTop = isTransparent(adjTop);
@@ -7736,47 +7778,84 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     // Skip fully hidden blocks
                     if (!hasTop && !hasBottom && !hasFront && !hasBack && !hasLeft && !hasRight) continue;
                     
+                    // Check if this is a leaf block for special rendering
+                    const isLeafBlock = type === 'leaves' || type === 'appleLeaves' || type === 'cherryLeaves';
+                    const treeStyle = this.settings.treeStyle;
+                    
+                    // Fancy leaves are OPAQUE but show internal faces (like Minecraft)
+                    const leafFancyMode = isLeafBlock && (treeStyle === 'transparent' || treeStyle === 'bushy');
+                    
                     // Define visible faces
                     const faces = [];
                     
-                    // For transparent blocks, use uniform shading to avoid patchy appearance
-                    const isCurrentTransparent = colors && colors.transparent;
-                    const uniformDark = 0.95; // All transparent faces use same brightness
-                    const frontDark = isCurrentTransparent ? uniformDark : 0.95;
-                    const backDark = isCurrentTransparent ? uniformDark : 0.75;
+                    // For transparent blocks (NOT fancy leaves), use uniform shading
+                    const isActuallyTransparent = colors && colors.transparent;
+                    const uniformDark = 0.95;
+                    const frontDark = isActuallyTransparent ? uniformDark : 0.95;
+                    const backDark = isActuallyTransparent ? uniformDark : 0.75;
                     const topDark = 1.0;
-                    const bottomDark = isCurrentTransparent ? uniformDark : 0.6;
-                    const leftDark = isCurrentTransparent ? uniformDark : 0.85;
-                    const rightDark = isCurrentTransparent ? uniformDark : 0.9;
+                    const bottomDark = isActuallyTransparent ? uniformDark : 0.6;
+                    const leftDark = isActuallyTransparent ? uniformDark : 0.85;
+                    const rightDark = isActuallyTransparent ? uniformDark : 0.9;
                     
-                    // For transparent blocks, use side color for all faces for consistency
-                    const sideColor = isCurrentTransparent ? colors.side : colors.side;
-                    const topColor = isCurrentTransparent ? colors.side : colors.top;
-                    const bottomColor = isCurrentTransparent ? colors.side : colors.bottom;
+                    // Use normal face colors (fancy leaves stay opaque with normal shading)
+                    const sideColor = colors.side;
+                    const topColor = colors.top;
+                    const bottomColor = colors.bottom;
+                    
+                    // Wind animation for bushy leaves
+                    let windOffsetX = 0, windOffsetZ = 0, windOffsetY = 0;
+                    if (isLeafBlock && treeStyle === 'bushy') {
+                        const windTime = Date.now() * 0.001;
+                        // Multi-frequency wind for natural movement
+                        const windSpeed1 = Math.sin(windTime * 1.5 + x * 0.3 + z * 0.5) * 0.08;
+                        const windSpeed2 = Math.sin(windTime * 2.3 + x * 0.7 - z * 0.2) * 0.05;
+                        const windSpeed3 = Math.cos(windTime * 1.8 - x * 0.4 + z * 0.6) * 0.03;
+                        windOffsetX = windSpeed1 + windSpeed2;
+                        windOffsetZ = windSpeed2 + windSpeed3;
+                        windOffsetY = Math.abs(windSpeed1) * 0.3; // Slight vertical bob
+                    }
+                    
+                    // Apply wind offset to vertex positions for leaves
+                    const applyWind = (vx, vy, vz) => {
+                        if (!isLeafBlock || treeStyle !== 'bushy') return [vx, vy, vz];
+                        // Only move top vertices for rustling effect
+                        const isTopVertex = vy > y + 0.5;
+                        if (isTopVertex) {
+                            return [vx + windOffsetX, vy + windOffsetY, vz + windOffsetZ];
+                        }
+                        return [vx, vy, vz];
+                    };
                     
                     // Front face (+Z)
                     if (hasFront) {
-                        faces.push({ v: [[x, y, z+1], [x+1, y, z+1], [x+1, topY, z+1], [x, topY, z+1]], color: sideColor, dark: frontDark, isTop: false });
+                        const v = [[x, y, z+1], [x+1, y, z+1], [x+1, topY, z+1], [x, topY, z+1]].map(([vx, vy, vz]) => applyWind(vx, vy, vz));
+                        faces.push({ v, color: sideColor, dark: frontDark, isTop: false, isLeaf: isLeafBlock });
                     }
                     // Back face (-Z)
                     if (hasBack) {
-                        faces.push({ v: [[x+1, y, z], [x, y, z], [x, topY, z], [x+1, topY, z]], color: sideColor, dark: backDark, isTop: false });
+                        const v = [[x+1, y, z], [x, y, z], [x, topY, z], [x+1, topY, z]].map(([vx, vy, vz]) => applyWind(vx, vy, vz));
+                        faces.push({ v, color: sideColor, dark: backDark, isTop: false, isLeaf: isLeafBlock });
                     }
                     // Top face (+Y)
                     if (hasTop) {
-                        faces.push({ v: [[x, topY, z], [x+1, topY, z], [x+1, topY, z+1], [x, topY, z+1]], color: topColor, dark: topDark, isTop: true });
+                        const v = [[x, topY, z], [x+1, topY, z], [x+1, topY, z+1], [x, topY, z+1]].map(([vx, vy, vz]) => applyWind(vx, vy, vz));
+                        faces.push({ v, color: topColor, dark: topDark, isTop: true, isLeaf: isLeafBlock });
                     }
                     // Bottom face (-Y)
                     if (hasBottom) {
-                        faces.push({ v: [[x, y, z+1], [x+1, y, z+1], [x+1, y, z], [x, y, z]], color: bottomColor, dark: bottomDark, isTop: false });
+                        const v = [[x, y, z+1], [x+1, y, z+1], [x+1, y, z], [x, y, z]].map(([vx, vy, vz]) => applyWind(vx, vy, vz));
+                        faces.push({ v, color: bottomColor, dark: bottomDark, isTop: false, isLeaf: isLeafBlock });
                     }
                     // Left face (-X)
                     if (hasLeft) {
-                        faces.push({ v: [[x, y, z], [x, y, z+1], [x, topY, z+1], [x, topY, z]], color: sideColor, dark: leftDark, isTop: false });
+                        const v = [[x, y, z], [x, y, z+1], [x, topY, z+1], [x, topY, z]].map(([vx, vy, vz]) => applyWind(vx, vy, vz));
+                        faces.push({ v, color: sideColor, dark: leftDark, isTop: false, isLeaf: isLeafBlock });
                     }
                     // Right face (+X)
                     if (hasRight) {
-                        faces.push({ v: [[x+1, y, z+1], [x+1, y, z], [x+1, topY, z], [x+1, topY, z+1]], color: sideColor, dark: rightDark, isTop: false });
+                        const v = [[x+1, y, z+1], [x+1, y, z], [x+1, topY, z], [x+1, topY, z+1]].map(([vx, vy, vz]) => applyWind(vx, vy, vz));
+                        faces.push({ v, color: sideColor, dark: rightDark, isTop: false, isLeaf: isLeafBlock });
                     }
                     
                     // Render visible faces
@@ -7816,6 +7895,19 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         let fillColor = face.color;
                         if (this.settings.shadows && face.dark < 1) {
                             fillColor = this.darkenColor(face.color, face.dark);
+                        }
+                        
+                        // Apply transparency to fancy leaves
+                        if (face.isLeaf && (this.settings.treeStyle === 'transparent' || this.settings.treeStyle === 'bushy')) {
+                            // darkenColor returns rgb(r,g,b) format, convert to rgba
+                            if (fillColor.startsWith('rgb(')) {
+                                fillColor = fillColor.replace('rgb(', 'rgba(').replace(')', ', 0.75)');
+                            } else if (fillColor.startsWith('#')) {
+                                const r = parseInt(fillColor.slice(1, 3), 16);
+                                const g = parseInt(fillColor.slice(3, 5), 16);
+                                const b = parseInt(fillColor.slice(5, 7), 16);
+                                fillColor = `rgba(${r}, ${g}, ${b}, 0.75)`;
+                            }
                         }
                         
                         // Animated fluid rendering
@@ -7971,6 +8063,17 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                             }
                             
                             // STEP 1: Fill the polygon with darkened base color (provides solid base)
+                            // Apply transparency to fancy leaves
+                            if (face.isLeaf && (this.settings.treeStyle === 'transparent' || this.settings.treeStyle === 'bushy')) {
+                                if (baseFillColor.startsWith('rgb(')) {
+                                    baseFillColor = baseFillColor.replace('rgb(', 'rgba(').replace(')', ', 0.75)');
+                                } else if (baseFillColor.startsWith('#')) {
+                                    const r = parseInt(baseFillColor.slice(1, 3), 16);
+                                    const g = parseInt(baseFillColor.slice(3, 5), 16);
+                                    const b = parseInt(baseFillColor.slice(5, 7), 16);
+                                    baseFillColor = `rgba(${r}, ${g}, ${b}, 0.75)`;
+                                }
+                            }
                             ctx.fillStyle = baseFillColor;
                             ctx.beginPath();
                             ctx.moveTo(pts[0].x, pts[0].y);

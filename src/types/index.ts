@@ -101,6 +101,7 @@ export interface GameSettings {
   antialiasing: boolean;
   showFps: boolean;
   targetFps: number;
+  treeStyle: 'simple' | 'transparent' | 'bushy';
 }
 
 // FPS Counter
