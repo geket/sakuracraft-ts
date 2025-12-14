@@ -2013,15 +2013,32 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 
                 // Wandering behavior
                 if (Date.now() > npc.nextWanderTime || !npc.wanderTargetX) {
-                    // Pick new random target nearby
-                    const angle = Math.random() * Math.PI * 2;
-                    const dist = 5 + Math.random() * 10;
-                    npc.wanderTargetX = npc.x + Math.cos(angle) * dist;
-                    npc.wanderTargetZ = npc.z + Math.sin(angle) * dist;
+                    // Pick new random target nearby - but verify it has ground
+                    let validTarget = false;
+                    for (let attempt = 0; attempt < 10; attempt++) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const dist = 3 + Math.random() * 6; // Shorter range to stay safe
+                        const testX = npc.x + Math.cos(angle) * dist;
+                        const testZ = npc.z + Math.sin(angle) * dist;
+                        
+                        // Check if there's solid ground at target
+                        const groundY = this.getGroundHeight(testX, testZ);
+                        if (groundY > 0) { // Has valid ground
+                            npc.wanderTargetX = testX;
+                            npc.wanderTargetZ = testZ;
+                            validTarget = true;
+                            break;
+                        }
+                    }
+                    if (!validTarget) {
+                        // Stay in place if no valid target found
+                        npc.wanderTargetX = npc.x;
+                        npc.wanderTargetZ = npc.z;
+                    }
                     npc.nextWanderTime = Date.now() + (3000 + Math.random() * 4000);
                 }
                 
-                // Move toward wander target
+                // Move toward wander target - but check each step
                 if (npc.wanderTargetX !== null) {
                     const dx = npc.wanderTargetX - npc.x;
                     const dz = npc.wanderTargetZ - npc.z;
@@ -2029,8 +2046,24 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     
                     if (dist > 0.5) {
                         const speed = 0.04;
-                        npc.vx = (dx / dist) * speed;
-                        npc.vz = (dz / dist) * speed;
+                        const nextVx = (dx / dist) * speed;
+                        const nextVz = (dz / dist) * speed;
+                        
+                        // Check if next position has valid ground
+                        const nextX = npc.x + nextVx;
+                        const nextZ = npc.z + nextVz;
+                        const nextGroundY = this.getGroundHeight(nextX, nextZ);
+                        
+                        if (nextGroundY > 0 && Math.abs(nextGroundY - npc.y) < 3) {
+                            // Safe to move
+                            npc.vx = nextVx;
+                            npc.vz = nextVz;
+                        } else {
+                            // Would fall into void - stop and pick new target
+                            npc.vx = 0;
+                            npc.vz = 0;
+                            npc.wanderTargetX = null;
+                        }
                     } else {
                         npc.vx = 0;
                         npc.vz = 0;
@@ -2042,13 +2075,20 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 npc.x += npc.vx;
                 npc.z += npc.vz;
                 
+                // Safety: If NPC fell into void, respawn it near player
+                if (npc.y < 0) {
+                    this.debugLog('⚠️ Gunsmith fell into void! Respawning...', 'warn');
+                    this.repairNPC = null;
+                    // Will respawn naturally via updateRepairNPC
+                }
+                
                 // Check for player interaction distance
                 const distToPlayer = Math.sqrt(
                     (npc.x - this.camera.x) ** 2 + 
                     (npc.z - this.camera.z) ** 2
                 );
                 
-                npc.showPrompt = distToPlayer < 3;
+                npc.showPrompt = distToPlayer < 4;
                 
                 // Despawn if too far from player
                 if (distToPlayer > 60) {
@@ -2642,7 +2682,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                 (this.repairNPC.z - this.camera.z) ** 2
                             );
                             
-                            if (distToNPC < 3) {
+                            if (distToNPC < 4) {
                                 // Player is near NPC - open dialogue
                                 this.openDialogue('gunsmith');
                                 return; // Don't open inventory
@@ -5926,126 +5966,131 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             
             // Render dialogue UI
             renderDialogue() {
+                // Remove old dialogue if it exists (ensures fresh styles)
                 let dialogueHTML = document.getElementById('dialogueScreen');
-                if (!dialogueHTML) {
-                    // Create dialogue screen element
-                    dialogueHTML = document.createElement('div');
-                    dialogueHTML.id = 'dialogueScreen';
-                    dialogueHTML.style.cssText = `
-                        position: absolute;
-                        top: 50%;
-                        left: 50%;
-                        transform: translate(-50%, -50%);
-                        width: 600px;
-                        max-height: 500px;
-                        background: rgba(30, 20, 40, 0.95);
-                        border: 3px solid #8b7355;
-                        border-radius: 8px;
-                        padding: 25px;
-                        color: #fff;
-                        font-family: 'Courier New', monospace;
-                        z-index: 9999;
-                        overflow-y: auto;
-                        box-shadow: 0 0 30px rgba(0,0,0,0.7);
-                    `;
-                    document.body.appendChild(dialogueHTML);
+                if (dialogueHTML) {
+                    dialogueHTML.remove();
                 }
                 
-                dialogueHTML.style.display = 'block';
+                // Create dialogue screen element
+                dialogueHTML = document.createElement('div');
+                dialogueHTML.id = 'dialogueScreen';
+                dialogueHTML.style.cssText = `
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: min(92vw, 500px);
+                    background: rgba(30, 20, 40, 0.97);
+                    border: 3px solid #8b7355;
+                    border-radius: 8px;
+                    color: #fff;
+                    font-family: 'Courier New', monospace;
+                    z-index: 9999;
+                    box-shadow: 0 0 30px rgba(0,0,0,0.7);
+                    overflow: hidden;
+                `;
+                // Append to game container, not body, so it appears above the canvas
+                const gameContainer = document.getElementById('minecraftGame');
+                (gameContainer || document.body).appendChild(dialogueHTML);
+                
+                // Add scrollbar styles (only once)
+                if (!document.getElementById('dialogueStyles')) {
+                    const style = document.createElement('style');
+                    style.id = 'dialogueStyles';
+                    style.textContent = `
+                        #dialogueScreen .dialogue-content::-webkit-scrollbar { width: 8px; }
+                        #dialogueScreen .dialogue-content::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); border-radius: 4px; }
+                        #dialogueScreen .dialogue-content::-webkit-scrollbar-thumb { background: #8b7355; border-radius: 4px; }
+                        #dialogueScreen .dialogue-content::-webkit-scrollbar-thumb:hover { background: #a08060; }
+                    `;
+                    document.head.appendChild(style);
+                }
                 
                 // Gunsmith dialogue
                 if (this.currentDialogueNPC === 'gunsmith') {
                     const stage = this.gunsmithDialogueStage;
                     let npcName = '🧙 Gunsmith Wizard';
-                    let dialogue = '';
-                    let options = '';
+                    let dialogueText = '';
                     
                     // First meeting
                     if (!this.gunsmithMetBefore || stage === 0) {
-                        dialogue = `
-                            <div style="margin-bottom: 20px;">
-                                <h2 style="color: #ffd700; margin: 0 0 15px 0;">${npcName}</h2>
-                                <p style="line-height: 1.6; font-size: 14px;">
-                                    <em>*The wizard adjusts his pointed hat and grins*</em>
-                                </p>
-                                <p style="line-height: 1.6; font-size: 14px;">
-                                    "Ah! A fellow survivor of the Great Feathering! Welcome, welcome!"
-                                </p>
-                                <p style="line-height: 1.6; font-size: 14px;">
-                                    "You know, I've been debugging—er, I mean, <em>studying</em>—these birds for quite some time. 
-                                    The patterns are fascinating! Aggressive spawning rates, coordinated attacks, 
-                                    suspiciously optimized pathfinding..."
-                                </p>
-                                <p style="line-height: 1.6; font-size: 14px;">
-                                    <em>*He pulls out a worn notebook covered in sketches and calculations*</em>
-                                </p>
-                                <p style="line-height: 1.6; font-size: 14px;">
-                                    "Between you and me, I think there's a <strong>source</strong> to all this madness. 
-                                    Something—or someone—is spawning these creatures at an unnaturally high rate. 
-                                    It's almost as if someone set the spawn chance to 1.0 instead of 0.001!"
-                                </p>
-                                <p style="line-height: 1.6; font-size: 14px;">
-                                    <em>*He chuckles nervously*</em>
-                                </p>
-                                <p style="line-height: 1.6; font-size: 14px;">
-                                    "But where are my manners! I'm a traveling gunsmith—I can repair that KA-69 of yours. 
-                                    And hey, if you're interested in actually <em>solving</em> this bird problem once and for all, 
-                                    I could use someone with your... survival skills."
-                                </p>
-                            </div>
+                        dialogueText = `
+                            <p><em>*The wizard adjusts his pointed hat and grins*</em></p>
+                            <p>"Ah! A fellow survivor of the Great Feathering! Welcome!"</p>
+                            <p>"I've been studying these birds for quite some time. Aggressive spawning, 
+                            coordinated attacks, suspiciously optimized pathfinding..."</p>
+                            <p><em>*He pulls out a worn notebook*</em></p>
+                            <p>"I think there's a <strong>source</strong> to all this. Something is spawning 
+                            these creatures at an unnaturally high rate!"</p>
+                            <p>"I'm a traveling gunsmith—I can repair your KA-69. And if you want to 
+                            <em>solve</em> this bird problem, I could use your help."</p>
                         `;
                     } else {
-                        // Subsequent meetings
-                        dialogue = `
-                            <div style="margin-bottom: 20px;">
-                                <h2 style="color: #ffd700; margin: 0 0 15px 0;">${npcName}</h2>
-                                <p style="line-height: 1.6; font-size: 14px;">
-                                    "Ah, back again! How's the bird-battling going?"
-                                </p>
-                                <p style="line-height: 1.6; font-size: 14px;">
-                                    <em>*He peers at you with curious eyes*</em>
-                                </p>
-                                <p style="line-height: 1.6; font-size: 14px;">
-                                    "I'm still working on tracking down the source of all these birds. 
-                                    The more data we gather, the closer we get to the truth!"
-                                </p>
-                            </div>
+                        dialogueText = `
+                            <p>"Ah, back again! How's the bird-battling going?"</p>
+                            <p><em>*He peers at you with curious eyes*</em></p>
+                            <p>"I'm still working on tracking down the source of all these birds. 
+                            The more data we gather, the closer we get to the truth!"</p>
                         `;
                     }
                     
-                    // Dialogue options
-                    options = `
-                        <div style="border-top: 2px solid #8b7355; padding-top: 20px; margin-top: 20px;">
+                    // Calculate max scroll height based on viewport
+                    const maxScrollHeight = Math.min(window.innerHeight * 0.4, 200);
+                    
+                    dialogueHTML.innerHTML = `
+                        <!-- Header -->
+                        <div style="padding: 12px 16px; border-bottom: 2px solid #8b7355; background: rgba(20, 15, 30, 0.5);">
+                            <h2 style="color: #ffd700; margin: 0; font-size: 15px;">${npcName}</h2>
+                        </div>
+                        
+                        <!-- Scrollable Content - explicit max-height -->
+                        <div class="dialogue-content" style="max-height: ${maxScrollHeight}px; overflow-y: scroll; padding: 12px 16px; font-size: 12px; line-height: 1.5;">
+                            ${dialogueText}
+                        </div>
+                        
+                        <!-- Fixed Options -->
+                        <div style="padding: 10px 16px; border-top: 2px solid #8b7355; background: rgba(20, 15, 30, 0.5);">
                             <div onclick="window.game.handleDialogueChoice('speak')" 
-                                 style="padding: 12px; margin: 8px 0; background: rgba(139, 115, 85, 0.3); 
+                                 style="padding: 8px 10px; margin: 4px 0; background: rgba(139, 115, 85, 0.3); 
                                         border: 2px solid #8b7355; border-radius: 4px; cursor: pointer; 
-                                        transition: all 0.2s;"
+                                        transition: all 0.2s; font-size: 11px;"
                                  onmouseover="this.style.background='rgba(139, 115, 85, 0.5)'"
                                  onmouseout="this.style.background='rgba(139, 115, 85, 0.3)'">
-                                💬 <strong>Speak</strong> - "Tell me more about your quest"
+                                💬 <strong>Speak</strong> - "Tell me about your quest"
                             </div>
-                            
                             <div onclick="window.game.handleDialogueChoice('repair')" 
-                                 style="padding: 12px; margin: 8px 0; background: rgba(65, 105, 225, 0.3); 
+                                 style="padding: 8px 10px; margin: 4px 0; background: rgba(65, 105, 225, 0.3); 
                                         border: 2px solid #4169e1; border-radius: 4px; cursor: pointer;
-                                        transition: all 0.2s;"
+                                        transition: all 0.2s; font-size: 11px;"
                                  onmouseover="this.style.background='rgba(65, 105, 225, 0.5)'"
                                  onmouseout="this.style.background='rgba(65, 105, 225, 0.3)'">
-                                🔧 <strong>Repair KA-69</strong> - Cost: 15 seeds
+                                🔧 <strong>Repair KA-69</strong> - 15 seeds
                             </div>
-                            
                             <div onclick="window.game.handleDialogueChoice('exit')" 
-                                 style="padding: 12px; margin: 8px 0; background: rgba(139, 0, 0, 0.3); 
+                                 style="padding: 8px 10px; margin: 4px 0; background: rgba(139, 0, 0, 0.3); 
                                         border: 2px solid #8b0000; border-radius: 4px; cursor: pointer;
-                                        transition: all 0.2s;"
+                                        transition: all 0.2s; font-size: 11px;"
                                  onmouseover="this.style.background='rgba(139, 0, 0, 0.5)'"
                                  onmouseout="this.style.background='rgba(139, 0, 0, 0.3)'">
-                                🚪 <strong>[Exit Dialogue]</strong>
+                                🚪 <strong>Exit</strong>
                             </div>
                         </div>
                     `;
                     
-                    dialogueHTML.innerHTML = dialogue + options;
+                    // Style paragraphs
+                    dialogueHTML.querySelectorAll('.dialogue-content p').forEach(p => {
+                        (p as HTMLElement).style.margin = '6px 0';
+                    });
+                    
+                    // Add wheel event listener to ensure scrolling works
+                    const contentDiv = dialogueHTML.querySelector('.dialogue-content') as HTMLElement;
+                    if (contentDiv) {
+                        contentDiv.addEventListener('wheel', (e) => {
+                            e.stopPropagation();
+                            contentDiv.scrollTop += e.deltaY;
+                        }, { passive: true });
+                    }
                 }
             },
             
@@ -6073,51 +6118,60 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 const dialogueHTML = document.getElementById('dialogueScreen');
                 if (!dialogueHTML) return;
                 
-                let questDialogue = `
-                    <div style="margin-bottom: 20px;">
-                        <h2 style="color: #ffd700; margin: 0 0 15px 0;">🧙 Gunsmith Wizard</h2>
-                        <p style="line-height: 1.6; font-size: 14px;">
-                            "Excellent! I knew you had that collaborative spirit!"
-                        </p>
-                        <p style="line-height: 1.6; font-size: 14px;">
-                            <em>*He spreads out a map with various markings*</em>
-                        </p>
-                        <p style="line-height: 1.6; font-size: 14px;">
-                            "Here's what I'm thinking: These birds aren't just randomly spawning. 
-                            There's <em>intelligence</em> behind this. Maybe a cursed artifact, maybe a rogue wizard, 
-                            maybe even a bug in the fabric of reality itself—I've seen weirder things!"
-                        </p>
-                        <p style="line-height: 1.6; font-size: 14px;">
-                            "What I need from you is <strong>data</strong>. Real field data. Survive some waves, 
-                            gather drops from defeated birds, and come back to me. I'll analyze the samples and 
-                            we'll piece together where they're coming from."
-                        </p>
-                        <p style="line-height: 1.6; font-size: 14px; color: #ffd700;">
-                            <strong>QUEST UNLOCKED: Origin of the Feathered Menace</strong>
-                        </p>
-                        <p style="line-height: 1.6; font-size: 14px;">
-                            📜 Survive 3 bird waves<br>
-                            📦 Collect 50 bird drops<br>
-                            🔄 Return to the Gunsmith
-                        </p>
-                        <p style="line-height: 1.6; font-size: 14px;">
-                            "Press <strong>J</strong> to open your journal and track your progress. Good luck out there!"
-                        </p>
+                // Calculate max scroll height based on viewport
+                const maxScrollHeight = Math.min(window.innerHeight * 0.4, 200);
+                
+                dialogueHTML.innerHTML = `
+                    <!-- Header -->
+                    <div style="padding: 12px 16px; border-bottom: 2px solid #8b7355; background: rgba(20, 15, 30, 0.5);">
+                        <h2 style="color: #ffd700; margin: 0; font-size: 15px;">🧙 Gunsmith Wizard</h2>
                     </div>
                     
-                    <div style="border-top: 2px solid #8b7355; padding-top: 20px; margin-top: 20px;">
+                    <!-- Scrollable Content - explicit max-height -->
+                    <div class="dialogue-content" style="max-height: ${maxScrollHeight}px; overflow-y: scroll; padding: 12px 16px; font-size: 12px; line-height: 1.5;">
+                        <p>"Excellent! I knew you had that collaborative spirit!"</p>
+                        <p><em>*He spreads out a map with various markings*</em></p>
+                        <p>"These birds aren't randomly spawning. There's <em>intelligence</em> behind this. 
+                        Maybe a cursed artifact, maybe a rogue wizard!"</p>
+                        <p>"I need <strong>data</strong>. Survive some waves, gather drops from defeated birds, 
+                        and come back to me."</p>
+                        <div style="background: rgba(255, 215, 0, 0.15); border: 1px solid #ffd700; border-radius: 4px; padding: 10px; margin: 10px 0;">
+                            <p style="color: #ffd700; margin: 0 0 6px 0;">
+                                <strong>📜 QUEST: Origin of the Feathered Menace</strong>
+                            </p>
+                            <p style="margin: 3px 0; color: #ccc;">• Survive 3 bird waves</p>
+                            <p style="margin: 3px 0; color: #ccc;">• Collect 50 bird drops</p>
+                            <p style="margin: 3px 0; color: #ccc;">• Return to the Gunsmith</p>
+                        </div>
+                        <p style="color: #aaa;">Press <strong>J</strong> to open your journal.</p>
+                    </div>
+                    
+                    <!-- Fixed Options -->
+                    <div style="padding: 10px 16px; border-top: 2px solid #8b7355; background: rgba(20, 15, 30, 0.5);">
                         <div onclick="window.game.handleDialogueChoice('exit')" 
-                             style="padding: 12px; margin: 8px 0; background: rgba(65, 105, 225, 0.3); 
+                             style="padding: 8px 10px; margin: 4px 0; background: rgba(65, 105, 225, 0.3); 
                                     border: 2px solid #4169e1; border-radius: 4px; cursor: pointer;
-                                    transition: all 0.2s;"
+                                    transition: all 0.2s; font-size: 11px;"
                              onmouseover="this.style.background='rgba(65, 105, 225, 0.5)'"
                              onmouseout="this.style.background='rgba(65, 105, 225, 0.3)'">
-                            ✓ <strong>Accept Quest</strong> - "Let's do this!"
+                            ✓ <strong>Accept Quest</strong>
                         </div>
                     </div>
                 `;
                 
-                dialogueHTML.innerHTML = questDialogue;
+                // Style paragraphs
+                dialogueHTML.querySelectorAll('.dialogue-content > p').forEach(p => {
+                    (p as HTMLElement).style.margin = '6px 0';
+                });
+                
+                // Add wheel event listener to ensure scrolling works
+                const contentDiv = dialogueHTML.querySelector('.dialogue-content') as HTMLElement;
+                if (contentDiv) {
+                    contentDiv.addEventListener('wheel', (e) => {
+                        e.stopPropagation();
+                        contentDiv.scrollTop += e.deltaY;
+                    }, { passive: true });
+                }
                 
                 // Unlock the quest
                 if (this.questData['birds_origin'].status === 'locked') {
@@ -6145,48 +6199,50 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         top: 50%;
                         left: 50%;
                         transform: translate(-50%, -50%);
-                        width: 700px;
-                        max-height: 600px;
-                        background: rgba(40, 30, 20, 0.95);
+                        width: min(90%, 600px);
+                        max-height: 80%;
+                        background: rgba(40, 30, 20, 0.97);
                         border: 4px solid #8b7355;
                         border-radius: 8px;
-                        padding: 30px;
+                        padding: 20px;
                         color: #fff;
                         font-family: 'Courier New', monospace;
                         z-index: 9999;
                         overflow-y: auto;
                         box-shadow: 0 0 40px rgba(0,0,0,0.8);
                     `;
-                    document.body.appendChild(journalHTML);
+                    // Append to game container, not body, so it appears above the canvas
+                    const gameContainer = document.getElementById('minecraftGame');
+                    (gameContainer || document.body).appendChild(journalHTML);
                 }
                 
                 journalHTML.style.display = 'block';
                 
                 let html = `
-                    <div style="border-bottom: 3px solid #8b7355; padding-bottom: 20px; margin-bottom: 20px;">
-                        <h1 style="color: #ffd700; margin: 0; font-size: 28px;">📖 Quest Journal</h1>
-                        <p style="color: #aaa; margin: 5px 0 0 0; font-size: 12px;">Press J to close</p>
+                    <div style="border-bottom: 2px solid #8b7355; padding-bottom: 12px; margin-bottom: 15px;">
+                        <h1 style="color: #ffd700; margin: 0; font-size: 22px;">📖 Quest Journal</h1>
+                        <p style="color: #aaa; margin: 4px 0 0 0; font-size: 11px;">Press J to close</p>
                     </div>
                 `;
                 
                 // Active quests
                 const activeQuests = this.quests.filter(q => q.status === 'active');
                 if (activeQuests.length > 0) {
-                    html += `<h2 style="color: #4169e1; margin: 20px 0 10px 0;">Active Quests</h2>`;
+                    html += `<h2 style="color: #4169e1; margin: 15px 0 8px 0; font-size: 16px;">Active Quests</h2>`;
                     activeQuests.forEach(quest => {
                         html += `
                             <div style="background: rgba(65, 105, 225, 0.2); border: 2px solid #4169e1; 
-                                        border-radius: 6px; padding: 15px; margin: 10px 0;">
-                                <h3 style="color: #ffd700; margin: 0 0 10px 0;">${quest.title}</h3>
-                                <p style="line-height: 1.5; margin: 8px 0;">${quest.description}</p>
-                                <div style="margin-top: 12px;">
-                                    <strong style="color: #4169e1;">Objectives:</strong>
-                                    <ul style="margin: 5px 0; padding-left: 20px;">
-                                        ${quest.objectives.map(obj => `<li>${obj}</li>`).join('')}
+                                        border-radius: 6px; padding: 12px; margin: 8px 0;">
+                                <h3 style="color: #ffd700; margin: 0 0 8px 0; font-size: 14px;">${quest.title}</h3>
+                                <p style="line-height: 1.4; margin: 6px 0; font-size: 12px;">${quest.description}</p>
+                                <div style="margin-top: 10px;">
+                                    <strong style="color: #4169e1; font-size: 12px;">Objectives:</strong>
+                                    <ul style="margin: 4px 0; padding-left: 18px; font-size: 12px;">
+                                        ${quest.objectives.map(obj => `<li style="margin: 2px 0;">${obj}</li>`).join('')}
                                     </ul>
                                 </div>
                                 ${quest.progress ? `
-                                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #4169e1;">
+                                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #4169e1; font-size: 12px;">
                                         <strong>Progress:</strong> 
                                         Waves: ${quest.progress.waves}/3 | 
                                         Drops: ${quest.progress.drops}/50
@@ -6200,13 +6256,13 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 // Completed quests
                 const completedQuests = this.quests.filter(q => q.status === 'completed');
                 if (completedQuests.length > 0) {
-                    html += `<h2 style="color: #228b22; margin: 30px 0 10px 0;">Completed Quests</h2>`;
+                    html += `<h2 style="color: #228b22; margin: 20px 0 8px 0; font-size: 16px;">Completed Quests</h2>`;
                     completedQuests.forEach(quest => {
                         html += `
                             <div style="background: rgba(34, 139, 34, 0.2); border: 2px solid #228b22; 
-                                        border-radius: 6px; padding: 15px; margin: 10px 0; opacity: 0.7;">
-                                <h3 style="color: #90ee90; margin: 0 0 10px 0;">✓ ${quest.title}</h3>
-                                <p style="line-height: 1.5; margin: 8px 0; font-size: 13px;">${quest.description}</p>
+                                        border-radius: 6px; padding: 12px; margin: 8px 0; opacity: 0.7;">
+                                <h3 style="color: #90ee90; margin: 0 0 6px 0; font-size: 14px;">✓ ${quest.title}</h3>
+                                <p style="line-height: 1.4; margin: 6px 0; font-size: 11px;">${quest.description}</p>
                             </div>
                         `;
                     });
@@ -6214,9 +6270,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 
                 if (this.quests.length === 0) {
                     html += `
-                        <div style="text-align: center; padding: 40px; color: #888;">
-                            <p style="font-size: 16px;">No quests yet...</p>
-                            <p style="font-size: 13px;">Talk to NPCs to discover new quests!</p>
+                        <div style="text-align: center; padding: 30px; color: #888;">
+                            <p style="font-size: 14px;">No quests yet...</p>
+                            <p style="font-size: 12px;">Talk to NPCs to discover new quests!</p>
                         </div>
                     `;
                 }
@@ -9116,9 +9172,10 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 // Render Repair NPC (wise man)
                 if (this.repairNPC) {
                     const npc = this.repairNPC;
-                    const center = project(npc.x, npc.y + 0.9, npc.z);
+                    const center = project(npc.x, npc.y + 1.2, npc.z);
                     if (center) {
-                        const screenSize = Math.max(20, 60 / center.z);
+                        // Larger NPC - increased base size and multiplier
+                        const screenSize = Math.max(35, 120 / center.z);
                         
                         // Body - blue robes
                         ctx.fillStyle = '#4169e1';
