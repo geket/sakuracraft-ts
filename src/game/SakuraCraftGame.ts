@@ -3262,8 +3262,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     let canvas = slot.querySelector('canvas');
                     if (!canvas) {
                         canvas = document.createElement('canvas');
-                        canvas.width = 32;
-                        canvas.height = 32;
+                        (canvas as HTMLCanvasElement).width = 32;
+                        (canvas as HTMLCanvasElement).height = 32;
                         (canvas as HTMLElement).style.width = '100%';
                         (canvas as HTMLElement).style.height = '100%';
                         (canvas as HTMLElement).style.position = 'absolute';
@@ -3294,8 +3294,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         }
                     } else {
                         // Clear canvas for empty slot
-                        const ctx = canvas.getContext('2d');
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        const ctx = (canvas as HTMLCanvasElement).getContext('2d');
+                        ctx.clearRect(0, 0, (canvas as HTMLCanvasElement).width, (canvas as HTMLCanvasElement).height);
                         // Hide durability bar
                         const durBar = slot.querySelector('.durability-bar');
                         if (durBar) (durBar as HTMLElement).style.display = 'none';
@@ -3964,8 +3964,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             drawMiniBlock(canvas, type) {
                 const ctx = canvas.getContext('2d');
                 const colors = this.blockColors[type];
-                const w = canvas.width;
-                const h = canvas.height;
+                const w = this.canvas.width;
+                const h = this.canvas.height;
                 
                 ctx.clearRect(0, 0, w, h);
                 
@@ -4674,7 +4674,15 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 showOverdraw: false,
                 highlightZFighting: false,
                 showTargetInfo: false,
-                renderAlgorithm: 'painter' as 'painter' | 'zbuffer' | 'bsp'
+                renderAlgorithm: 'painter' as 'painter' | 'zbuffer' | 'bsp',
+                // NEW: Tree/foliage diagnostics
+                showTreeDiag: false,
+                highlightBlockType: null as string | null,
+                showFaceOrder: false,
+                showDistanceHeatmap: false,
+                pauseRendering: false,
+                capturedFrame: null as any[] | null,
+                showRenderStats: false
             },
             debugFly: false,
             debugMoveSpeed: null,
@@ -5235,6 +5243,12 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         this.debugLog('    culling - Disable face culling', 'info');
                         this.debugLog('    overdraw - Show overdraw heatmap', 'info');
                         this.debugLog('    targetinfo - Raycast vs render diagnostic', 'info');
+                        this.debugLog('    treediag - Tree/foliage flicker diagnostic', 'info');
+                        this.debugLog('    faceorder - Show face render order', 'info');
+                        this.debugLog('    heatmap - Distance-based heatmap', 'info');
+                        this.debugLog('    stats - Show render statistics', 'info');
+                        this.debugLog('    highlight <type> - Highlight block type', 'info');
+                        this.debugLog('    pause - Pause/capture render frame', 'info');
                         this.debugLog('    all - Toggle all render debug', 'info');
                         this.debugLog('    none - Turn all render debug OFF', 'info');
                         break;
@@ -5496,6 +5510,66 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                     this.debugLog('Shows raycast hit position, world data, and render status', 'info');
                                 }
                                 break;
+                            
+                            case 'treediag':
+                                this.debugSettings.showTreeDiag = !this.debugSettings.showTreeDiag;
+                                this.debugLog(`Tree diagnostic: ${this.debugSettings.showTreeDiag ? 'ON' : 'OFF'}`, 'success');
+                                if (this.debugSettings.showTreeDiag) {
+                                    this.debugLog('Shows leaf/foliage render analysis', 'info');
+                                    this.debugLog('- Red outline: Potential Z-fighting', 'info');
+                                    this.debugLog('- Numbers: Render order within group', 'info');
+                                }
+                                break;
+                            
+                            case 'faceorder':
+                                this.debugSettings.showFaceOrder = !this.debugSettings.showFaceOrder;
+                                this.debugLog(`Face order display: ${this.debugSettings.showFaceOrder ? 'ON' : 'OFF'}`, 'success');
+                                if (this.debugSettings.showFaceOrder) {
+                                    this.debugLog('Shows render order of individual faces', 'info');
+                                }
+                                break;
+                            
+                            case 'heatmap':
+                                this.debugSettings.showDistanceHeatmap = !this.debugSettings.showDistanceHeatmap;
+                                this.debugLog(`Distance heatmap: ${this.debugSettings.showDistanceHeatmap ? 'ON' : 'OFF'}`, 'success');
+                                if (this.debugSettings.showDistanceHeatmap) {
+                                    this.debugLog('Colors blocks by distance (red=close, blue=far)', 'info');
+                                }
+                                break;
+                            
+                            case 'stats':
+                                this.debugSettings.showRenderStats = !this.debugSettings.showRenderStats;
+                                this.debugLog(`Render stats: ${this.debugSettings.showRenderStats ? 'ON' : 'OFF'}`, 'success');
+                                break;
+                            
+                            case 'highlight':
+                                if (args[0]) {
+                                    const blockType = args[0].toLowerCase();
+                                    if (this.debugSettings.highlightBlockType === blockType) {
+                                        this.debugSettings.highlightBlockType = null;
+                                        this.debugLog(`Highlight OFF`, 'warn');
+                                    } else {
+                                        this.debugSettings.highlightBlockType = blockType;
+                                        this.debugLog(`Highlighting: ${blockType}`, 'success');
+                                    }
+                                } else {
+                                    this.debugSettings.highlightBlockType = null;
+                                    this.debugLog('Usage: render highlight <block_type>', 'info');
+                                    this.debugLog('Example: render highlight leaves', 'info');
+                                    this.debugLog('Common types: leaves, wood, grass, stone, sand', 'info');
+                                }
+                                break;
+                            
+                            case 'pause':
+                                this.debugSettings.pauseRendering = !this.debugSettings.pauseRendering;
+                                if (this.debugSettings.pauseRendering) {
+                                    this.debugLog('Render PAUSED - frame captured', 'warn');
+                                    this.debugLog('Use "render pause" again to resume', 'info');
+                                } else {
+                                    this.debugSettings.capturedFrame = null;
+                                    this.debugLog('Render RESUMED', 'success');
+                                }
+                                break;
                                 
                             case 'all':
                                 const newState = !this.debugSettings.wireframeOnly;
@@ -5521,12 +5595,19 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                 this.debugSettings.showOverdraw = false;
                                 this.debugSettings.disableFaceCulling = false;
                                 this.debugSettings.showTargetInfo = false;
+                                this.debugSettings.showTreeDiag = false;
+                                this.debugSettings.showFaceOrder = false;
+                                this.debugSettings.showDistanceHeatmap = false;
+                                this.debugSettings.showRenderStats = false;
+                                this.debugSettings.highlightBlockType = null;
+                                this.debugSettings.pauseRendering = false;
+                                this.debugSettings.capturedFrame = null;
                                 this.debugLog('All render debug: OFF', 'warn');
                                 break;
                                 
                             default:
                                 this.debugLog(`Unknown render option: ${subcommand}`, 'error');
-                                this.debugLog('Options: wireframe, depthorder, normals, bounds, raycast, projection, culling, overdraw, targetinfo, all, none', 'info');
+                                this.debugLog('Options: wireframe, depthorder, normals, bounds, raycast, projection, culling, overdraw, targetinfo, treediag, faceorder, heatmap, stats, highlight, pause, all, none', 'info');
                         }
                         break;
                         
@@ -7319,10 +7400,14 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     return false; // Solid opaque block
                 };
                 
-                // For transparent blocks, check if adjacent is SAME type (only hide if same)
-                const shouldHideFace = (currentType, adjacentType) => {
+                // For transparent blocks, check if adjacent is OPAQUE (only hide if can't see through)
+                const shouldHideFaceTransparent = (adjacentType) => {
                     if (!adjacentType) return false; // No adjacent = show face
-                    return currentType === adjacentType; // Only hide if same type
+                    // Hide face only if adjacent block is OPAQUE (can't see through it anyway)
+                    const adjProps = this.blockColors[adjacentType];
+                    if (adjProps && adjProps.transparent) return false; // Adjacent is transparent = show face
+                    if (this.fluidBlocks.includes(adjacentType)) return false; // Adjacent is fluid = show face
+                    return true; // Adjacent is opaque = hide face
                 };
                 
                 const getFluidLevel = (x, y, z) => this.fluidLevels[`${x},${y},${z}`] || 8;
@@ -7630,13 +7715,13 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         const isCurrentTransparent = this.blockColors[type] && this.blockColors[type].transparent;
                         
                         if (isCurrentTransparent) {
-                            // Transparent solid blocks (leaves, glass) - only hide if same type adjacent
-                            hasTop = !shouldHideFace(type, adjTop);
-                            hasBottom = !shouldHideFace(type, adjBottom);
-                            hasFront = !shouldHideFace(type, adjFront);
-                            hasBack = !shouldHideFace(type, adjBack);
-                            hasLeft = !shouldHideFace(type, adjLeft);
-                            hasRight = !shouldHideFace(type, adjRight);
+                            // Transparent solid blocks (leaves, glass) - only hide if adjacent is OPAQUE
+                            hasTop = !shouldHideFaceTransparent(adjTop);
+                            hasBottom = !shouldHideFaceTransparent(adjBottom);
+                            hasFront = !shouldHideFaceTransparent(adjFront);
+                            hasBack = !shouldHideFaceTransparent(adjBack);
+                            hasLeft = !shouldHideFaceTransparent(adjLeft);
+                            hasRight = !shouldHideFaceTransparent(adjRight);
                         } else {
                             // Opaque solid blocks: show face if adjacent is empty OR transparent
                             hasTop = isTransparent(adjTop);
@@ -8602,6 +8687,192 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         ctx.fillStyle = '#888';
                         ctx.fillText('No raycast hit (air or out of range)', infoX, infoY);
                     }
+                }
+                
+                // 8. TREE/FOLIAGE DIAGNOSTIC - Analyze flickering/Z-fighting on leaves
+                if (this.debugSettings.showTreeDiag) {
+                    // Find all leaf/foliage blocks
+                    const foliageBlocks = allBlocks.filter(b => 
+                        b.type === 'leaves' || b.type === 'sakura_leaves' || 
+                        b.type === 'cherry_leaves' || b.type.includes('leaf')
+                    );
+                    
+                    // Group by distance buckets to find potential Z-fighting
+                    const distBuckets: {[key: number]: {block: any, idx: number}[]} = {};
+                    foliageBlocks.forEach((block, idx) => {
+                        const bucketKey = Math.floor(block.dist * 100) / 100; // Round to 2 decimals
+                        if (!distBuckets[bucketKey]) distBuckets[bucketKey] = [];
+                        distBuckets[bucketKey].push({ block, idx });
+                    });
+                    
+                    // Find buckets with multiple blocks (potential Z-fighting)
+                    const zFightingGroups = Object.entries(distBuckets).filter(([_, blocks]) => (blocks as any[]).length > 1);
+                    
+                    // Draw diagnostic overlay on foliage
+                    foliageBlocks.forEach((block, idx) => {
+                        const centerProj = project(block.x + 0.5, block.y + 0.5, block.z + 0.5);
+                        if (!centerProj) return;
+                        
+                        // Check if this block is in a Z-fighting group
+                        const bucketKey = Math.floor(block.dist * 100) / 100;
+                        const isZFighting = distBuckets[bucketKey] && distBuckets[bucketKey].length > 1;
+                        
+                        // Draw outline
+                        if (isZFighting) {
+                            // Red dashed outline for potential Z-fighting
+                            ctx.strokeStyle = 'rgba(255, 0, 0, 0.9)';
+                            ctx.lineWidth = 3;
+                            ctx.setLineDash([4, 4]);
+                            ctx.strokeRect(centerProj.x - 15, centerProj.y - 15, 30, 30);
+                            ctx.setLineDash([]);
+                        }
+                        
+                        // Show render order number
+                        ctx.fillStyle = isZFighting ? '#f00' : '#0f0';
+                        ctx.font = 'bold 10px monospace';
+                        ctx.fillText(`${idx}`, centerProj.x - 5, centerProj.y + 3);
+                    });
+                    
+                    // Draw info panel
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                    ctx.fillRect(this.canvas.width - 260, 80, 250, 140);
+                    
+                    ctx.fillStyle = '#ff69b4';
+                    ctx.font = 'bold 14px monospace';
+                    ctx.fillText('🌳 TREE DIAGNOSTIC', this.canvas.width - 250, 100);
+                    
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '12px monospace';
+                    ctx.fillText(`Foliage blocks: ${foliageBlocks.length}`, this.canvas.width - 250, 120);
+                    ctx.fillText(`Z-fighting groups: ${zFightingGroups.length}`, this.canvas.width - 250, 135);
+                    
+                    if (zFightingGroups.length > 0) {
+                        ctx.fillStyle = '#f55';
+                        ctx.fillText(`⚠ ${zFightingGroups.reduce((sum, [_, b]) => sum + (b as any[]).length, 0)} blocks at risk`, this.canvas.width - 250, 150);
+                        ctx.fillStyle = '#888';
+                        ctx.fillText('Red boxes = same distance', this.canvas.width - 250, 165);
+                    } else {
+                        ctx.fillStyle = '#0f0';
+                        ctx.fillText('✓ No Z-fighting detected', this.canvas.width - 250, 150);
+                    }
+                    
+                    ctx.fillStyle = '#888';
+                    ctx.fillText(`Algo: ${this.debugSettings.renderAlgorithm}`, this.canvas.width - 250, 180);
+                    ctx.fillText('Numbers = render order', this.canvas.width - 250, 195);
+                }
+                
+                // 9. DISTANCE HEATMAP - Color blocks by distance
+                if (this.debugSettings.showDistanceHeatmap) {
+                    const maxDist = Math.max(...allBlocks.map(b => b.dist), 1);
+                    const minDist = Math.min(...allBlocks.map(b => b.dist), 0);
+                    
+                    allBlocks.forEach((block, idx) => {
+                        const centerProj = project(block.x + 0.5, block.y + 0.5, block.z + 0.5);
+                        if (!centerProj) return;
+                        
+                        // Normalize distance to 0-1
+                        const normalized = (block.dist - minDist) / (maxDist - minDist);
+                        
+                        // Red (close) to Blue (far) gradient
+                        const r = Math.floor(255 * (1 - normalized));
+                        const b = Math.floor(255 * normalized);
+                        const g = Math.floor(100 * (1 - Math.abs(normalized - 0.5) * 2));
+                        
+                        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.5)`;
+                        ctx.fillRect(centerProj.x - 8, centerProj.y - 8, 16, 16);
+                    });
+                    
+                    // Draw legend
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                    ctx.fillRect(this.canvas.width - 150, 80, 140, 60);
+                    ctx.font = 'bold 12px monospace';
+                    ctx.fillStyle = '#f00';
+                    ctx.fillText('■ Close', this.canvas.width - 140, 100);
+                    ctx.fillStyle = '#00f';
+                    ctx.fillText('■ Far', this.canvas.width - 140, 120);
+                    ctx.fillStyle = '#888';
+                    ctx.fillText(`Range: ${minDist.toFixed(1)}-${maxDist.toFixed(1)}`, this.canvas.width - 140, 135);
+                }
+                
+                // 10. HIGHLIGHT BLOCK TYPE - Outline specific block types
+                if (this.debugSettings.highlightBlockType) {
+                    const targetType = this.debugSettings.highlightBlockType;
+                    const matchingBlocks = allBlocks.filter(b => 
+                        b.type.toLowerCase().includes(targetType.toLowerCase())
+                    );
+                    
+                    matchingBlocks.forEach(block => {
+                        const centerProj = project(block.x + 0.5, block.y + 0.5, block.z + 0.5);
+                        if (!centerProj) return;
+                        
+                        ctx.strokeStyle = '#ff0';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(centerProj.x - 12, centerProj.y - 12, 24, 24);
+                    });
+                    
+                    // Info panel
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                    ctx.fillRect(10, this.canvas.height - 60, 200, 50);
+                    ctx.fillStyle = '#ff0';
+                    ctx.font = 'bold 12px monospace';
+                    ctx.fillText(`Highlighting: ${targetType}`, 20, this.canvas.height - 40);
+                    ctx.fillStyle = '#fff';
+                    ctx.fillText(`Found: ${matchingBlocks.length} blocks`, 20, this.canvas.height - 22);
+                }
+                
+                // 11. RENDER STATS - Comprehensive performance panel
+                if (this.debugSettings.showRenderStats) {
+                    // Count blocks by type
+                    const typeCounts: {[key: string]: number} = {};
+                    allBlocks.forEach(b => {
+                        typeCounts[b.type] = (typeCounts[b.type] || 0) + 1;
+                    });
+                    
+                    // Sort by count
+                    const sortedTypes = Object.entries(typeCounts)
+                        .sort((a, b) => (b[1] as number) - (a[1] as number))
+                        .slice(0, 10);
+                    
+                    // Calculate distances
+                    const avgDist = allBlocks.reduce((s, b) => s + b.dist, 0) / allBlocks.length || 0;
+                    const minDist = Math.min(...allBlocks.map(b => b.dist));
+                    const maxDist = Math.max(...allBlocks.map(b => b.dist));
+                    
+                    // Draw panel
+                    const panelHeight = 180 + sortedTypes.length * 15;
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+                    ctx.fillRect(this.canvas.width - 220, 80, 210, panelHeight);
+                    
+                    let y = 100;
+                    ctx.fillStyle = '#ff69b4';
+                    ctx.font = 'bold 14px monospace';
+                    ctx.fillText('📊 RENDER STATS', this.canvas.width - 210, y);
+                    y += 20;
+                    
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '11px monospace';
+                    ctx.fillText(`Total Blocks: ${allBlocks.length}`, this.canvas.width - 210, y); y += 15;
+                    ctx.fillText(`Algorithm: ${this.debugSettings.renderAlgorithm}`, this.canvas.width - 210, y); y += 15;
+                    ctx.fillText(`Dist Range: ${minDist.toFixed(1)} - ${maxDist.toFixed(1)}`, this.canvas.width - 210, y); y += 15;
+                    ctx.fillText(`Avg Dist: ${avgDist.toFixed(1)}`, this.canvas.width - 210, y); y += 20;
+                    
+                    ctx.fillStyle = '#888';
+                    ctx.fillText('Top Block Types:', this.canvas.width - 210, y); y += 15;
+                    
+                    sortedTypes.forEach(([type, count]) => {
+                        const pct = ((count as number) / allBlocks.length * 100).toFixed(0);
+                        ctx.fillStyle = type.includes('leaves') ? '#f55' : '#0f0';
+                        ctx.fillText(`  ${type}: ${count} (${pct}%)`, this.canvas.width - 210, y);
+                        y += 15;
+                    });
+                    
+                    // Foliage specific stats
+                    const foliageCount = allBlocks.filter(b => 
+                        b.type.includes('leaves') || b.type.includes('leaf')
+                    ).length;
+                    y += 10;
+                    ctx.fillStyle = foliageCount > 50 ? '#f55' : '#0f0';
+                    ctx.fillText(`Foliage: ${foliageCount} (${(foliageCount/allBlocks.length*100).toFixed(0)}%)`, this.canvas.width - 210, y);
                 }
                 
                 // ═══════════════════════════════════════════════════════════
