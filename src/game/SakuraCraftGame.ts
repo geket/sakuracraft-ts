@@ -413,15 +413,15 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 dirt: { top: '#8b6b4a', side: '#8b6b4a', bottom: '#8b6b4a', useTexture: true, texture: 'dirt' },
                 stone: { top: '#888888', side: '#777777', bottom: '#666666' },
                 wood: { top: '#a0825a', side: '#6b4423', bottom: '#6b4423', useTexture: true, texture: 'wood' },
-                leaves: { top: 'rgba(50, 180, 50, 0.85)', side: 'rgba(40, 160, 40, 0.85)', bottom: 'rgba(30, 140, 30, 0.85)', transparent: true, useTexture: true, texture: 'leaves' },
-                appleLeaves: { top: 'rgba(50, 180, 50, 0.85)', side: 'rgba(40, 160, 40, 0.85)', bottom: 'rgba(30, 140, 30, 0.85)', transparent: true, useTexture: true, texture: 'leaves' },
+                leaves: { top: '#32b432', side: '#28a028', bottom: '#1e8c1e', transparent: false, useTexture: true, texture: 'leaves' },
+                appleLeaves: { top: '#32b432', side: '#28a028', bottom: '#1e8c1e', transparent: false, useTexture: true, texture: 'leaves' },
                 water: { top: 'rgba(74, 144, 217, 0.7)', side: 'rgba(58, 128, 201, 0.7)', bottom: 'rgba(42, 112, 185, 0.7)', transparent: true, animated: true },
                 sand: { top: '#e6d9a0', side: '#d9cc93', bottom: '#ccbf86' },
                 brick: { top: '#b35050', side: '#a04040', bottom: '#903030', useTexture: true, texture: 'brick' },
                 lava: { top: '#ff6600', side: '#ff4400', bottom: '#cc3300', animated: true },
                 obsidian: { top: '#1a0a2e', side: '#140820', bottom: '#0a0410' },
                 cherryWood: { top: '#c4a07a', side: '#8b5a5a', bottom: '#8b5a5a', useTexture: true, texture: 'wood' },
-                cherryLeaves: { top: 'rgba(255, 183, 197, 0.85)', side: 'rgba(255, 192, 203, 0.85)', bottom: 'rgba(255, 144, 165, 0.85)', transparent: true },
+                cherryLeaves: { top: '#ffb7c5', side: '#ffc0cb', bottom: '#ff90a5', transparent: false },
                 chest: { top: '#8b6914', side: '#a0780a', bottom: '#705010' },
                 ritualChest: { top: '#4a0080', side: '#6a00b0', bottom: '#300060' },
                 buildingChest: { top: '#c0c0c0', side: '#a0a0a0', bottom: '#808080' },
@@ -7739,29 +7739,44 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     // Define visible faces
                     const faces = [];
                     
+                    // For transparent blocks, use uniform shading to avoid patchy appearance
+                    const isCurrentTransparent = colors && colors.transparent;
+                    const uniformDark = 0.95; // All transparent faces use same brightness
+                    const frontDark = isCurrentTransparent ? uniformDark : 0.95;
+                    const backDark = isCurrentTransparent ? uniformDark : 0.75;
+                    const topDark = 1.0;
+                    const bottomDark = isCurrentTransparent ? uniformDark : 0.6;
+                    const leftDark = isCurrentTransparent ? uniformDark : 0.85;
+                    const rightDark = isCurrentTransparent ? uniformDark : 0.9;
+                    
+                    // For transparent blocks, use side color for all faces for consistency
+                    const sideColor = isCurrentTransparent ? colors.side : colors.side;
+                    const topColor = isCurrentTransparent ? colors.side : colors.top;
+                    const bottomColor = isCurrentTransparent ? colors.side : colors.bottom;
+                    
                     // Front face (+Z)
                     if (hasFront) {
-                        faces.push({ v: [[x, y, z+1], [x+1, y, z+1], [x+1, topY, z+1], [x, topY, z+1]], color: colors.side, dark: 0.95, isTop: false });
+                        faces.push({ v: [[x, y, z+1], [x+1, y, z+1], [x+1, topY, z+1], [x, topY, z+1]], color: sideColor, dark: frontDark, isTop: false });
                     }
                     // Back face (-Z)
                     if (hasBack) {
-                        faces.push({ v: [[x+1, y, z], [x, y, z], [x, topY, z], [x+1, topY, z]], color: colors.side, dark: 0.75, isTop: false });
+                        faces.push({ v: [[x+1, y, z], [x, y, z], [x, topY, z], [x+1, topY, z]], color: sideColor, dark: backDark, isTop: false });
                     }
                     // Top face (+Y)
                     if (hasTop) {
-                        faces.push({ v: [[x, topY, z], [x+1, topY, z], [x+1, topY, z+1], [x, topY, z+1]], color: colors.top, dark: 1, isTop: true });
+                        faces.push({ v: [[x, topY, z], [x+1, topY, z], [x+1, topY, z+1], [x, topY, z+1]], color: topColor, dark: topDark, isTop: true });
                     }
                     // Bottom face (-Y)
                     if (hasBottom) {
-                        faces.push({ v: [[x, y, z+1], [x+1, y, z+1], [x+1, y, z], [x, y, z]], color: colors.bottom, dark: 0.6, isTop: false });
+                        faces.push({ v: [[x, y, z+1], [x+1, y, z+1], [x+1, y, z], [x, y, z]], color: bottomColor, dark: bottomDark, isTop: false });
                     }
                     // Left face (-X)
                     if (hasLeft) {
-                        faces.push({ v: [[x, y, z], [x, y, z+1], [x, topY, z+1], [x, topY, z]], color: colors.side, dark: 0.85, isTop: false });
+                        faces.push({ v: [[x, y, z], [x, y, z+1], [x, topY, z+1], [x, topY, z]], color: sideColor, dark: leftDark, isTop: false });
                     }
                     // Right face (+X)
                     if (hasRight) {
-                        faces.push({ v: [[x+1, y, z+1], [x+1, y, z], [x+1, topY, z], [x+1, topY, z+1]], color: colors.side, dark: 0.9, isTop: false });
+                        faces.push({ v: [[x+1, y, z+1], [x+1, y, z], [x+1, topY, z], [x+1, topY, z+1]], color: sideColor, dark: rightDark, isTop: false });
                     }
                     
                     // Render visible faces
