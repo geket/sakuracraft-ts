@@ -6632,7 +6632,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         } else {
                             // Hit a solid block! Calculate placement position
                             let placePos = null;
-                            const placeFace = lastSolidFace || enteredFace;
+                            // Use enteredFace directly - this is the face we crossed to enter THIS block
+                            // lastSolidFace is only needed when passing through fluids
+                            const placeFace = (throughWater || throughLava) ? (lastSolidFace || enteredFace) : enteredFace;
                             if (placeFace && (placeFace.x !== 0 || placeFace.y !== 0 || placeFace.z !== 0)) {
                                 placePos = {
                                     x: voxelX + placeFace.x,
@@ -6647,7 +6649,12 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                 block: block,
                                 throughWater: throughWater,
                                 throughLava: throughLava,
-                                hitT: t
+                                hitT: t,
+                                enteredFace: placeFace,  // The face we entered from
+                                lastSolidFace: lastSolidFace,
+                                rawEnteredFace: enteredFace,
+                                debugTMax: { x: tMaxX, y: tMaxY, z: tMaxZ },
+                                debugStep: { x: stepX, y: stepY, z: stepZ }
                             };
                         }
                     } else {
@@ -8013,7 +8020,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     
                     // Background panel
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-                    ctx.fillRect(5, 115, 620, hit ? 680 : 60);
+                    ctx.fillRect(5, 115, 650, hit ? 850 : 60);
                     
                     // Title
                     ctx.fillStyle = '#ff69b4';
@@ -8049,6 +8056,106 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         // What raycast reports
                         ctx.fillStyle = '#ff0';
                         ctx.fillText(`Raycast Block: "${hit.block || 'null'}"`, infoX, infoY);
+                        infoY += lineHeight;
+                        
+                        // PLACEMENT INFO - Show where block would be placed
+                        ctx.fillStyle = '#f0f';
+                        ctx.fillText('=== PLACEMENT INFO ===', infoX, infoY);
+                        infoY += lineHeight;
+                        
+                        if (hit.place) {
+                            ctx.fillStyle = '#0ff';
+                            ctx.fillText(`Place Position: (${hit.place.x}, ${hit.place.y}, ${hit.place.z})`, infoX, infoY);
+                            infoY += lineHeight;
+                            
+                            // Calculate which face was hit based on place vs hit difference
+                            const faceDiffX = hit.place.x - hx;
+                            const faceDiffY = hit.place.y - hy;
+                            const faceDiffZ = hit.place.z - hz;
+                            
+                            let faceName = 'Unknown';
+                            if (faceDiffX === 1) faceName = '+X (Right)';
+                            else if (faceDiffX === -1) faceName = '-X (Left)';
+                            else if (faceDiffY === 1) faceName = '+Y (Top)';
+                            else if (faceDiffY === -1) faceName = '-Y (Bottom)';
+                            else if (faceDiffZ === 1) faceName = '+Z (Front)';
+                            else if (faceDiffZ === -1) faceName = '-Z (Back)';
+                            
+                            ctx.fillStyle = '#ff0';
+                            ctx.fillText(`Entry Face: ${faceName} (diff: ${faceDiffX},${faceDiffY},${faceDiffZ})`, infoX, infoY);
+                            infoY += lineHeight;
+                            
+                            // Show raw face detection data
+                            if (hit.enteredFace) {
+                                ctx.fillStyle = '#aaa';
+                                ctx.fillText(`enteredFace: (${hit.enteredFace.x}, ${hit.enteredFace.y}, ${hit.enteredFace.z})`, infoX, infoY);
+                                infoY += lineHeight;
+                            }
+                            if (hit.lastSolidFace) {
+                                ctx.fillText(`lastSolidFace: (${hit.lastSolidFace.x}, ${hit.lastSolidFace.y}, ${hit.lastSolidFace.z})`, infoX, infoY);
+                                infoY += lineHeight;
+                            }
+                            if (hit.rawEnteredFace) {
+                                ctx.fillText(`rawEnteredFace: (${hit.rawEnteredFace.x}, ${hit.rawEnteredFace.y}, ${hit.rawEnteredFace.z})`, infoX, infoY);
+                                infoY += lineHeight;
+                            }
+                            if (hit.debugTMax) {
+                                ctx.fillText(`tMax at hit: X=${hit.debugTMax.x.toFixed(2)} Y=${hit.debugTMax.y.toFixed(2)} Z=${hit.debugTMax.z.toFixed(2)}`, infoX, infoY);
+                                infoY += lineHeight;
+                            }
+                            if (hit.debugStep) {
+                                ctx.fillText(`Step dirs: X=${hit.debugStep.x} Y=${hit.debugStep.y} Z=${hit.debugStep.z}`, infoX, infoY);
+                                infoY += lineHeight;
+                            }
+                            
+                            // Show placement preview - draw wireframe at place position
+                            const placeCorners = [
+                                [hit.place.x, hit.place.y, hit.place.z],
+                                [hit.place.x + 1, hit.place.y, hit.place.z],
+                                [hit.place.x + 1, hit.place.y + 1, hit.place.z],
+                                [hit.place.x, hit.place.y + 1, hit.place.z],
+                                [hit.place.x, hit.place.y, hit.place.z + 1],
+                                [hit.place.x + 1, hit.place.y, hit.place.z + 1],
+                                [hit.place.x + 1, hit.place.y + 1, hit.place.z + 1],
+                                [hit.place.x, hit.place.y + 1, hit.place.z + 1]
+                            ];
+                            const placeProjected = placeCorners.map(c => project(c[0], c[1], c[2]));
+                            
+                            if (placeProjected.every(p => p !== null)) {
+                                // Draw green wireframe where block would be placed
+                                ctx.strokeStyle = 'rgba(0, 255, 0, 0.8)';
+                                ctx.lineWidth = 2;
+                                ctx.setLineDash([5, 5]);
+                                const edges = [
+                                    [0,1], [1,2], [2,3], [3,0],
+                                    [4,5], [5,6], [6,7], [7,4],
+                                    [0,4], [1,5], [2,6], [3,7]
+                                ];
+                                ctx.beginPath();
+                                for (const [a, b] of edges) {
+                                    ctx.moveTo(placeProjected[a].x, placeProjected[a].y);
+                                    ctx.lineTo(placeProjected[b].x, placeProjected[b].y);
+                                }
+                                ctx.stroke();
+                                ctx.setLineDash([]);
+                                
+                                // Label the placement preview
+                                const placeCenterProj = project(hit.place.x + 0.5, hit.place.y + 0.5, hit.place.z + 0.5);
+                                if (placeCenterProj) {
+                                    ctx.fillStyle = '#0f0';
+                                    ctx.font = 'bold 12px monospace';
+                                    ctx.fillText('PLACE', placeCenterProj.x + 15, placeCenterProj.y);
+                                    ctx.font = 'bold 14px monospace';
+                                }
+                            }
+                        } else {
+                            ctx.fillStyle = '#f55';
+                            ctx.fillText('Place Position: null (no entry face)', infoX, infoY);
+                            infoY += lineHeight;
+                        }
+                        
+                        ctx.fillStyle = '#f0f';
+                        ctx.fillText('======================', infoX, infoY);
                         infoY += lineHeight;
                         
                         // What world data contains
