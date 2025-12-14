@@ -102,6 +102,7 @@ export interface GameSettings {
   showFps: boolean;
   targetFps: number;
   treeStyle: 'simple' | 'transparent' | 'bushy';
+  textureMode: 'fixed' | 'trippy';
 }
 
 // FPS Counter

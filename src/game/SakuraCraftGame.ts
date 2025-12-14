@@ -37,8 +37,28 @@ const gameTemplate = `
     <button class="minecraft-close" id="closeMinecraft">✕ Close</button>
     <canvas id="gameCanvas" class="minecraft-canvas" width="800" height="500"></canvas>
     
+    <!-- World Generation Loading Screen -->
+    <div class="loading-screen active" id="loadingScreen">
+      <div class="loading-content">
+        <div class="loading-title">🌸 Generating World 🌸</div>
+        <div class="loading-phase" id="loadingPhase">Initializing...</div>
+        <div class="loading-bar-container">
+          <div class="loading-bar" id="loadingBar"></div>
+        </div>
+        <div class="loading-percent" id="loadingPercent">0%</div>
+        <div class="loading-details" id="loadingDetails"></div>
+        <div class="loading-biome-preview" id="biomePreview">
+          <div class="biome-icon" id="biomeIcon">🌲</div>
+          <div class="biome-name" id="biomeName">Forest</div>
+        </div>
+        <div class="loading-tips" id="loadingTips">
+          <div class="tip-text">💡 Tip: Press E to open your inventory</div>
+        </div>
+      </div>
+    </div>
+    
     <!-- Click to Play Overlay (required for pointer lock) -->
-    <div class="click-to-play active" id="clickToPlay">
+    <div class="click-to-play" id="clickToPlay">
       <div class="click-to-play-text">🎮 Click to Play</div>
       <div class="click-to-play-hint">Mouse will be captured • Press ESC to pause</div>
     </div>
@@ -133,6 +153,13 @@ const gameTemplate = `
             </select>
           </div>
           <div class="option-row">
+            <span>Texture Mode</span>
+            <select class="option-select" id="optTextureMode">
+              <option value="fixed" selected>Fixed (Stable)</option>
+              <option value="trippy">Trippy (Chowder)</option>
+            </select>
+          </div>
+          <div class="option-row">
             <span>Show FPS</span>
             <div class="option-toggle on" id="optShowFps" data-on="true"></div>
           </div>
@@ -148,6 +175,28 @@ const gameTemplate = `
     <!-- Inventory Screen -->
     <div class="inventory-screen" id="inventoryScreen">
       <!-- Content populated by JavaScript -->
+    </div>
+    
+    <!-- Container Screen (Chests, Barrels, etc) -->
+    <div class="container-screen" id="containerScreen">
+      <div class="container-ui">
+        <div class="container-header">
+          <span class="container-title" id="containerTitle">Chest</span>
+          <button class="container-close" id="containerClose">✕</button>
+        </div>
+        <div class="container-content">
+          <div class="container-slots" id="containerSlots">
+            <!-- Container slots populated by JS -->
+          </div>
+          <div class="container-divider"></div>
+          <div class="player-inventory-mini">
+            <div class="inventory-label">Your Inventory</div>
+            <div class="player-slots" id="playerSlotsInContainer">
+              <!-- Player inventory slots populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     
     <div class="minecraft-ui" id="gameUI">
@@ -316,7 +365,13 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 { ingredients: [{ id: 'wood', count: 4 }], result: { type: 'block', id: 'wood', count: 16 }, name: 'Planks' },
                 { ingredients: [{ id: 'stone', count: 8 }], result: { type: 'block', id: 'brick', count: 4 }, name: 'Bricks' },
                 { ingredients: [{ id: 'sand', count: 4 }], result: { type: 'block', id: 'stone', count: 2 }, name: 'Sandstone' },
-                { ingredients: [{ id: 'wood', count: 8 }], result: { type: 'block', id: 'chest', count: 1 }, name: 'Chest' }
+                { ingredients: [{ id: 'wood', count: 8 }], result: { type: 'block', id: 'chest', count: 1 }, name: 'Chest' },
+                { ingredients: [{ id: 'wood', count: 6 }], result: { type: 'block', id: 'barrel', count: 1 }, name: 'Barrel' },
+                { ingredients: [{ id: 'wood', count: 4 }], result: { type: 'block', id: 'crate', count: 1 }, name: 'Crate' },
+                { ingredients: [{ id: 'stone', count: 8 }, { id: 'deepslate', count: 4 }], result: { type: 'block', id: 'furnace', count: 1 }, name: 'Furnace' },
+                { ingredients: [{ id: 'moonstone', count: 2 }, { id: 'stone', count: 4 }], result: { type: 'block', id: 'alchemyTable', count: 1 }, name: 'Alchemy Table' },
+                { ingredients: [{ id: 'glowstone', count: 4 }], result: { type: 'block', id: 'glowstone', count: 8 }, name: 'Refined Glowstone' },
+                { ingredients: [{ id: 'sakuraite', count: 4 }, { id: 'wood', count: 8 }], result: { type: 'block', id: 'storageShrine', count: 1 }, name: 'Storage Shrine' }
             ],
             
             // Fluid blocks that need updating
@@ -337,6 +392,12 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             draggedItem: null,
             dragSource: null,
             
+            // Container UI state
+            containerOpen: false,
+            openContainerPos: null as { x: number, y: number, z: number } | null,
+            openContainerType: null as string | null,
+            containerSlots: 27, // Default chest size
+            
             // Stats
             stats: {
                 blocksPlaced: 0,
@@ -356,7 +417,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 antialiasing: false,
                 showFps: true,
                 targetFps: 60,
-                treeStyle: 'simple' as 'simple' | 'transparent' | 'bushy'
+                treeStyle: 'simple' as 'simple' | 'transparent' | 'bushy',
+                textureMode: 'fixed' as 'fixed' | 'trippy'  // fixed = stationary, trippy = moves with scene
             },
             
             // FPS tracking
@@ -424,16 +486,39 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 wood: { top: '#a0825a', side: '#6b4423', bottom: '#6b4423', useTexture: true, texture: 'wood' },
                 leaves: { top: '#32b432', side: '#28a028', bottom: '#1e8c1e', transparent: false, useTexture: true, texture: 'leaves' },
                 appleLeaves: { top: '#32b432', side: '#28a028', bottom: '#1e8c1e', transparent: false, useTexture: true, texture: 'leaves' },
-                water: { top: 'rgba(74, 144, 217, 0.7)', side: 'rgba(58, 128, 201, 0.7)', bottom: 'rgba(42, 112, 185, 0.7)', transparent: true, animated: true },
+                water: { top: 'rgba(74, 144, 217, 0.7)', side: 'rgba(58, 128, 201, 0.7)', bottom: 'rgba(42, 112, 185, 0.7)', transparent: true, animated: true, useTexture: true, texture: 'water' },
                 sand: { top: '#e6d9a0', side: '#d9cc93', bottom: '#ccbf86' },
                 brick: { top: '#b35050', side: '#a04040', bottom: '#903030', useTexture: true, texture: 'brick' },
-                lava: { top: '#ff6600', side: '#ff4400', bottom: '#cc3300', animated: true },
+                lava: { top: '#ff6600', side: '#ff4400', bottom: '#cc3300', animated: true, useTexture: true, texture: 'lava' },
                 obsidian: { top: '#1a0a2e', side: '#140820', bottom: '#0a0410' },
                 cherryWood: { top: '#c4a07a', side: '#8b5a5a', bottom: '#8b5a5a', useTexture: true, texture: 'wood' },
-                cherryLeaves: { top: '#ffb7c5', side: '#ffc0cb', bottom: '#ff90a5', transparent: false },
+                cherryLeaves: { top: '#ffb7c5', side: '#ffc0cb', bottom: '#ff90a5', transparent: false, useTexture: true, texture: 'sakuraLeaves' },
                 chest: { top: '#8b6914', side: '#a0780a', bottom: '#705010' },
                 ritualChest: { top: '#4a0080', side: '#6a00b0', bottom: '#300060' },
                 buildingChest: { top: '#c0c0c0', side: '#a0a0a0', bottom: '#808080' },
+                // Underground blocks
+                bedrock: { top: '#1a1a1a', side: '#0f0f0f', bottom: '#050505' },
+                deepslate: { top: '#3a3a3a', side: '#2a2a2a', bottom: '#1a1a1a' },
+                mossyStone: { top: '#6a8866', side: '#5a7856', bottom: '#4a6846' },
+                // Unique Ores (Japanese/Fantasy themed)
+                sakuraite: { top: '#ff69b4', side: '#ff1493', bottom: '#c71585', glow: true }, // Pink crystal
+                moonstone: { top: '#e6e6fa', side: '#d8bfd8', bottom: '#dda0dd', glow: true }, // Lunar ore
+                jadite: { top: '#00a86b', side: '#009060', bottom: '#007850' }, // Jade ore
+                crimsonite: { top: '#dc143c', side: '#b22222', bottom: '#8b0000' }, // Volcanic ore
+                voidstone: { top: '#2d1b4e', side: '#1a0d2e', bottom: '#0d0617', glow: true }, // Rare dark ore
+                spirite: { top: '#87ceeb', side: '#6bb3d9', bottom: '#4f98c7' }, // Spirit essence
+                // Dungeon blocks
+                dungeonBrick: { top: '#4a4a5a', side: '#3a3a4a', bottom: '#2a2a3a' },
+                dungeonMossy: { top: '#4a5a4a', side: '#3a4a3a', bottom: '#2a3a2a' },
+                dungeonChest: { top: '#8b4513', side: '#a0522d', bottom: '#654321' },
+                spikeTrap: { top: '#5a5a5a', side: '#4a4a4a', bottom: '#3a3a3a' },
+                // Container blocks
+                barrel: { top: '#8b6914', side: '#a0780a', bottom: '#8b6914' },
+                crate: { top: '#c4a07a', side: '#a08060', bottom: '#806040' },
+                furnace: { top: '#555555', side: '#666666', bottom: '#444444' },
+                furnaceActive: { top: '#555555', side: '#886644', bottom: '#444444' },
+                alchemyTable: { top: '#4a3a6a', side: '#3a2a5a', bottom: '#2a1a4a' },
+                storageShrine: { top: '#ffd700', side: '#daa520', bottom: '#b8860b' },
                 // Ritual Temple blocks
                 ritualStone: { top: '#4a4a6a', side: '#3a3a5a', bottom: '#2a2a4a' },
                 petalSocket: { top: '#ffb7c5', side: '#8b5a5a', bottom: '#5a3a3a' },
@@ -450,7 +535,21 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 // Church blocks
                 whiteBrick: { top: '#f0f0f0', side: '#e0e0e0', bottom: '#d0d0d0' },
                 redBrick: { top: '#b35050', side: '#a04040', bottom: '#903030' },
-                glowstone: { top: '#ffdd88', side: '#eebb66', bottom: '#ddaa44' }
+                glowstone: { top: '#ffdd88', side: '#eebb66', bottom: '#ddaa44' },
+                // Furniture blocks
+                table: { top: '#a0825a', side: '#6b4423', bottom: '#5a3a1a', useTexture: true, texture: 'wood' },
+                chair: { top: '#8b6914', side: '#705010', bottom: '#5a400a' },
+                bed: { top: '#c04040', side: '#a03030', bottom: '#802020' },
+                bedPillow: { top: '#f0f0f0', side: '#e0e0e0', bottom: '#d0d0d0' },
+                cashRegister: { top: '#404040', side: '#303030', bottom: '#202020' },
+                stool: { top: '#c04040', side: '#a03030', bottom: '#802020' },
+                counter: { top: '#e0e0e0', side: '#c0c0c0', bottom: '#a0a0a0' },
+                lamp: { top: '#ffee88', side: '#ffdd66', bottom: '#eebb44' },
+                bookshelf: { top: '#6b4423', side: '#8b6914', bottom: '#5a3a1a' },
+                plant: { top: '#32b432', side: '#28a028', bottom: '#1e8c1e' },
+                sink: { top: '#d0d0d0', side: '#b0b0b0', bottom: '#909090' },
+                stove: { top: '#404040', side: '#303030', bottom: '#ff4400' },
+                fridge: { top: '#e0e0e0', side: '#d0d0d0', bottom: '#c0c0c0' }
             },
             
             // Texture cache for procedurally generated patterns
@@ -475,6 +574,29 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 redBrick: { stackable: true, maxStack: 64 },
                 glowstone: { stackable: true, maxStack: 64 },
                 ritualStone: { stackable: true, maxStack: 64 },
+                lava: { stackable: false, maxStack: 1 },
+                water: { stackable: false, maxStack: 1 },
+                // Underground blocks
+                deepslate: { stackable: true, maxStack: 64 },
+                mossyStone: { stackable: true, maxStack: 64 },
+                dungeonBrick: { stackable: true, maxStack: 64 },
+                dungeonMossy: { stackable: true, maxStack: 64 },
+                // Container blocks
+                barrel: { stackable: true, maxStack: 16, description: 'Wooden storage barrel' },
+                crate: { stackable: true, maxStack: 16, description: 'Sturdy storage crate' },
+                furnace: { stackable: true, maxStack: 16, description: 'Smelt ores into ingots' },
+                alchemyTable: { stackable: true, maxStack: 8, description: 'Brew mysterious potions' },
+                storageShrine: { stackable: true, maxStack: 4, description: 'Sacred storage with extra capacity' },
+                dungeonChest: { stackable: true, maxStack: 8, description: 'Ancient treasure chest' },
+                ritualChest: { stackable: true, maxStack: 8, description: 'Mystical chest' },
+                buildingChest: { stackable: true, maxStack: 16, description: 'Standard storage chest' },
+                // Ores (valuable!)
+                sakuraite: { stackable: true, maxStack: 64, description: 'Rare pink crystal ore - glows faintly' },
+                moonstone: { stackable: true, maxStack: 64, description: 'Lunar ore that shimmers in darkness' },
+                jadite: { stackable: true, maxStack: 64, description: 'Precious jade ore from deep caverns' },
+                crimsonite: { stackable: true, maxStack: 64, description: 'Volcanic ore pulsing with heat' },
+                voidstone: { stackable: true, maxStack: 64, description: 'Mysterious ore from the deepest depths' },
+                spirite: { stackable: true, maxStack: 64, description: 'Crystallized spirit essence' },
                 // Consumables/Throwables
                 apple: { stackable: true, maxStack: 64, throwable: true, description: 'Throw at birds to knock them away' },
                 // Buckets
@@ -489,7 +611,21 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 shimenawa: { stackable: true, maxStack: 1, description: 'Sacred rope', ritual: true },
                 omamori: { stackable: true, maxStack: 1, description: 'Protective charm base', ritual: true },
                 ema: { stackable: true, maxStack: 1, description: 'Wooden wish plaque', ritual: true },
-                incense: { stackable: true, maxStack: 1, description: 'Purifying incense', ritual: true }
+                incense: { stackable: true, maxStack: 1, description: 'Purifying incense', ritual: true },
+                // Furniture blocks
+                table: { stackable: true, maxStack: 16, description: 'Wooden dining table' },
+                chair: { stackable: true, maxStack: 16, description: 'Comfortable chair' },
+                bed: { stackable: true, maxStack: 8, description: 'Cozy bed for resting' },
+                bedPillow: { stackable: true, maxStack: 8, description: 'Soft pillow' },
+                cashRegister: { stackable: true, maxStack: 8, description: 'Store cash register' },
+                stool: { stackable: true, maxStack: 16, description: 'Simple stool' },
+                counter: { stackable: true, maxStack: 16, description: 'Kitchen counter' },
+                lamp: { stackable: true, maxStack: 16, description: 'Light source' },
+                bookshelf: { stackable: true, maxStack: 8, description: 'Filled with books' },
+                plant: { stackable: true, maxStack: 16, description: 'Decorative plant' },
+                sink: { stackable: true, maxStack: 8, description: 'Kitchen sink' },
+                stove: { stackable: true, maxStack: 8, description: 'Cooking stove' },
+                fridge: { stackable: true, maxStack: 8, description: 'Refrigerator' }
             },
             
             // Fluids that player can pass through
@@ -524,10 +660,10 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             },
             
             // Full initialization - called only when game starts
-            fullInit() {
+            async fullInit() {
                 if (this.initialized) return;  // Don't regenerate if already done
                 
-                this.generateWorld();
+                await this.generateWorld();
                 this.setupControls();
                 this.setupMenus();
                 this.setupDebugConsole();
@@ -540,142 +676,641 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 setTimeout(() => this.updateHotbarDisplay(), 300);
             },
             
-            generateWorld() {
+            // ═══════════════════════════════════════════════════════════════════════════
+            // ASYNC WORLD GENERATION WITH BIOME SYSTEM
+            // ═══════════════════════════════════════════════════════════════════════════
+            
+            async generateWorld() {
                 this.world = {};
-                this.fluidLevels = {};  // Clear fluid levels
-                this.droppedItems = []; // Items on ground
-                this.cherryTrees = [];  // Cherry blossom tree locations
-                this.petalParticles = []; // Cherry blossom petals
+                this.fluidLevels = {};
+                this.droppedItems = [];
+                this.cherryTrees = [];
+                this.petalParticles = [];
+                this.buildings = [];
+                this.structureQueue = [];
+                this.biomeMap = {};
+                this.biomeRegions = [];
                 
-                const worldSize = 50; // -50 to 50 = 101x101 blocks
+                const worldSize = 150; // 3x larger: -150 to 150 = 301x301 blocks
                 const waterLevel = 6;
                 const baseHeight = 8;
                 
-                // Store world bounds for forcefield - ON the last block, not past it
+                // Store world bounds
                 this.worldBounds = {
                     minX: -worldSize,
                     maxX: worldSize + 1,
                     minZ: -worldSize,
                     maxZ: worldSize + 1,
                     minY: 0,
-                    maxY: 50
+                    maxY: 60
                 };
                 
-                // Wind system for petals and birds
+                // Wind system
                 this.wind = {
-                    x: 0,
-                    z: 0,
-                    targetX: 0,
-                    targetZ: 0,
+                    x: 0, z: 0,
+                    targetX: 0, targetZ: 0,
                     gustTimer: 0,
                     strength: 0.02
                 };
                 
-                // Building placements storage
-                this.buildings = [];
+                // Loading tips
+                const tips = [
+                    "💡 Tip: Press E to open your inventory",
+                    "💡 Tip: Hold SHIFT to sneak and not fall off edges",
+                    "💡 Tip: Collect ritual items to complete the Omamori blessing",
+                    "💡 Tip: Watch out for pest birds - they attack!",
+                    "💡 Tip: Find the WcDonald's for a tasty Berdger",
+                    "💡 Tip: Cherry trees drop sakura petals in the wind",
+                    "💡 Tip: Press ` (backtick) to open debug console",
+                    "💡 Tip: Different biomes have unique terrain features",
+                    "💡 Tip: Mountains have the best views!",
+                    "💡 Tip: Explore to find hidden ritual chests"
+                ];
                 
-                // Fluid simulation queue
-                this.fluidQueue = [];
+                // Biome definitions
+                const biomeTypes = {
+                    plains: { icon: '🌾', name: 'Plains', color: '#7cba5f', treeChance: 0.05, heightMod: 0 },
+                    forest: { icon: '🌲', name: 'Forest', color: '#2d5a27', treeChance: 0.35, heightMod: 2 },
+                    sakuraForest: { icon: '🌸', name: 'Sakura Forest', color: '#ffb7c5', treeChance: 0.40, heightMod: 1 },
+                    desert: { icon: '🏜️', name: 'Desert', color: '#e6d9a0', treeChance: 0, heightMod: -1 },
+                    mountains: { icon: '⛰️', name: 'Mountains', color: '#888888', treeChance: 0.08, heightMod: 12 },
+                    ocean: { icon: '🌊', name: 'Ocean', color: '#4a90d9', treeChance: 0, heightMod: -8 }
+                };
                 
-                // Pre-calculate height map for faster generation
+                // Update loading UI helper
+                const tipsEl = document.getElementById('loadingTips');
+                let tipIndex = Math.floor(Math.random() * tips.length);
+                
+                // Set initial random tip immediately
+                if (tipsEl) {
+                    tipsEl.innerHTML = `<div class="tip-text">${tips[tipIndex]}</div>`;
+                }
+                
+                // Start tip rotation timer (every 3 seconds)
+                const tipTimer = setInterval(() => {
+                    if (tipsEl) {
+                        tipIndex = (tipIndex + 1) % tips.length;
+                        tipsEl.innerHTML = `<div class="tip-text">${tips[tipIndex]}</div>`;
+                    }
+                }, 3000);
+                
+                const updateLoading = (phase, percent, details = '', biomeIcon = '🌍', biomeName = 'World') => {
+                    const phaseEl = document.getElementById('loadingPhase');
+                    const barEl = document.getElementById('loadingBar');
+                    const percentEl = document.getElementById('loadingPercent');
+                    const detailsEl = document.getElementById('loadingDetails');
+                    const biomeIconEl = document.getElementById('biomeIcon');
+                    const biomeNameEl = document.getElementById('biomeName');
+                    
+                    if (phaseEl) phaseEl.textContent = phase;
+                    if (barEl) barEl.style.width = percent + '%';
+                    if (percentEl) percentEl.textContent = Math.floor(percent) + '%';
+                    if (detailsEl) detailsEl.textContent = details;
+                    if (biomeIconEl) biomeIconEl.textContent = biomeIcon;
+                    if (biomeNameEl) biomeNameEl.textContent = biomeName;
+                };
+                
+                // Allow UI to update
+                const yieldToUI = () => new Promise(resolve => setTimeout(resolve, 0));
+                
+                // ════════════════════════════════════════════════════════════════════════
+                // PHASE 1: Generate Biome Regions using Voronoi-like approach
+                // ════════════════════════════════════════════════════════════════════════
+                updateLoading('Generating Biomes...', 0, 'Creating biome seeds', '🌍', 'World');
+                await yieldToUI();
+                
+                // Create biome seed points - guarantee at least one of each type
+                const biomeSeeds = [];
+                const biomeTypeList = Object.keys(biomeTypes);
+                
+                // Place guaranteed biomes in different quadrants
+                const quadrants = [
+                    { x: -worldSize * 0.6, z: -worldSize * 0.6 },
+                    { x: worldSize * 0.6, z: -worldSize * 0.6 },
+                    { x: -worldSize * 0.6, z: worldSize * 0.6 },
+                    { x: worldSize * 0.6, z: worldSize * 0.6 },
+                    { x: 0, z: -worldSize * 0.7 },
+                    { x: 0, z: worldSize * 0.7 }
+                ];
+                
+                // Guarantee one of each biome
+                biomeTypeList.forEach((type, i) => {
+                    const q = quadrants[i % quadrants.length];
+                    biomeSeeds.push({
+                        x: q.x + (Math.random() - 0.5) * 40,
+                        z: q.z + (Math.random() - 0.5) * 40,
+                        type: type
+                    });
+                });
+                
+                // Add more random biome seeds for variety
+                const additionalSeeds = 25;
+                for (let i = 0; i < additionalSeeds; i++) {
+                    biomeSeeds.push({
+                        x: (Math.random() - 0.5) * worldSize * 1.8,
+                        z: (Math.random() - 0.5) * worldSize * 1.8,
+                        type: biomeTypeList[Math.floor(Math.random() * biomeTypeList.length)]
+                    });
+                }
+                
+                // Make spawn area (center) always plains
+                biomeSeeds.push({ x: 0, z: 0, type: 'plains' });
+                
+                this.biomeSeeds = biomeSeeds;
+                
+                // Function to get biome at any position (Voronoi)
+                const getBiomeAt = (x, z) => {
+                    let closestDist = Infinity;
+                    let closestBiome = 'plains';
+                    
+                    for (const seed of biomeSeeds) {
+                        const dx = x - seed.x;
+                        const dz = z - seed.z;
+                        // Add noise to distance for more organic borders
+                        const noise = this.noise2D(x * 0.02 + seed.x, z * 0.02 + seed.z) * 20;
+                        const dist = Math.sqrt(dx * dx + dz * dz) + noise;
+                        
+                        if (dist < closestDist) {
+                            closestDist = dist;
+                            closestBiome = seed.type;
+                        }
+                    }
+                    
+                    return closestBiome;
+                };
+                
+                // ════════════════════════════════════════════════════════════════════════
+                // PHASE 2: Generate Height Map
+                // ════════════════════════════════════════════════════════════════════════
+                updateLoading('Generating Terrain...', 5, 'Calculating height map', '⛰️', 'Mountains');
+                await yieldToUI();
+                
                 const heightMap = {};
-                const biomeMap = {};
+                const biomeCache = {};
+                let processedBlocks = 0;
+                const totalBlocks = (worldSize * 2 + 1) * (worldSize * 2 + 1);
                 
-                // First pass: calculate heights
                 for (let x = -worldSize; x <= worldSize; x++) {
                     for (let z = -worldSize; z <= worldSize; z++) {
-                        const n1 = this.fbm(x * 0.03, z * 0.03, 2) * 10;
-                        const n2 = this.fbm(x * 0.05 + 100, z * 0.05 + 100, 2) * 5;
-                        
-                        const distFromCenter = Math.sqrt(x * x + z * z) / worldSize;
-                        const edgeFalloff = Math.max(0, 1 - distFromCenter * 0.5);
-                        
-                        let height = Math.floor(baseHeight + (n1 + n2) * edgeFalloff);
-                        height = Math.max(1, Math.min(22, height));
-                        
                         const key = `${x},${z}`;
+                        
+                        // Get biome for this position
+                        const biome = getBiomeAt(x, z);
+                        biomeCache[key] = biome;
+                        const biomeData = biomeTypes[biome];
+                        
+                        // Base terrain noise
+                        const n1 = this.fbm(x * 0.02, z * 0.02, 3) * 8;
+                        const n2 = this.fbm(x * 0.05 + 100, z * 0.05 + 100, 2) * 4;
+                        
+                        // Mountain-specific high peaks
+                        let mountainBonus = 0;
+                        if (biome === 'mountains') {
+                            mountainBonus = Math.abs(this.fbm(x * 0.03, z * 0.03, 4)) * 15;
+                        }
+                        
+                        // Ocean depth
+                        let oceanDepth = 0;
+                        if (biome === 'ocean') {
+                            oceanDepth = -Math.abs(this.fbm(x * 0.04, z * 0.04, 2)) * 4;
+                        }
+                        
+                        // Edge falloff
+                        const distFromCenter = Math.sqrt(x * x + z * z) / worldSize;
+                        const edgeFalloff = Math.max(0, 1 - Math.pow(distFromCenter, 2) * 0.3);
+                        
+                        let height = Math.floor(baseHeight + (n1 + n2 + biomeData.heightMod + mountainBonus + oceanDepth) * edgeFalloff);
+                        height = Math.max(1, Math.min(35, height));
+                        
                         heightMap[key] = height;
-                        biomeMap[key] = this.noise2D(x * 0.03 + 500, z * 0.03 + 500);
+                    }
+                    
+                    // Update progress every few columns
+                    if (x % 20 === 0) {
+                        const progress = 5 + ((x + worldSize) / (worldSize * 2)) * 25;
+                        updateLoading('Generating Terrain...', progress, `Column ${x + worldSize} of ${worldSize * 2}`, '🗺️', 'Terrain');
+                        await yieldToUI();
                     }
                 }
                 
-                // Second pass: generate blocks using cached heights
+                // ════════════════════════════════════════════════════════════════════════
+                // PHASE 3: Place Terrain Blocks (Full Underground)
+                // ════════════════════════════════════════════════════════════════════════
+                updateLoading('Placing Blocks...', 30, 'Building terrain', '🧱', 'Terrain');
+                await yieldToUI();
+                
+                // 3D noise function for caves
+                const caveNoise3D = (x, y, z, scale = 0.08) => {
+                    // Combine multiple octaves for organic cave shapes
+                    const n1 = this.noise2D(x * scale + y * 0.5, z * scale) * 0.6;
+                    const n2 = this.noise2D(y * scale * 0.7, x * scale + z * 0.3) * 0.3;
+                    const n3 = this.noise2D(z * scale + x * 0.2, y * scale * 0.5) * 0.1;
+                    return n1 + n2 + n3;
+                };
+                
+                // Worm cave carver - creates tunnel-like caves
+                const wormNoise = (x, y, z) => {
+                    const wx = this.noise2D(x * 0.04, z * 0.04) * 10;
+                    const wz = this.noise2D(x * 0.04 + 100, z * 0.04 + 100) * 10;
+                    const tunnelY = 8 + this.noise2D(x * 0.02, z * 0.02) * 6;
+                    const distFromTunnel = Math.sqrt((y - tunnelY) ** 2 + (Math.sin(x * 0.1 + wx) * 3) ** 2);
+                    return distFromTunnel < 2.5 + this.noise2D(x * 0.1, z * 0.1) * 1.5;
+                };
+                
+                // Ore generation rules
+                const oreTypes = [
+                    { type: 'jadite', minY: 5, maxY: 25, chance: 0.008, veinSize: 3 },
+                    { type: 'spirite', minY: 8, maxY: 30, chance: 0.006, veinSize: 4 },
+                    { type: 'crimsonite', minY: 2, maxY: 15, chance: 0.005, veinSize: 3 },
+                    { type: 'moonstone', minY: 10, maxY: 35, chance: 0.004, veinSize: 2 },
+                    { type: 'sakuraite', minY: 5, maxY: 20, chance: 0.003, veinSize: 2 },
+                    { type: 'voidstone', minY: 1, maxY: 8, chance: 0.001, veinSize: 1 }
+                ];
+                
+                // Track ore veins to place
+                const oreVeins = [];
+                
                 for (let x = -worldSize; x <= worldSize; x++) {
                     for (let z = -worldSize; z <= worldSize; z++) {
                         const key = `${x},${z}`;
-                        const height = heightMap[key];
-                        const biomeNoise = biomeMap[key];
+                        const surfaceHeight = heightMap[key];
+                        const biome = biomeCache[key];
+                        const isBeach = surfaceHeight <= waterLevel + 1 && surfaceHeight >= waterLevel - 1;
                         
-                        const isBeach = height <= waterLevel + 1 && height >= waterLevel - 1;
-                        const isDesert = biomeNoise > 0.3 && height > waterLevel + 2;
-                        
-                        // Generate column - only surface blocks for speed
-                        // Just 3 layers of stone at bottom
-                        for (let y = Math.max(0, height - 3); y < height - 1; y++) {
-                            this.setBlock(x, y, z, 'stone');
+                        // Generate from bedrock (y=0) to surface
+                        for (let y = 0; y <= surfaceHeight; y++) {
+                            // Check if this should be a cave
+                            const caveValue = caveNoise3D(x, y, z);
+                            const isWormCave = y > 3 && y < surfaceHeight - 4 && wormNoise(x, y, z);
+                            const isCave = (caveValue > 0.35 && y > 2 && y < surfaceHeight - 3) || isWormCave;
+                            
+                            // Don't carve caves too close to surface or in ocean floor
+                            if (isCave && biome !== 'ocean') {
+                                continue; // Leave as air (cave)
+                            }
+                            
+                            let blockType;
+                            
+                            if (y === 0) {
+                                // Bedrock layer (unbreakable)
+                                blockType = 'bedrock';
+                            } else if (y <= 2 && Math.random() < 0.7) {
+                                // Mixed bedrock layer
+                                blockType = 'bedrock';
+                            } else if (y < 6) {
+                                // Thin deep stone layer (reduced from y<12)
+                                blockType = 'deepslate';
+                            } else if (y < surfaceHeight - 3) {
+                                // Regular stone with occasional mossy
+                                if (this.noise2D(x * 0.3, z * 0.3 + y * 0.2) > 0.6) {
+                                    blockType = 'mossyStone';
+                                } else {
+                                    blockType = 'stone';
+                                }
+                            } else if (y < surfaceHeight) {
+                                // Sub-surface layers
+                                if (biome === 'ocean' || biome === 'desert' || isBeach) {
+                                    blockType = 'sand';
+                                } else if (biome === 'mountains' && surfaceHeight > 20) {
+                                    blockType = 'stone';
+                                } else {
+                                    blockType = y === surfaceHeight - 1 ? 'dirt' : 'stone';
+                                }
+                            } else {
+                                // Surface block
+                                if (biome === 'ocean' || surfaceHeight < waterLevel) {
+                                    blockType = 'sand';
+                                } else if (biome === 'desert' || isBeach) {
+                                    blockType = 'sand';
+                                } else if (biome === 'mountains' && surfaceHeight > 20) {
+                                    blockType = 'stone';
+                                } else {
+                                    blockType = 'grass';
+                                }
+                            }
+                            
+                            this.setBlock(x, y, z, blockType);
+                            
+                            // Check for ore generation (in stone/deepslate only)
+                            if ((blockType === 'stone' || blockType === 'deepslate') && y > 0 && y < surfaceHeight - 2) {
+                                for (const ore of oreTypes) {
+                                    if (y >= ore.minY && y <= ore.maxY && Math.random() < ore.chance) {
+                                        oreVeins.push({ x, y, z, type: ore.type, size: ore.veinSize });
+                                    }
+                                }
+                            }
                         }
                         
-                        // Surface layers based on biome
-                        if (isBeach || (height <= waterLevel)) {
-                            this.setBlock(x, height - 1, z, 'sand');
-                            this.setBlock(x, height, z, 'sand');
-                        } else if (isDesert) {
-                            this.setBlock(x, height - 1, z, 'sand');
-                            this.setBlock(x, height, z, 'sand');
-                        } else {
-                            this.setBlock(x, height - 1, z, 'dirt');
-                            this.setBlock(x, height, z, 'grass');
-                        }
-                        
-                        // Water - source blocks at full level
-                        if (height < waterLevel) {
-                            for (let y = height + 1; y <= waterLevel; y++) {
+                        // Water generation - fill from surface to water level
+                        if (surfaceHeight < waterLevel) {
+                            for (let y = surfaceHeight + 1; y <= waterLevel; y++) {
                                 this.setBlock(x, y, z, 'water');
-                                this.setFluidLevel(x, y, z, 8);  // Full level for natural water
+                                this.setFluidLevel(x, y, z, 8);
                             }
                         }
                     }
+                    
+                    // Update progress
+                    if (x % 25 === 0) {
+                        const progress = 30 + ((x + worldSize) / (worldSize * 2)) * 20;
+                        updateLoading('Carving Caves...', progress, `Column ${x + worldSize}`, '⛏️', 'Underground');
+                        await yieldToUI();
+                    }
                 }
                 
-                // Trees - separate pass, sparser
-                for (let x = -worldSize; x <= worldSize; x += 2) { // Skip every other for speed
-                    for (let z = -worldSize; z <= worldSize; z += 2) {
-                        const key = `${x},${z}`;
-                        const height = heightMap[key];
-                        const biomeNoise = biomeMap[key];
-                        const isBeach = height <= waterLevel + 1;
-                        const isDesert = biomeNoise > 0.3;
-                        
-                        if (height > waterLevel + 1 && !isDesert && !isBeach) {
-                            const treeNoise = this.noise2D(x * 0.4 + 300, z * 0.4 + 300);
-                            if (treeNoise > 0.4 && Math.random() < 0.25) {
-                                // Check if area is clear (no overlapping structures) AND within bounds
-                                const treeSize = 5;
-                                const treeX = x - 2;
-                                const treeZ = z - 2;
+                // ════════════════════════════════════════════════════════════════════════
+                // PHASE 3.5: Place Ore Veins
+                // ════════════════════════════════════════════════════════════════════════
+                updateLoading('Generating Ores...', 50, `Placing ${oreVeins.length} ore veins`, '💎', 'Ores');
+                await yieldToUI();
+                
+                for (const vein of oreVeins) {
+                    // Place vein in a small cluster
+                    for (let i = 0; i < vein.size; i++) {
+                        const ox = vein.x + Math.floor(Math.random() * 3) - 1;
+                        const oy = vein.y + Math.floor(Math.random() * 3) - 1;
+                        const oz = vein.z + Math.floor(Math.random() * 3) - 1;
+                        const existing = this.getBlock(ox, oy, oz);
+                        if (existing === 'stone' || existing === 'deepslate') {
+                            this.setBlock(ox, oy, oz, vein.type);
+                        }
+                    }
+                }
+                
+                // ════════════════════════════════════════════════════════════════════════
+                // PHASE 3.6: Generate Underground Dungeons
+                // ════════════════════════════════════════════════════════════════════════
+                updateLoading('Building Dungeons...', 55, 'Creating treasure rooms', '🏛️', 'Dungeons');
+                await yieldToUI();
+                
+                const dungeonCount = Math.floor(worldSize / 15); // Scale with world size
+                const dungeons = [];
+                
+                for (let d = 0; d < dungeonCount; d++) {
+                    const dx = Math.floor(Math.random() * worldSize * 1.5) - worldSize * 0.75;
+                    const dz = Math.floor(Math.random() * worldSize * 1.5) - worldSize * 0.75;
+                    const dy = 5 + Math.floor(Math.random() * 15); // Underground level
+                    
+                    // Check if location is valid (underground)
+                    const surfaceKey = `${Math.floor(dx)},${Math.floor(dz)}`;
+                    const surfaceY = heightMap[surfaceKey];
+                    if (!surfaceY || dy >= surfaceY - 5) continue;
+                    
+                    // Room dimensions
+                    const roomW = 5 + Math.floor(Math.random() * 4);
+                    const roomH = 4 + Math.floor(Math.random() * 2);
+                    const roomD = 5 + Math.floor(Math.random() * 4);
+                    
+                    // Carve out room
+                    for (let rx = 0; rx < roomW; rx++) {
+                        for (let ry = 0; ry < roomH; ry++) {
+                            for (let rz = 0; rz < roomD; rz++) {
+                                const bx = Math.floor(dx) + rx;
+                                const by = dy + ry;
+                                const bz = Math.floor(dz) + rz;
                                 
-                                // Check if tree would be within world bounds
-                                const inBounds = this.worldBounds && 
-                                    treeX >= this.worldBounds.minX + 2 &&
-                                    treeX + treeSize <= this.worldBounds.maxX - 2 &&
-                                    treeZ >= this.worldBounds.minZ + 2 &&
-                                    treeZ + treeSize <= this.worldBounds.maxZ - 2;
-                                
-                                if (inBounds && !this.checkStructureCollision(treeX, height + 1, treeZ, treeSize, 8, treeSize)) {
-                                    // 25% chance for cherry blossom tree
-                                    if (Math.random() < 0.25) {
-                                        this.generateCherryTree(x, height + 1, z);
-                                    } else {
-                                        this.generateTree(x, height + 1, z);
+                                // Floor
+                                if (ry === 0) {
+                                    this.setBlock(bx, by, bz, Math.random() < 0.3 ? 'dungeonMossy' : 'dungeonBrick');
+                                }
+                                // Walls
+                                else if (rx === 0 || rx === roomW - 1 || rz === 0 || rz === roomD - 1) {
+                                    if (ry < roomH - 1) {
+                                        this.setBlock(bx, by, bz, Math.random() < 0.2 ? 'dungeonMossy' : 'dungeonBrick');
+                                    }
+                                }
+                                // Ceiling
+                                else if (ry === roomH - 1) {
+                                    this.setBlock(bx, by, bz, 'dungeonBrick');
+                                }
+                                // Interior - clear it out
+                                else {
+                                    const existing = this.getBlock(bx, by, bz);
+                                    if (existing && existing !== 'water' && existing !== 'lava') {
+                                        // Remove block to create empty space
+                                        delete this.world[`${bx},${by},${bz}`];
                                     }
                                 }
                             }
                         }
                     }
+                    
+                    // Place treasure chest in center
+                    const chestX = Math.floor(dx) + Math.floor(roomW / 2);
+                    const chestY = dy + 1;
+                    const chestZ = Math.floor(dz) + Math.floor(roomD / 2);
+                    this.setBlock(chestX, chestY, chestZ, 'dungeonChest');
+                    
+                    // Stock the chest with random loot
+                    const lootTable = [
+                        { type: 'sakuraite', count: 2 + Math.floor(Math.random() * 4) },
+                        { type: 'moonstone', count: 1 + Math.floor(Math.random() * 3) },
+                        { type: 'jadite', count: 3 + Math.floor(Math.random() * 5) },
+                        { type: 'apple', count: 5 + Math.floor(Math.random() * 5) },
+                        { type: 'glowstone', count: 4 + Math.floor(Math.random() * 8) },
+                        { type: 'crimsonite', count: 1 + Math.floor(Math.random() * 3) },
+                        { type: 'voidstone', count: 1 + Math.floor(Math.random() * 2) },
+                        { type: 'spirite', count: 2 + Math.floor(Math.random() * 4) }
+                    ];
+                    
+                    this.chestContents = this.chestContents || {};
+                    const chestLoot = [];
+                    const lootCount = 2 + Math.floor(Math.random() * 3);
+                    for (let l = 0; l < lootCount; l++) {
+                        const loot = lootTable[Math.floor(Math.random() * lootTable.length)];
+                        chestLoot.push({ type: loot.type, count: loot.count });
+                    }
+                    this.chestContents[`${chestX},${chestY},${chestZ}`] = chestLoot;
+                    
+                    // Randomly add other containers to larger dungeons
+                    if (roomW >= 7 && Math.random() < 0.6) {
+                        // Add a barrel in a corner
+                        const barrelX = Math.floor(dx) + 1;
+                        const barrelZ = Math.floor(dz) + 1;
+                        this.setBlock(barrelX, dy + 1, barrelZ, 'barrel');
+                        this.chestContents[`${barrelX},${dy + 1},${barrelZ}`] = [
+                            { type: 'apple', count: 3 + Math.floor(Math.random() * 5) }
+                        ];
+                    }
+                    
+                    if (roomW >= 6 && Math.random() < 0.4) {
+                        // Add furnace (abandoned, with items inside)
+                        const furnaceX = Math.floor(dx) + roomW - 2;
+                        const furnaceZ = Math.floor(dz) + 1;
+                        this.setBlock(furnaceX, dy + 1, furnaceZ, 'furnace');
+                        this.chestContents[`${furnaceX},${dy + 1},${furnaceZ}`] = [
+                            { type: Math.random() < 0.5 ? 'crimsonite' : 'deepslate', count: 1 + Math.floor(Math.random() * 3) }
+                        ];
+                    }
+                    
+                    if (Math.random() < 0.2) {
+                        // Rare: Add alchemy table
+                        const alchX = Math.floor(dx) + Math.floor(roomW / 2) - 1;
+                        const alchZ = Math.floor(dz) + roomD - 2;
+                        this.setBlock(alchX, dy + 1, alchZ, 'alchemyTable');
+                        this.chestContents[`${alchX},${dy + 1},${alchZ}`] = [
+                            { type: 'moonstone', count: 1 },
+                            { type: 'spirite', count: 2 }
+                        ];
+                    }
+                    
+                    // Add glowstone for light
+                    this.setBlock(Math.floor(dx) + 1, dy + roomH - 1, Math.floor(dz) + 1, 'glowstone');
+                    this.setBlock(Math.floor(dx) + roomW - 2, dy + roomH - 1, Math.floor(dz) + roomD - 2, 'glowstone');
+                    
+                    dungeons.push({ x: dx, y: dy, z: dz });
                 }
                 
-                // Spawn ritual item chests (rare, ~5 in world)
-                const ritualChestCount = 5;
+                console.log(`Generated ${dungeons.length} dungeons, ${oreVeins.length} ore veins`);
+                
+                // ════════════════════════════════════════════════════════════════════════
+                // PHASE 4: Generate Trees (Biome-aware)
+                // ════════════════════════════════════════════════════════════════════════
+                updateLoading('Planting Trees...', 60, 'Growing forests', '🌲', 'Forest');
+                await yieldToUI();
+                
+                let treesPlanted = 0;
+                const treePositions = [];
+                
+                for (let x = -worldSize; x <= worldSize; x += 3) {
+                    for (let z = -worldSize; z <= worldSize; z += 3) {
+                        const key = `${x},${z}`;
+                        const height = heightMap[key];
+                        const biome = biomeCache[key];
+                        const biomeData = biomeTypes[biome];
+                        
+                        if (height > waterLevel + 1 && biomeData.treeChance > 0) {
+                            const treeNoise = this.noise2D(x * 0.3 + 300, z * 0.3 + 300);
+                            
+                            if (treeNoise > 0.3 && Math.random() < biomeData.treeChance) {
+                                const treeSize = 5;
+                                const treeX = x - 2;
+                                const treeZ = z - 2;
+                                
+                                const inBounds = treeX >= this.worldBounds.minX + 2 &&
+                                    treeX + treeSize <= this.worldBounds.maxX - 2 &&
+                                    treeZ >= this.worldBounds.minZ + 2 &&
+                                    treeZ + treeSize <= this.worldBounds.maxZ - 2;
+                                
+                                if (inBounds && !this.checkStructureCollision(treeX, height + 1, treeZ, treeSize, 8, treeSize)) {
+                                    treePositions.push({ x, z, height, biome });
+                                    
+                                    if (biome === 'sakuraForest') {
+                                        this.generateCherryTree(x, height + 1, z);
+                                    } else if (biome === 'forest' && Math.random() < 0.15) {
+                                        this.generateCherryTree(x, height + 1, z);
+                                    } else {
+                                        // Regular or apple tree
+                                        if (Math.random() < 0.2) {
+                                            this.generateTree(x, height + 1, z, true); // Apple tree
+                                        } else {
+                                            this.generateTree(x, height + 1, z);
+                                        }
+                                    }
+                                    treesPlanted++;
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (x % 30 === 0) {
+                        const biomeData = biomeTypes[biomeCache[`${x},0`] || 'plains'];
+                        const progress = 60 + ((x + worldSize) / (worldSize * 2)) * 15;
+                        updateLoading('Planting Trees...', progress, `${treesPlanted} trees planted`, biomeData.icon, biomeData.name);
+                        await yieldToUI();
+                    }
+                }
+                
+                // ════════════════════════════════════════════════════════════════════════
+                // PHASE 5: Generate Buildings (Incremental)
+                // ════════════════════════════════════════════════════════════════════════
+                updateLoading('Constructing Buildings...', 75, 'Planning structures', '🏠', 'Village');
+                await yieldToUI();
+                
+                const buildingTypes = ['church', 'house1', 'house2', 'house3', 'grocery', 'wcdonalds'];
+                const quadrantSize = 25; // Smaller quadrants = more building areas
+                let buildingsPlaced = 0;
+                let wcdonaldsCount = 0;
+                const maxWcDonalds = 4; // Allow multiple WcDonalds
+                
+                for (let qx = -Math.floor(worldSize / quadrantSize); qx <= Math.floor(worldSize / quadrantSize); qx++) {
+                    for (let qz = -Math.floor(worldSize / quadrantSize); qz <= Math.floor(worldSize / quadrantSize); qz++) {
+                        // Skip center quadrant (spawn area)
+                        if (Math.abs(qx) <= 1 && Math.abs(qz) <= 1) continue;
+                        
+                        const minX = qx * quadrantSize;
+                        const minZ = qz * quadrantSize;
+                        
+                        // Check biome - only build in plains/forest/sakuraForest
+                        const centerBiome = getBiomeAt(minX + quadrantSize / 2, minZ + quadrantSize / 2);
+                        if (centerBiome === 'ocean' || centerBiome === 'mountains') continue;
+                        
+                        // More buildings per quadrant (2-5)
+                        const numBuildings = 2 + Math.floor(Math.random() * 4);
+                        
+                        for (let i = 0; i < numBuildings; i++) {
+                            const bx = minX + 5 + Math.floor(Math.random() * (quadrantSize - 12));
+                            const bz = minZ + 5 + Math.floor(Math.random() * (quadrantSize - 12));
+                            
+                            // WcDonald's spawning - more frequent
+                            if (wcdonaldsCount < maxWcDonalds && Math.random() < 0.15) {
+                                if (this.tryPlaceBuilding(bx, bz, ['wcdonalds'], heightMap)) {
+                                    wcdonaldsCount++;
+                                    buildingsPlaced++;
+                                    continue;
+                                }
+                            }
+                            
+                            if (this.tryPlaceBuilding(bx, bz, buildingTypes, heightMap)) {
+                                buildingsPlaced++;
+                            }
+                        }
+                    }
+                    
+                    const progress = 75 + ((qx + Math.floor(worldSize / quadrantSize)) / (Math.floor(worldSize / quadrantSize) * 2)) * 10;
+                    updateLoading('Constructing Buildings...', progress, `${buildingsPlaced} structures built`, '🏗️', 'Construction');
+                    await yieldToUI();
+                }
+                
+                // Guarantee at least 2 WcDonald's
+                while (wcdonaldsCount < 2) {
+                    for (let attempts = 0; attempts < 50; attempts++) {
+                        const bx = 40 + Math.floor(Math.random() * 80) * (Math.random() < 0.5 ? 1 : -1);
+                        const bz = 40 + Math.floor(Math.random() * 80) * (Math.random() < 0.5 ? 1 : -1);
+                        if (this.tryPlaceBuilding(bx, bz, ['wcdonalds'], heightMap)) {
+                            wcdonaldsCount++;
+                            break;
+                        }
+                    }
+                    if (wcdonaldsCount < 2) break; // Avoid infinite loop
+                }
+                
+                console.log(`Generated ${buildingsPlaced} buildings, ${wcdonaldsCount} WcDonalds`);
+                
+                // ════════════════════════════════════════════════════════════════════════
+                // PHASE 6: Special Structures
+                // ════════════════════════════════════════════════════════════════════════
+                updateLoading('Adding Special Locations...', 85, 'Placing ritual temple', '⛩️', 'Temple');
+                await yieldToUI();
+                
+                // Ritual Temple
+                let templeX, templeZ;
+                do {
+                    templeX = Math.floor(Math.random() * (worldSize - 30)) + 20;
+                    templeZ = Math.floor(Math.random() * (worldSize - 30)) + 20;
+                    if (Math.random() < 0.5) templeX = -templeX;
+                    if (Math.random() < 0.5) templeZ = -templeZ;
+                } while (Math.abs(templeX) < 30 || Math.abs(templeZ) < 30);
+                
+                const templeKey = `${templeX},${templeZ}`;
+                const templeHeight = heightMap[templeKey] || baseHeight;
+                this.generateRitualTemple(templeX, templeHeight + 1, templeZ);
+                
+                // Ritual Chests
+                updateLoading('Hiding Treasures...', 88, 'Placing ritual chests', '📦', 'Treasures');
+                await yieldToUI();
+                
+                const ritualChestCount = 8;
                 for (let i = 0; i < ritualChestCount; i++) {
                     const rx = Math.floor(Math.random() * worldSize * 2) - worldSize;
                     const rz = Math.floor(Math.random() * worldSize * 2) - worldSize;
@@ -683,17 +1318,46 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     const rHeight = heightMap[rKey] || baseHeight;
                     if (rHeight > waterLevel) {
                         this.setBlock(rx, rHeight + 1, rz, 'ritualChest');
-                        // Store chest contents
                         const ritualItem = this.ritualItems[i % this.ritualItems.length];
                         this.chestContents = this.chestContents || {};
-                        this.chestContents[`${rx},${rHeight + 1},${rz}`] = [
-                            { type: ritualItem, count: 1 }
+                        
+                        // Build loot array with ritual item + random extras
+                        const loot = [{ type: ritualItem, count: 1 }];
+                        
+                        // 1% chance for legendary Berdger!
+                        if (Math.random() < 0.01) {
+                            loot.push({ type: 'berdger', count: 1 });
+                        }
+                        
+                        // Random bonus items
+                        const bonusItems = [
+                            { type: 'seeds', count: 2 + Math.floor(Math.random() * 4) },
+                            { type: 'apple', count: 1 + Math.floor(Math.random() * 3) },
+                            { type: 'jadite', count: 1 + Math.floor(Math.random() * 2) },
+                            { type: 'sakuraite', count: 1 },
+                            { type: 'moonstone', count: 1 },
+                            { type: 'glowstone', count: 2 + Math.floor(Math.random() * 3) }
                         ];
+                        
+                        // Add 1-3 random bonus items
+                        const bonusCount = 1 + Math.floor(Math.random() * 3);
+                        for (let b = 0; b < bonusCount; b++) {
+                            const bonus = bonusItems[Math.floor(Math.random() * bonusItems.length)];
+                            loot.push({ type: bonus.type, count: bonus.count });
+                        }
+                        
+                        this.chestContents[`${rx},${rHeight + 1},${rz}`] = loot;
                     }
                 }
                 
-                // Spawn seeds around the world (uncommon ground items)
-                for (let i = 0; i < 30; i++) {
+                // ════════════════════════════════════════════════════════════════════════
+                // PHASE 7: Spawn Items
+                // ════════════════════════════════════════════════════════════════════════
+                updateLoading('Scattering Items...', 92, 'Dropping seeds and apples', '🍎', 'Items');
+                await yieldToUI();
+                
+                // Seeds
+                for (let i = 0; i < 60; i++) {
                     const sx = Math.floor(Math.random() * worldSize * 2) - worldSize;
                     const sz = Math.floor(Math.random() * worldSize * 2) - worldSize;
                     const sKey = `${sx},${sz}`;
@@ -710,10 +1374,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     }
                 }
                 
-                // Spawn apples under apple trees
+                // Apples under apple trees
                 if (this.appleTrees) {
                     for (const tree of this.appleTrees) {
-                        // 50% chance of apples under each tree
                         if (Math.random() < 0.5) {
                             const appleCount = 1 + Math.floor(Math.random() * 3);
                             for (let i = 0; i < appleCount; i++) {
@@ -730,109 +1393,81 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     }
                 }
                 
-                // Generate buildings
-                this.generateBuildings(worldSize);
+                // ════════════════════════════════════════════════════════════════════════
+                // PHASE 8: Initialize Entities
+                // ════════════════════════════════════════════════════════════════════════
+                updateLoading('Spawning Wildlife...', 96, 'Releasing birds and fish', '🐦', 'Wildlife');
+                await yieldToUI();
                 
-                // Generate ONE Ritual Temple in a random far location
-                let templeX, templeZ;
-                do {
-                    templeX = Math.floor(Math.random() * (worldSize - 20)) + 15;
-                    templeZ = Math.floor(Math.random() * (worldSize - 20)) + 15;
-                    if (Math.random() < 0.5) templeX = -templeX;
-                    if (Math.random() < 0.5) templeZ = -templeZ;
-                } while (Math.abs(templeX) < 20 || Math.abs(templeZ) < 20);
-                
-                const templeKey = `${templeX},${templeZ}`;
-                const templeHeight = heightMap[templeKey] || baseHeight;
-                this.generateRitualTemple(templeX, templeHeight + 1, templeZ);
-                
-                // Initialize birds
                 this.initBirds();
                 this.initPestBirds();
+                
+                // ════════════════════════════════════════════════════════════════════════
+                // PHASE 9: Finalize
+                // ════════════════════════════════════════════════════════════════════════
+                updateLoading('Finalizing World...', 99, 'Almost ready!', '✨', 'Complete');
+                await yieldToUI();
+                
+                // Store biome data for debug/minimap
+                this.worldBiomes = biomeCache;
+                this.worldHeights = heightMap;
+                
+                // Count biomes for stats
+                const biomeCounts: Record<string, number> = {};
+                for (const biome of Object.values(biomeCache) as string[]) {
+                    biomeCounts[biome] = (biomeCounts[biome] || 0) + 1;
+                }
+                console.log('Biome distribution:', biomeCounts);
+                console.log(`World generated: ${Object.keys(this.world).length} blocks, ${treesPlanted} trees, ${buildingsPlaced} buildings`);
+                
+                // Complete!
+                updateLoading('World Ready!', 100, 'Click to play!', '🌸', 'SakuraCraft');
+                clearInterval(tipTimer); // Stop tip rotation
+                await yieldToUI();
+                
+                // Hide loading screen, show click to play
+                setTimeout(() => {
+                    const loadingScreen = document.getElementById('loadingScreen');
+                    const clickToPlay = document.getElementById('clickToPlay');
+                    if (loadingScreen) loadingScreen.classList.remove('active');
+                    if (clickToPlay) clickToPlay.classList.add('active');
+                }, 500);
             },
             
-            generateBuildings(worldSize) {
-                // Building types
-                const buildingTypes = ['church', 'house1', 'house2', 'house3', 'grocery', 'wcdonalds'];
-                
-                // Quadrant-based generation: 2-6 buildings per 25x25 area
-                const quadrantSize = 25;
-                let wcdonaldsPlaced = false;
-                
-                for (let qx = -Math.floor(worldSize / quadrantSize); qx <= Math.floor(worldSize / quadrantSize); qx++) {
-                    for (let qz = -Math.floor(worldSize / quadrantSize); qz <= Math.floor(worldSize / quadrantSize); qz++) {
-                        // Skip center quadrant (spawn area)
-                        if (qx === 0 && qz === 0) continue;
-                        
-                        const minX = qx * quadrantSize;
-                        const minZ = qz * quadrantSize;
-                        
-                        // 2-6 buildings per quadrant
-                        const numBuildings = 2 + Math.floor(Math.random() * 5);
-                        
-                        for (let i = 0; i < numBuildings; i++) {
-                            const bx = minX + 3 + Math.floor(Math.random() * (quadrantSize - 6));
-                            const bz = minZ + 3 + Math.floor(Math.random() * (quadrantSize - 6));
-                            
-                            // Force WcDonald's if not placed yet and this is a good spot
-                            if (!wcdonaldsPlaced && Math.random() < 0.3) {
-                                if (this.tryPlaceBuilding(bx, bz, ['wcdonalds'])) {
-                                    wcdonaldsPlaced = true;
-                                    continue;
-                                }
-                            }
-                            
-                            this.tryPlaceBuilding(bx, bz, buildingTypes);
-                        }
-                    }
-                }
-                
-                // Guarantee at least one WcDonald's if not placed
-                if (!wcdonaldsPlaced) {
-                    for (let attempts = 0; attempts < 50; attempts++) {
-                        const bx = 25 + Math.floor(Math.random() * 20);
-                        const bz = 25 + Math.floor(Math.random() * 20);
-                        if (this.tryPlaceBuilding(bx, bz, ['wcdonalds'])) {
-                            break;
-                        }
-                    }
-                }
-            },
-            
-            tryPlaceBuilding(x, z, buildingTypes) {
+            tryPlaceBuilding(x, z, buildingTypes, heightMap = null) {
                 // Check world bounds - don't spawn near forcefield
                 if (this.worldBounds) {
-                    const buffer = 10; // Stay 10 blocks away from forcefield
+                    const buffer = 10;
                     const bounds = this.worldBounds;
                     if (x < bounds.minX + buffer || x > bounds.maxX - buffer ||
                         z < bounds.minZ + buffer || z > bounds.maxZ - buffer) {
-                        return false; // Too close to world edge
+                        return false;
                     }
                 }
                 
-                const groundY = this.getHighestBlock(x, z);
+                // Use heightMap if provided, otherwise fall back to getHighestBlock
+                const groundY = heightMap ? (heightMap[`${x},${z}`] || this.getHighestBlock(x, z)) : this.getHighestBlock(x, z);
                 if (!groundY || groundY < 7) return false;
                 
                 const block = this.getBlock(x, groundY, z);
                 if (block === 'water' || block === 'sand') return false;
                 
                 // Quick flatness check
-                const h1 = this.getHighestBlock(x + 3, z) || groundY;
-                const h2 = this.getHighestBlock(x - 3, z) || groundY;
-                const h3 = this.getHighestBlock(x, z + 3) || groundY;
-                const h4 = this.getHighestBlock(x, z - 3) || groundY;
-                if (Math.max(Math.abs(h1 - groundY), Math.abs(h2 - groundY), Math.abs(h3 - groundY), Math.abs(h4 - groundY)) > 2) return false;
+                const h1 = heightMap ? (heightMap[`${x+3},${z}`] || groundY) : (this.getHighestBlock(x + 3, z) || groundY);
+                const h2 = heightMap ? (heightMap[`${x-3},${z}`] || groundY) : (this.getHighestBlock(x - 3, z) || groundY);
+                const h3 = heightMap ? (heightMap[`${x},${z+3}`] || groundY) : (this.getHighestBlock(x, z + 3) || groundY);
+                const h4 = heightMap ? (heightMap[`${x},${z-3}`] || groundY) : (this.getHighestBlock(x, z - 3) || groundY);
+                if (Math.max(Math.abs(h1 - groundY), Math.abs(h2 - groundY), Math.abs(h3 - groundY), Math.abs(h4 - groundY)) > 3) return false;
                 
                 // Check overlap with other buildings
                 for (const b of this.buildings) {
-                    if (Math.sqrt((x - b.x) ** 2 + (z - b.z) ** 2) < 15) return false;
+                    if (Math.sqrt((x - b.x) ** 2 + (z - b.z) ** 2) < 18) return false;
                 }
                 
                 // Check for existing structures (trees, other blocks) in build area
-                // Buildings are roughly 8x8x10, check a bit larger area
                 const buildWidth = 10, buildHeight = 12, buildDepth = 10;
                 if (this.checkStructureCollision(x - 1, groundY, z - 1, buildWidth, buildHeight, buildDepth)) {
-                    return false; // Area has existing blocks (likely trees)
+                    return false;
                 }
                 
                 const type = buildingTypes[Math.floor(Math.random() * buildingTypes.length)];
@@ -941,6 +1576,37 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                             this.setBlock(x + dx, y + h, z + dz, 'leaves');
                         }
                     }
+                }
+                
+                // Interior furniture
+                // Bed in corner
+                this.setBlock(x + 1, y, z + 1, 'bed');
+                this.setBlock(x + 1, y, z + 2, 'bedPillow');
+                
+                // Small table with chair
+                this.setBlock(x + 3, y, z + 2, 'table');
+                this.setBlock(x + 3, y, z + 3, 'chair');
+                
+                // Lamp on table
+                this.setBlock(x + 3, y + 1, z + 2, 'lamp');
+                
+                // Add storage containers inside
+                if (Math.random() < 0.7) {
+                    // Barrel in corner
+                    this.setBlock(x + 1, y, z + 4, 'barrel');
+                    this.chestContents = this.chestContents || {};
+                    this.chestContents[`${x + 1},${y},${z + 4}`] = [
+                        { type: 'apple', count: 2 + Math.floor(Math.random() * 4) }
+                    ];
+                }
+                if (Math.random() < 0.5) {
+                    // Crate on other side
+                    this.setBlock(x + 3, y, z + 1, 'crate');
+                    this.chestContents = this.chestContents || {};
+                    this.chestContents[`${x + 3},${y},${z + 1}`] = [
+                        { type: 'wood', count: 4 + Math.floor(Math.random() * 8) },
+                        { type: 'seeds', count: 1 + Math.floor(Math.random() * 3) }
+                    ];
                 }
             },
             
@@ -1063,99 +1729,326 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             },
             
             // WcDonald's - the knockoff! (W instead of M, same colors)
+            // Now with two variants: Drive-Thru and Dine-In
             generateWcDonalds(x, y, z) {
-                const w = 9, d = 9, h = 4;
-                const ruinFactor = 0.2;
+                // Randomly choose variant
+                if (Math.random() < 0.5) {
+                    this.generateWcDonaldsDriveThru(x, y, z);
+                } else {
+                    this.generateWcDonaldsDineIn(x, y, z);
+                }
+            },
+            
+            // WcDonald's Drive-Thru - larger with outdoor lane
+            generateWcDonaldsDriveThru(x, y, z) {
+                const w = 14, d = 12, h = 5;
+                const ruinFactor = 0.15;
                 
-                // FIRST: Clear interior space (remove any terrain blocks inside building)
+                // Clear interior
                 for (let dx = 1; dx < w - 1; dx++) {
                     for (let dz = 1; dz < d - 1; dz++) {
-                        for (let dy = 0; dy < h + 2; dy++) {
-                            const existingBlock = this.getBlock(x + dx, y + dy, z + dz);
-                            // Remove any solid non-air blocks inside
-                            if (existingBlock && existingBlock !== 'water' && existingBlock !== 'lava') {
+                        for (let dy = 0; dy < h + 3; dy++) {
+                            const existing = this.getBlock(x + dx, y + dy, z + dz);
+                            if (existing && existing !== 'water' && existing !== 'lava') {
                                 this.setBlock(x + dx, y + dy, z + dz, null);
                             }
                         }
                     }
                 }
                 
-                // Red foundation/floor
-                for (let dx = 0; dx < w; dx++) {
-                    for (let dz = 0; dz < d; dz++) {
-                        this.setBlock(x + dx, y - 1, z + dz, 'brick'); // Red brick as red
+                // Foundation - red brick parking lot extends beyond building
+                for (let dx = -3; dx < w + 3; dx++) {
+                    for (let dz = -2; dz < d + 2; dz++) {
+                        this.setBlock(x + dx, y - 1, z + dz, 'brick');
                     }
                 }
                 
-                // Walls (mix of brick and stone for that fast food look)
-                for (let dx = 0; dx < w; dx++) {
+                // Main building floor - stone tile look
+                for (let dx = 0; dx < w - 4; dx++) {
+                    for (let dz = 0; dz < d; dz++) {
+                        this.setBlock(x + dx, y - 1, z + dz, (dx + dz) % 2 === 0 ? 'stone' : 'whiteBrick');
+                    }
+                }
+                
+                // Walls
+                for (let dx = 0; dx < w - 4; dx++) {
                     for (let dz = 0; dz < d; dz++) {
                         for (let dy = 0; dy < h; dy++) {
-                            const isWall = dx === 0 || dx === w - 1 || dz === 0 || dz === d - 1;
+                            const isWall = dx === 0 || dx === w - 5 || dz === 0 || dz === d - 1;
                             if (isWall && Math.random() > ruinFactor) {
-                                // Double door entrance
+                                // Front entrance (double doors)
                                 if (dz === d - 1 && dx >= 3 && dx <= 5 && dy < 3) continue;
-                                // Drive-thru window
-                                if (dx === w - 1 && dz >= 2 && dz <= 4 && dy === 1) continue;
-                                // Use brick for bottom, stone for top
-                                this.setBlock(x + dx, y + dy, z + dz, dy < 2 ? 'brick' : 'stone');
+                                // Windows on front
+                                if (dz === d - 1 && (dx === 1 || dx === 7 || dx === 8) && dy >= 1 && dy <= 2) continue;
+                                // Drive-thru window on side
+                                if (dx === w - 5 && dz >= 3 && dz <= 5 && dy >= 1 && dy <= 2) continue;
+                                
+                                // Color scheme: red bottom, cream top
+                                this.setBlock(x + dx, y + dy, z + dz, dy < 2 ? 'brick' : 'whiteBrick');
                             }
                         }
                     }
                 }
                 
-                // The famous "W" arches (golden... well, sand-colored)
-                // W shape using sand blocks (yellow-ish) - ALWAYS SOLID, no ruin
+                // Flat roof with slight overhang
+                for (let dx = -1; dx < w - 3; dx++) {
+                    for (let dz = -1; dz < d + 1; dz++) {
+                        if (Math.random() > ruinFactor * 0.5) {
+                            this.setBlock(x + dx, y + h, z + dz, 'brick');
+                        }
+                    }
+                }
+                
+                // Drive-thru lane (raised curb)
+                for (let dz = -2; dz < d + 2; dz++) {
+                    this.setBlock(x + w - 3, y - 1, z + dz, 'stone');
+                    this.setBlock(x + w - 2, y - 1, z + dz, 'stone');
+                    this.setBlock(x + w - 1, y - 1, z + dz, 'stone');
+                }
+                
+                // Drive-thru menu board
+                this.setBlock(x + w - 2, y, z + 1, 'wood');
+                this.setBlock(x + w - 2, y + 1, z + 1, 'wood');
+                this.setBlock(x + w - 2, y + 2, z + 1, 'obsidian'); // Screen
+                
+                // Drive-thru order speaker
+                this.setBlock(x + w - 1, y, z + 3, 'stone');
+                this.setBlock(x + w - 1, y + 1, z + 3, 'obsidian');
+                
+                // The famous "W" arches - BIG golden arches
                 const wX = x + 4;
                 const wZ = z + d;
                 const wY = y + h;
                 
-                // Build the W shape - guaranteed to always appear
-                // Left vertical leg
+                // Large W on front
+                for (let i = 0; i < 5; i++) {
+                    this.setBlock(wX - 3, wY + i, wZ, 'sand');
+                    this.setBlock(wX + 3, wY + i, wZ, 'sand');
+                }
                 this.setBlock(wX - 2, wY, wZ, 'sand');
                 this.setBlock(wX - 2, wY + 1, wZ, 'sand');
-                this.setBlock(wX - 2, wY + 2, wZ, 'sand');
-                this.setBlock(wX - 2, wY + 3, wZ, 'sand');
-                
-                // Left diagonal down to center
                 this.setBlock(wX - 1, wY, wZ, 'sand');
-                this.setBlock(wX - 1, wY + 1, wZ, 'sand');
-                
-                // Center bottom (the V dip)
                 this.setBlock(wX, wY, wZ, 'sand');
-                
-                // Right diagonal up from center  
                 this.setBlock(wX + 1, wY, wZ, 'sand');
-                this.setBlock(wX + 1, wY + 1, wZ, 'sand');
-                
-                // Right vertical leg
                 this.setBlock(wX + 2, wY, wZ, 'sand');
                 this.setBlock(wX + 2, wY + 1, wZ, 'sand');
-                this.setBlock(wX + 2, wY + 2, wZ, 'sand');
-                this.setBlock(wX + 2, wY + 3, wZ, 'sand');
                 
-                // Counter inside
-                for (let dx = 2; dx < 7; dx++) {
-                    if (Math.random() > 0.3) {
-                        this.setBlock(x + dx, y, z + 2, 'brick');
+                // Interior - service counter with cash registers
+                for (let dx = 1; dx < 8; dx++) {
+                    this.setBlock(x + dx, y, z + 2, 'counter');
+                    if (dx % 2 === 0) {
+                        this.setBlock(x + dx, y + 1, z + 2, 'cashRegister');
                     }
                 }
                 
-                // Some tables (wood blocks)
-                if (Math.random() > 0.4) this.setBlock(x + 2, y, z + 5, 'wood');
-                if (Math.random() > 0.4) this.setBlock(x + 6, y, z + 5, 'wood');
-                if (Math.random() > 0.4) this.setBlock(x + 4, y, z + 6, 'wood');
+                // Kitchen area behind counter
+                for (let dx = 1; dx < 4; dx++) {
+                    this.setBlock(x + dx, y, z + 1, 'stove');
+                }
+                for (let dx = 4; dx < 8; dx++) {
+                    this.setBlock(x + dx, y, z + 1, 'counter');
+                }
+                this.setBlock(x + 8, y, z + 1, 'fridge');
+                this.setBlock(x + 8, y + 1, z + 1, 'fridge');
                 
-                // Special WcDonalds chest behind counter - may contain the legendary Berdger!
+                // Seating area - booths with tables and stools
+                for (let booth = 0; booth < 2; booth++) {
+                    const bx = 2 + booth * 4;
+                    const bz = 6 + booth * 2;
+                    this.setBlock(x + bx, y, z + bz, 'stool');
+                    this.setBlock(x + bx + 1, y, z + bz, 'table');
+                    this.setBlock(x + bx + 2, y, z + bz, 'stool');
+                }
+                
+                // Glowstone lighting and lamps
+                this.setBlock(x + 2, y + h - 1, z + 4, 'glowstone');
+                this.setBlock(x + 6, y + h - 1, z + 8, 'glowstone');
+                this.setBlock(x + 3, y + 1, z + 6, 'lamp');
+                
+                // Treasure chest behind counter
                 this.setBlock(x + 4, y, z + 1, 'buildingChest');
                 this.chestContents = this.chestContents || {};
                 const chestKey = `${x + 4},${y},${z + 1}`;
-                // 30% chance for berdger, otherwise seeds
-                if (Math.random() < 0.3) {
+                if (Math.random() < 0.35) {
                     this.chestContents[chestKey] = [{ type: 'berdger', count: 1 }];
                 } else {
-                    this.chestContents[chestKey] = [{ type: 'seeds', count: 3 + Math.floor(Math.random() * 5) }];
+                    this.chestContents[chestKey] = [
+                        { type: 'apple', count: 5 + Math.floor(Math.random() * 5) },
+                        { type: 'seeds', count: 2 + Math.floor(Math.random() * 4) }
+                    ];
                 }
+                
+                // Extra barrel in kitchen
+                this.setBlock(x + 7, y, z + 1, 'barrel');
+                this.chestContents[`${x + 7},${y},${z + 1}`] = [
+                    { type: 'apple', count: 8 + Math.floor(Math.random() * 8) }
+                ];
+            },
+            
+            // WcDonald's Dine-In - larger restaurant with more seating
+            generateWcDonaldsDineIn(x, y, z) {
+                const w = 16, d = 14, h = 6;
+                const ruinFactor = 0.12;
+                
+                // Clear interior
+                for (let dx = 1; dx < w - 1; dx++) {
+                    for (let dz = 1; dz < d - 1; dz++) {
+                        for (let dy = 0; dy < h + 3; dy++) {
+                            const existing = this.getBlock(x + dx, y + dy, z + dz);
+                            if (existing && existing !== 'water' && existing !== 'lava') {
+                                this.setBlock(x + dx, y + dy, z + dz, null);
+                            }
+                        }
+                    }
+                }
+                
+                // Foundation
+                for (let dx = -1; dx < w + 1; dx++) {
+                    for (let dz = -1; dz < d + 1; dz++) {
+                        this.setBlock(x + dx, y - 1, z + dz, 'brick');
+                    }
+                }
+                
+                // Checkered floor
+                for (let dx = 0; dx < w; dx++) {
+                    for (let dz = 0; dz < d; dz++) {
+                        this.setBlock(x + dx, y - 1, z + dz, (dx + dz) % 2 === 0 ? 'whiteBrick' : 'redBrick');
+                    }
+                }
+                
+                // Walls
+                for (let dx = 0; dx < w; dx++) {
+                    for (let dz = 0; dz < d; dz++) {
+                        for (let dy = 0; dy < h; dy++) {
+                            const isWall = dx === 0 || dx === w - 1 || dz === 0 || dz === d - 1;
+                            if (isWall && Math.random() > ruinFactor) {
+                                // Grand entrance
+                                if (dz === d - 1 && dx >= 5 && dx <= 10 && dy < 4) continue;
+                                // Large windows
+                                if (dz === d - 1 && (dx <= 3 || dx >= 12) && dy >= 1 && dy <= 3) continue;
+                                if (dx === 0 && dz >= 3 && dz <= 10 && dy >= 1 && dy <= 3) continue;
+                                if (dx === w - 1 && dz >= 3 && dz <= 10 && dy >= 1 && dy <= 3) continue;
+                                
+                                this.setBlock(x + dx, y + dy, z + dz, dy < 3 ? 'brick' : 'whiteBrick');
+                            }
+                        }
+                    }
+                }
+                
+                // Roof with skylights
+                for (let dx = -1; dx < w + 1; dx++) {
+                    for (let dz = -1; dz < d + 1; dz++) {
+                        if (Math.random() > ruinFactor * 0.3) {
+                            // Skylights in center
+                            if ((dx === 7 || dx === 8) && (dz === 6 || dz === 7)) {
+                                this.setBlock(x + dx, y + h, z + dz, 'glowstone');
+                            } else {
+                                this.setBlock(x + dx, y + h, z + dz, 'brick');
+                            }
+                        }
+                    }
+                }
+                
+                // Giant W arches on front - ICONIC
+                const wX = x + 8;
+                const wZ = z + d;
+                const wY = y + h;
+                
+                for (let i = 0; i < 6; i++) {
+                    this.setBlock(wX - 4, wY + i, wZ, 'sand');
+                    this.setBlock(wX + 4, wY + i, wZ, 'sand');
+                }
+                for (let i = 0; i < 3; i++) {
+                    this.setBlock(wX - 3, wY + i, wZ, 'sand');
+                    this.setBlock(wX + 3, wY + i, wZ, 'sand');
+                }
+                this.setBlock(wX - 2, wY, wZ, 'sand');
+                this.setBlock(wX - 2, wY + 1, wZ, 'sand');
+                this.setBlock(wX - 1, wY, wZ, 'sand');
+                this.setBlock(wX, wY, wZ, 'sand');
+                this.setBlock(wX + 1, wY, wZ, 'sand');
+                this.setBlock(wX + 2, wY, wZ, 'sand');
+                this.setBlock(wX + 2, wY + 1, wZ, 'sand');
+                
+                // Long service counter with cash registers
+                for (let dx = 2; dx < 14; dx++) {
+                    this.setBlock(x + dx, y, z + 2, 'counter');
+                    if (dx % 3 === 0) {
+                        this.setBlock(x + dx, y + 1, z + 2, 'cashRegister');
+                    }
+                }
+                
+                // Kitchen behind counter (stoves, counters, fridge)
+                for (let dx = 2; dx < 7; dx++) {
+                    this.setBlock(x + dx, y, z + 1, 'stove');
+                }
+                for (let dx = 7; dx < 12; dx++) {
+                    this.setBlock(x + dx, y, z + 1, 'counter');
+                }
+                this.setBlock(x + 12, y, z + 1, 'fridge');
+                this.setBlock(x + 12, y + 1, z + 1, 'fridge');
+                this.setBlock(x + 13, y, z + 1, 'fridge');
+                this.setBlock(x + 13, y + 1, z + 1, 'fridge');
+                
+                // Sink station
+                this.setBlock(x + 2, y, z + 1, 'sink');
+                
+                // Multiple booth sections with tables and stools
+                for (let section = 0; section < 3; section++) {
+                    for (let row = 0; row < 2; row++) {
+                        const bx = 2 + section * 4;
+                        const bz = 5 + row * 3;
+                        this.setBlock(x + bx, y, z + bz, 'stool');
+                        this.setBlock(x + bx + 1, y, z + bz, 'table');
+                        this.setBlock(x + bx + 2, y, z + bz, 'stool');
+                        // Table lamps
+                        if (row === 0) {
+                            this.setBlock(x + bx + 1, y + 1, z + bz, 'lamp');
+                        }
+                    }
+                }
+                
+                // Play area in corner (kids section!) with decorative plants
+                this.setBlock(x + 13, y, z + 5, 'plant');
+                this.setBlock(x + 13, y + 1, z + 5, 'cherryLeaves');
+                this.setBlock(x + 14, y, z + 6, 'plant');
+                this.setBlock(x + 13, y, z + 7, 'chair');
+                this.setBlock(x + 14, y, z + 7, 'table');
+                this.setBlock(x + 13, y + 1, z + 8, 'cherryLeaves');
+                
+                // Lighting
+                for (let lx = 3; lx < w - 2; lx += 4) {
+                    for (let lz = 4; lz < d - 2; lz += 4) {
+                        this.setBlock(x + lx, y + h - 1, z + lz, 'glowstone');
+                    }
+                }
+                
+                // Main treasure chest
+                this.setBlock(x + 7, y, z + 1, 'buildingChest');
+                this.chestContents = this.chestContents || {};
+                const chestKey = `${x + 7},${y},${z + 1}`;
+                if (Math.random() < 0.4) {
+                    this.chestContents[chestKey] = [
+                        { type: 'berdger', count: 1 },
+                        { type: 'apple', count: 3 }
+                    ];
+                } else {
+                    this.chestContents[chestKey] = [
+                        { type: 'apple', count: 10 + Math.floor(Math.random() * 10) },
+                        { type: 'seeds', count: 5 + Math.floor(Math.random() * 5) }
+                    ];
+                }
+                
+                // Storage room barrels
+                this.setBlock(x + 1, y, z + 1, 'barrel');
+                this.chestContents[`${x + 1},${y},${z + 1}`] = [
+                    { type: 'apple', count: 12 }
+                ];
+                this.setBlock(x + 14, y, z + 1, 'crate');
+                this.chestContents[`${x + 14},${y},${z + 1}`] = [
+                    { type: 'wood', count: 8 },
+                    { type: 'brick', count: 4 }
+                ];
             },
             
             getHighestBlock(x, z) {
@@ -1200,19 +2093,31 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             
             // Check if area is clear for structure placement
             checkStructureCollision(x, y, z, width, height, depth) {
+                // Blocks that don't count as collision (natural/terrain blocks)
+                const ignoredBlocks = [
+                    'grass', 'dirt', 'sand', 'stone', 'leaves', 'cherryLeaves', 'appleLeaves',
+                    'wood', 'cherryWood', 'water', 'lava', 'mossyStone', 'deepslate',
+                    'snow', 'ice', 'flowers'
+                ];
+                
                 // Check if this area overlaps with any existing structures
+                let structureBlockCount = 0;
                 for (let dx = 0; dx < width; dx++) {
                     for (let dy = 0; dy < height; dy++) {
                         for (let dz = 0; dz < depth; dz++) {
                             const block = this.getBlock(x + dx, y + dy, z + dz);
-                            // If there's already a block here (not air), area is occupied
-                            if (block) {
-                                return true; // Collision detected
+                            // Only count as collision if it's a structure block (not natural)
+                            if (block && !ignoredBlocks.includes(block)) {
+                                structureBlockCount++;
+                                // Allow small overlap but not major
+                                if (structureBlockCount > 5) {
+                                    return true; // Collision detected
+                                }
                             }
                         }
                     }
                 }
-                return false; // Area is clear
+                return false; // Area is clear enough
             },
             
             // Find nearest clear spot for structure
@@ -2104,7 +3009,35 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     (npc.z - this.camera.z) ** 2
                 );
                 
-                npc.showPrompt = distToPlayer < 4;
+                // Only show prompt if close AND cursor is over the NPC
+                let isLookingAtNPC = false;
+                if (distToPlayer < 4) {
+                    // Calculate look direction from camera
+                    const lookDirX = -Math.sin(this.camera.rotY) * Math.cos(this.camera.rotX);
+                    const lookDirY = Math.sin(this.camera.rotX);
+                    const lookDirZ = Math.cos(this.camera.rotY) * Math.cos(this.camera.rotX);
+                    
+                    // Calculate direction to NPC center (at head height)
+                    const npcHeadY = npc.y + 1.5;
+                    const toNpcX = npc.x - this.camera.x;
+                    const toNpcY = npcHeadY - this.camera.y;
+                    const toNpcZ = npc.z - this.camera.z;
+                    const toNpcDist = Math.sqrt(toNpcX * toNpcX + toNpcY * toNpcY + toNpcZ * toNpcZ);
+                    
+                    if (toNpcDist > 0.1) {
+                        const toNpcNormX = toNpcX / toNpcDist;
+                        const toNpcNormY = toNpcY / toNpcDist;
+                        const toNpcNormZ = toNpcZ / toNpcDist;
+                        
+                        // Dot product to check if looking at NPC
+                        const dot = lookDirX * toNpcNormX + lookDirY * toNpcNormY + lookDirZ * toNpcNormZ;
+                        
+                        // Need to be looking quite precisely at NPC (within ~15 degrees)
+                        isLookingAtNPC = dot > 0.96;
+                    }
+                }
+                
+                npc.showPrompt = isLookingAtNPC;
                 
                 // Despawn if too far from player
                 if (distToPlayer > 60) {
@@ -2642,7 +3575,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     if (e.key === 'Escape') {
                         e.preventDefault();
                         
-                        // Priority order: dialogue > journal > inventory > pause
+                        // Priority order: dialogue > journal > container > inventory > pause
                         if (this.dialogueOpen) {
                             this.closeDialogue();
                             return;
@@ -2650,6 +3583,12 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         
                         if (this.journalOpen) {
                             this.toggleJournal();
+                            return;
+                        }
+                        
+                        // If container is open, close it
+                        if (this.containerOpen) {
+                            this.closeContainer();
                             return;
                         }
                         
@@ -2664,6 +3603,12 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         } else {
                             this.pause();
                         }
+                        return;
+                    }
+                    
+                    // J key - toggle journal (works even when journal is open)
+                    if (e.key.toLowerCase() === 'j' && !e.repeat) {
+                        this.toggleJournal();
                         return;
                     }
                     
@@ -2689,29 +3634,41 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         this.updateHotbar();
                     }
                     
-                    // E key - Check for NPC interaction first, then inventory
+                    // E key - Check for NPC interaction first (only if looking at NPC), then inventory
                     if (e.key.toLowerCase() === 'e') {
-                        // Check if near repair NPC
+                        // Check if near AND looking at repair NPC
                         if (this.repairNPC) {
                             const distToNPC = Math.sqrt(
                                 (this.repairNPC.x - this.camera.x) ** 2 + 
                                 (this.repairNPC.z - this.camera.z) ** 2
                             );
                             
+                            // Check if player is actually looking at the NPC
                             if (distToNPC < 4) {
-                                // Player is near NPC - open dialogue
-                                this.openDialogue('gunsmith');
-                                return; // Don't open inventory
+                                // Calculate direction player is looking
+                                const lookDirX = -Math.sin(this.camera.rotY);
+                                const lookDirZ = Math.cos(this.camera.rotY);
+                                
+                                // Calculate direction to NPC
+                                const toNpcX = this.repairNPC.x - this.camera.x;
+                                const toNpcZ = this.repairNPC.z - this.camera.z;
+                                const toNpcDist = Math.sqrt(toNpcX * toNpcX + toNpcZ * toNpcZ);
+                                const toNpcNormX = toNpcX / toNpcDist;
+                                const toNpcNormZ = toNpcZ / toNpcDist;
+                                
+                                // Dot product to check if facing NPC (cos of angle)
+                                const dot = lookDirX * toNpcNormX + lookDirZ * toNpcNormZ;
+                                
+                                // Only open dialogue if looking roughly at NPC (within ~60 degrees)
+                                if (dot > 0.5) {
+                                    this.openDialogue('gunsmith');
+                                    return; // Don't open inventory
+                                }
                             }
                         }
                         
                         // Normal inventory toggle
                         this.toggleInventory();
-                    }
-                    
-                    // J key - Open journal/quest log
-                    if (e.key.toLowerCase() === 'j' && !e.repeat) {
-                        this.toggleJournal();
                     }
                     
                     // Toggle sneak with C
@@ -2839,6 +3796,14 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                             
                             // Drop the block as an item (if it's a normal block, not chest)
                             if (blockType && !isChest(blockType)) {
+                                // Blocks that don't drop anything
+                                const noDropBlocks = ['bedrock'];
+                                if (noDropBlocks.includes(blockType)) {
+                                    // Don't drop, and don't break bedrock
+                                    this.setBlock(hit.hit.x, hit.hit.y, hit.hit.z, blockType);
+                                    return;
+                                }
+                                
                                 // Special drops for certain blocks
                                 if (blockType === 'appleLeaves') {
                                     // Apple leaves have chance to drop apple
@@ -2852,7 +3817,14 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                     if (Math.random() < 0.1) {
                                         this.dropItem(hit.hit.x + 0.5, hit.hit.y + 0.5, hit.hit.z + 0.5, 'sakuraPetal', 1);
                                     }
+                                } else if (blockType === 'leaves') {
+                                    // Regular leaves sometimes drop sticks or seeds
+                                    this.dropItem(hit.hit.x + 0.5, hit.hit.y + 0.5, hit.hit.z + 0.5, 'leaves', 1);
+                                    if (Math.random() < 0.08) {
+                                        this.dropItem(hit.hit.x + 0.5, hit.hit.y + 0.5, hit.hit.z + 0.5, 'seeds', 1);
+                                    }
                                 } else {
+                                    // All other blocks drop themselves
                                     this.dropItem(hit.hit.x + 0.5, hit.hit.y + 0.5, hit.hit.z + 0.5, blockType, 1);
                                 }
                             } else if (isChest(blockType)) {
@@ -2873,13 +3845,21 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         }
                     } else if (e.button === 2) {
                         // Right click - PLACE block, SHOOT, USE item, or interact
-                        // First check for chest interaction
+                        // First check for container/chest interaction
                         const hit = this.raycast();
                         if (hit && hit.hit) {
                             const hitBlock = this.getBlock(hit.hit.x, hit.hit.y, hit.hit.z);
-                            // Check for any type of chest (case-insensitive)
-                            if (hitBlock && (hitBlock === 'chest' || hitBlock === 'ritualChest' || hitBlock === 'buildingChest' || hitBlock.toLowerCase().includes('chest'))) {
-                                this.openChest(hit.hit.x, hit.hit.y, hit.hit.z);
+                            
+                            // List of all container types
+                            const containerTypes = [
+                                'chest', 'ritualChest', 'buildingChest', 'dungeonChest',
+                                'barrel', 'crate', 'furnace', 'furnaceActive',
+                                'alchemyTable', 'storageShrine'
+                            ];
+                            
+                            // Check for any container type
+                            if (hitBlock && (containerTypes.includes(hitBlock) || hitBlock.toLowerCase().includes('chest'))) {
+                                this.openContainer(hit.hit.x, hit.hit.y, hit.hit.z, hitBlock);
                                 return;
                             }
                             
@@ -3004,9 +3984,11 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     }
                 });
                 
-                // Prevent context menu from appearing
-                this.canvas.addEventListener('contextmenu', (e) => {
-                    e.preventDefault();
+                // Prevent context menu from appearing (except when debug console is open)
+                document.getElementById('minecraftGame').addEventListener('contextmenu', (e) => {
+                    if (!this.debugConsoleOpen) {
+                        e.preventDefault();
+                    }
                 });
                 
                 // Scroll wheel - change hotbar selection
@@ -3089,14 +4071,35 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     }
                 });
                 
-                // Window resize - update canvas if fullscreen
+                // Window resize - DON'T change canvas resolution in fullscreen
+                // Instead, let CSS handle scaling for consistent performance
                 window.addEventListener('resize', () => {
-                    const isFs = document.fullscreenElement || document.webkitFullscreenElement;
-                    if (isFs && this.isActive) {
-                        this.canvas.width = window.innerWidth;
-                        this.canvas.height = window.innerHeight;
-                    }
+                    // Canvas stays at base resolution (800x500)
+                    // CSS will scale it to fill the screen
                 });
+                
+                // Handle fullscreen changes
+                const handleFullscreenChange = () => {
+                    const isFs = document.fullscreenElement || document.webkitFullscreenElement;
+                    const canvas = this.canvas as HTMLCanvasElement;
+                    
+                    if (isFs) {
+                        // Fullscreen: Use CSS to scale canvas, keep internal resolution
+                        canvas.style.width = '100vw';
+                        canvas.style.height = '100vh';
+                        canvas.style.objectFit = 'contain';
+                    } else {
+                        // Windowed: Reset to normal size
+                        canvas.style.width = '';
+                        canvas.style.height = '';
+                        canvas.style.objectFit = '';
+                    }
+                    
+                    this.updateFullscreenButton();
+                };
+                
+                document.addEventListener('fullscreenchange', handleFullscreenChange);
+                document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
                 
                 // Hotbar clicks
                 document.querySelectorAll('.hotbar-slot').forEach((slot, index) => {
@@ -3148,10 +4151,6 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     this.resume();
                 });
                 
-                // Update button text on fullscreen change
-                document.addEventListener('fullscreenchange', () => this.updateFullscreenButton());
-                document.addEventListener('webkitfullscreenchange', () => this.updateFullscreenButton());
-                
                 // Account button (disabled)
                 document.getElementById('btnAccount').addEventListener('click', (e) => {
                     e.preventDefault();
@@ -3192,6 +4191,10 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 
                 document.getElementById('optTreeStyle').addEventListener('change', (e) => {
                     this.settings.treeStyle = (e.target as HTMLSelectElement).value as 'simple' | 'transparent' | 'bushy';
+                });
+                
+                document.getElementById('optTextureMode').addEventListener('change', (e) => {
+                    this.settings.textureMode = (e.target as HTMLSelectElement).value as 'fixed' | 'trippy';
                 });
                 
                 // Toggle switches
@@ -3840,11 +4843,25 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     item.vy -= 0.015; // Gravity
                     item.y += item.vy;
                     
-                    // Ground collision
-                    const groundY = this.getGroundHeightBelow(item.x, item.z, item.y + 5) + 1.3;
-                    if (item.y < groundY) {
-                        item.y = groundY;
-                        item.vy = 0;
+                    // Ground collision - check block directly below item
+                    const bx = Math.floor(item.x);
+                    const by = Math.floor(item.y - 0.1); // Check slightly below
+                    const bz = Math.floor(item.z);
+                    const blockBelow = this.getBlock(bx, by, bz);
+                    
+                    // If there's a solid block below, rest on top of it
+                    if (blockBelow && !this.fluidBlocks.includes(blockBelow)) {
+                        const restY = by + 1.3; // Rest on top of block
+                        if (item.y < restY) {
+                            item.y = restY;
+                            item.vy = 0;
+                        }
+                    } else {
+                        // No block below, keep falling but clamp to y=1 minimum
+                        if (item.y < 1) {
+                            item.y = 1;
+                            item.vy = 0;
+                        }
                     }
                     
                     // Bobbing animation
@@ -3863,6 +4880,12 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                 this.droppedItems.splice(i, 1);
                             }
                         }
+                    }
+                    
+                    // Remove items that have been on ground too long (5 minutes)
+                    item.age = (item.age || 0) + 1;
+                    if (item.age > 60 * 60 * 5) {
+                        this.droppedItems.splice(i, 1);
                     }
                 }
             },
@@ -3957,7 +4980,11 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         chest: 'Chest', seeds: 'Seeds', berdger: 'The Berdger', apple: 'Apple',
                         sakuraPetal: 'Cherry Petal', shimenawa: 'Sacred Rope', omamori: 'Charm',
                         ema: 'Wish Plaque', incense: 'Incense', whiteBrick: 'White Brick',
-                        redBrick: 'Red Brick', glowstone: 'Glowstone', ritualStone: 'Ritual Stone'
+                        redBrick: 'Red Brick', glowstone: 'Glowstone', ritualStone: 'Ritual Stone',
+                        table: 'Table', chair: 'Chair', bed: 'Bed', bedPillow: 'Pillow',
+                        cashRegister: 'Cash Register', stool: 'Stool', counter: 'Counter',
+                        lamp: 'Lamp', bookshelf: 'Bookshelf', plant: 'Plant',
+                        sink: 'Sink', stove: 'Stove', fridge: 'Fridge'
                     };
                     
                     const notification = document.createElement('div');
@@ -4625,30 +5652,308 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             },
             
             // Open chest UI - simply take all items
+            // ═══════════════════════════════════════════════════════════════════════════
+            // CONTAINER UI SYSTEM
+            // ═══════════════════════════════════════════════════════════════════════════
+            
             openChest(x, y, z) {
+                this.openContainer(x, y, z, 'chest');
+            },
+            
+            openContainer(x, y, z, type) {
                 if (!this.chestContents) this.chestContents = {};
                 
-                const chestKey = `${x},${y},${z}`;
-                const contents = this.chestContents[chestKey];
+                const containerKey = `${x},${y},${z}`;
                 
-                if (contents && Array.isArray(contents) && contents.length > 0) {
-                    // Take all items from chest
-                    for (const item of contents) {
-                        if (!item) continue;
-                        const itemType = item.type || item.id;
-                        const itemCount = item.count || 1;
+                // Initialize container if empty
+                if (!this.chestContents[containerKey]) {
+                    this.chestContents[containerKey] = [];
+                }
+                
+                // Determine container properties
+                const containerInfo = {
+                    chest: { name: '📦 Chest', slots: 27 },
+                    dungeonChest: { name: '🏛️ Dungeon Chest', slots: 27 },
+                    ritualChest: { name: '⛩️ Ritual Chest', slots: 9 },
+                    buildingChest: { name: '🏠 Storage Chest', slots: 27 },
+                    barrel: { name: '🛢️ Barrel', slots: 27 },
+                    crate: { name: '📦 Crate', slots: 18 },
+                    furnace: { name: '🔥 Furnace', slots: 3 },
+                    alchemyTable: { name: '⚗️ Alchemy Table', slots: 5 },
+                    storageShrine: { name: '✨ Storage Shrine', slots: 54 }
+                };
+                
+                const info = containerInfo[type] || containerInfo.chest;
+                
+                this.openContainerPos = { x, y, z };
+                this.openContainerType = type;
+                this.containerSlots = info.slots;
+                this.containerOpen = true;
+                
+                // Release pointer lock
+                if (document.pointerLockElement) {
+                    document.exitPointerLock();
+                }
+                
+                this.renderContainerUI(info.name, containerKey);
+            },
+            
+            renderContainerUI(title, containerKey) {
+                const screen = document.getElementById('containerScreen');
+                const titleEl = document.getElementById('containerTitle');
+                const slotsEl = document.getElementById('containerSlots');
+                const playerSlotsEl = document.getElementById('playerSlotsInContainer');
+                
+                if (!screen || !slotsEl || !playerSlotsEl) return;
+                
+                titleEl.textContent = title;
+                
+                const contents = this.chestContents[containerKey] || [];
+                
+                // Render container slots
+                let containerHTML = '';
+                for (let i = 0; i < this.containerSlots; i++) {
+                    const item = contents[i];
+                    const hasItem = item && item.type;
+                    const emoji = hasItem ? this.getItemEmoji({ id: item.type }) : '';
+                    const count = hasItem && item.count > 1 ? item.count : '';
+                    
+                    containerHTML += `
+                        <div class="container-slot ${hasItem ? 'has-item' : ''}" 
+                             data-slot="${i}" data-source="container">
+                            ${hasItem ? `<span class="slot-icon">${emoji}</span>` : ''}
+                            ${count ? `<span class="slot-count">${count}</span>` : ''}
+                        </div>
+                    `;
+                }
+                slotsEl.innerHTML = containerHTML;
+                
+                // Render player inventory slots
+                let playerHTML = '';
+                
+                // Hotbar
+                for (let i = 0; i < 9; i++) {
+                    const slot = this.inventory.hotbar[i];
+                    const hasItem = slot && slot.id;
+                    const emoji = hasItem ? this.getItemEmoji(slot) : '';
+                    const count = hasItem && slot.count > 1 ? slot.count : '';
+                    
+                    playerHTML += `
+                        <div class="container-slot ${hasItem ? 'has-item' : ''}" 
+                             data-slot="${i}" data-source="hotbar">
+                            ${hasItem ? `<span class="slot-icon">${emoji}</span>` : ''}
+                            ${count ? `<span class="slot-count">${count}</span>` : ''}
+                        </div>
+                    `;
+                }
+                
+                // Main inventory
+                for (let i = 0; i < 27; i++) {
+                    const slot = this.inventory.main[i];
+                    const hasItem = slot && slot.id;
+                    const emoji = hasItem ? this.getItemEmoji(slot) : '';
+                    const count = hasItem && slot.count > 1 ? slot.count : '';
+                    
+                    playerHTML += `
+                        <div class="container-slot ${hasItem ? 'has-item' : ''}" 
+                             data-slot="${i}" data-source="main">
+                            ${hasItem ? `<span class="slot-icon">${emoji}</span>` : ''}
+                            ${count ? `<span class="slot-count">${count}</span>` : ''}
+                        </div>
+                    `;
+                }
+                playerSlotsEl.innerHTML = playerHTML;
+                
+                // Add click handlers
+                this.setupContainerSlotHandlers(containerKey);
+                
+                screen.classList.add('active');
+            },
+            
+            setupContainerSlotHandlers(containerKey) {
+                const slots = document.querySelectorAll('.container-slot');
+                
+                slots.forEach(slot => {
+                    slot.addEventListener('click', (e) => {
+                        const slotIndex = parseInt((e.currentTarget as HTMLElement).dataset.slot);
+                        const source = (e.currentTarget as HTMLElement).dataset.source;
                         
-                        if (itemType) {
-                            if (!this.addToInventory(itemType, itemCount)) {
-                                // Inventory full - drop item
-                                this.dropItem(x + 0.5, y + 1.5, z + 0.5, itemType, itemCount);
+                        this.handleContainerSlotClick(slotIndex, source, containerKey);
+                    });
+                    
+                    slot.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        const slotIndex = parseInt((e.currentTarget as HTMLElement).dataset.slot);
+                        const source = (e.currentTarget as HTMLElement).dataset.source;
+                        
+                        // Right click - transfer half stack
+                        this.handleContainerSlotClick(slotIndex, source, containerKey, true);
+                    });
+                });
+                
+                // Close button
+                const closeBtn = document.getElementById('containerClose');
+                if (closeBtn) {
+                    closeBtn.onclick = () => this.closeContainer();
+                }
+            },
+            
+            handleContainerSlotClick(slotIndex, source, containerKey, halfStack = false) {
+                const contents = this.chestContents[containerKey] || [];
+                
+                if (this.draggedItem) {
+                    // Placing item
+                    if (source === 'container') {
+                        // Place into container
+                        const existingItem = contents[slotIndex];
+                        
+                        if (!existingItem || !existingItem.type) {
+                            // Empty slot - place item
+                            contents[slotIndex] = { ...this.draggedItem };
+                            this.draggedItem = null;
+                        } else if (existingItem.type === this.draggedItem.type) {
+                            // Same type - stack
+                            const maxStack = this.itemTypes[existingItem.type]?.maxStack || 64;
+                            const canAdd = maxStack - existingItem.count;
+                            const toAdd = Math.min(canAdd, this.draggedItem.count);
+                            existingItem.count += toAdd;
+                            this.draggedItem.count -= toAdd;
+                            if (this.draggedItem.count <= 0) this.draggedItem = null;
+                        } else {
+                            // Swap
+                            contents[slotIndex] = { ...this.draggedItem };
+                            this.draggedItem = { ...existingItem };
+                        }
+                    } else {
+                        // Place into player inventory
+                        const invArray = source === 'hotbar' ? this.inventory.hotbar : this.inventory.main;
+                        const existingItem = invArray[slotIndex];
+                        
+                        if (!existingItem || !existingItem.id) {
+                            // Empty slot
+                            invArray[slotIndex] = { 
+                                type: 'block', 
+                                id: this.draggedItem.type, 
+                                count: this.draggedItem.count 
+                            };
+                            this.draggedItem = null;
+                        } else if (existingItem.id === this.draggedItem.type) {
+                            // Stack
+                            const maxStack = this.itemTypes[existingItem.id]?.maxStack || 64;
+                            const canAdd = maxStack - existingItem.count;
+                            const toAdd = Math.min(canAdd, this.draggedItem.count);
+                            existingItem.count += toAdd;
+                            this.draggedItem.count -= toAdd;
+                            if (this.draggedItem.count <= 0) this.draggedItem = null;
+                        } else {
+                            // Swap
+                            const temp = { type: existingItem.id, count: existingItem.count };
+                            invArray[slotIndex] = { 
+                                type: 'block', 
+                                id: this.draggedItem.type, 
+                                count: this.draggedItem.count 
+                            };
+                            this.draggedItem = temp;
+                        }
+                    }
+                } else {
+                    // Picking up item
+                    if (source === 'container') {
+                        const item = contents[slotIndex];
+                        if (item && item.type) {
+                            if (halfStack && item.count > 1) {
+                                const half = Math.ceil(item.count / 2);
+                                this.draggedItem = { type: item.type, count: half };
+                                item.count -= half;
+                            } else {
+                                this.draggedItem = { ...item };
+                                contents[slotIndex] = null;
+                            }
+                        }
+                    } else {
+                        const invArray = source === 'hotbar' ? this.inventory.hotbar : this.inventory.main;
+                        const item = invArray[slotIndex];
+                        if (item && item.id) {
+                            if (halfStack && item.count > 1) {
+                                const half = Math.ceil(item.count / 2);
+                                this.draggedItem = { type: item.id, count: half };
+                                item.count -= half;
+                            } else {
+                                this.draggedItem = { type: item.id, count: item.count };
+                                invArray[slotIndex] = null;
                             }
                         }
                     }
-                    // Empty the chest
-                    this.chestContents[chestKey] = [];
-                    this.updateHotbarDisplay();
                 }
+                
+                // Update display
+                this.chestContents[containerKey] = contents;
+                this.renderContainerUI(
+                    document.getElementById('containerTitle').textContent, 
+                    containerKey
+                );
+                this.updateHotbarDisplay();
+                
+                // Update cursor
+                this.updateDragCursor();
+            },
+            
+            updateDragCursor() {
+                let ghost = document.getElementById('dragGhost');
+                
+                if (this.draggedItem) {
+                    if (!ghost) {
+                        ghost = document.createElement('div');
+                        ghost.id = 'dragGhost';
+                        ghost.className = 'drag-ghost';
+                        document.body.appendChild(ghost);
+                        
+                        // Add single persistent mouse tracking
+                        document.addEventListener('mousemove', (e) => {
+                            const g = document.getElementById('dragGhost');
+                            if (g && g.style.display !== 'none') {
+                                g.style.left = e.clientX + 'px';
+                                g.style.top = e.clientY + 'px';
+                            }
+                        });
+                    }
+                    
+                    ghost.innerHTML = `<span class="ghost-icon">${this.getItemEmoji({ id: this.draggedItem.type })}</span>`;
+                    if (this.draggedItem.count > 1) {
+                        ghost.innerHTML += `<span class="ghost-count">${this.draggedItem.count}</span>`;
+                    }
+                    ghost.style.display = 'block';
+                } else if (ghost) {
+                    ghost.style.display = 'none';
+                }
+            },
+            
+            closeContainer() {
+                // Drop any held item back into world
+                if (this.draggedItem) {
+                    this.dropItem(
+                        this.camera.x, 
+                        this.camera.y, 
+                        this.camera.z,
+                        this.draggedItem.type,
+                        this.draggedItem.count
+                    );
+                    this.draggedItem = null;
+                }
+                
+                this.containerOpen = false;
+                this.openContainerPos = null;
+                this.openContainerType = null;
+                
+                // Hide ghost
+                const ghost = document.getElementById('dragGhost');
+                if (ghost) ghost.style.display = 'none';
+                
+                // Hide screen
+                const screen = document.getElementById('containerScreen');
+                if (screen) screen.classList.remove('active');
+                
+                this.updateHotbarDisplay();
             },
             
             // Drop currently held item
@@ -6397,10 +7702,26 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         lava: 'Lava', obsidian: 'Obsidian', cherryWood: 'Cherry Wood',
                         cherryLeaves: 'Cherry Leaves', chest: 'Chest',
                         ritualChest: 'Ritual Chest', buildingChest: 'Building Chest',
+                        dungeonChest: 'Dungeon Chest',
                         seeds: 'Seeds', berdger: 'The Berdger',
                         sakuraPetal: 'Sacred Cherry Petal', shimenawa: 'Sacred Rope',
                         omamori: 'Protective Charm', ema: 'Wooden Wish Plaque',
-                        incense: 'Purifying Incense'
+                        incense: 'Purifying Incense',
+                        // Underground
+                        bedrock: 'Bedrock', deepslate: 'Deepslate', mossyStone: 'Mossy Stone',
+                        dungeonBrick: 'Dungeon Brick', dungeonMossy: 'Mossy Dungeon Brick',
+                        // Ores
+                        sakuraite: 'Sakuraite Ore', moonstone: 'Moonstone Ore',
+                        jadite: 'Jadite Ore', crimsonite: 'Crimsonite Ore',
+                        voidstone: 'Voidstone Ore', spirite: 'Spirite Ore',
+                        // Containers
+                        barrel: 'Storage Barrel', crate: 'Wooden Crate',
+                        furnace: 'Furnace', alchemyTable: 'Alchemy Table',
+                        storageShrine: 'Storage Shrine',
+                        // Other
+                        whiteBrick: 'White Brick', redBrick: 'Red Brick',
+                        glowstone: 'Glowstone', ritualStone: 'Ritual Stone',
+                        appleLeaves: 'Apple Tree Leaves'
                     };
                     return names[id] || id;
                 };
@@ -6641,10 +7962,27 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     leaves: '🌸', water: '💧', sand: '🏖️', brick: '🧱',
                     ka69: '🔫', water_bucket: '🪣', lava_bucket: '🫧',
                     lava: '🔥', obsidian: '🟣', cherryWood: '🪵', cherryLeaves: '🌸',
-                    chest: '📦', ritualChest: '📦', buildingChest: '📦',
+                    chest: '📦', ritualChest: '📦', buildingChest: '📦', dungeonChest: '📦',
                     seeds: '🌾', berdger: '🍔',
                     sakuraPetal: '🌸', shimenawa: '🪢', omamori: '🎀',
-                    ema: '🪧', incense: '🕯️'
+                    ema: '🪧', incense: '🕯️',
+                    // Underground blocks
+                    bedrock: '⬛', deepslate: '🪨', mossyStone: '🪨',
+                    dungeonBrick: '🧱', dungeonMossy: '🧱',
+                    // Ores
+                    sakuraite: '💎', moonstone: '🌙', jadite: '💚',
+                    crimsonite: '❤️', voidstone: '🖤', spirite: '💠',
+                    // Containers
+                    barrel: '🛢️', crate: '📦', furnace: '🔥',
+                    alchemyTable: '⚗️', storageShrine: '⛩️',
+                    // Other
+                    whiteBrick: '🧱', redBrick: '🧱', glowstone: '💡',
+                    ritualStone: '🪨', appleLeaves: '🍃',
+                    // Furniture
+                    table: '🪑', chair: '🪑', bed: '🛏️', bedPillow: '🛏️',
+                    cashRegister: '🧾', stool: '🪑', counter: '🗄️',
+                    lamp: '💡', bookshelf: '📚', plant: '🌿',
+                    sink: '🚰', stove: '🔥', fridge: '🧊'
                 };
                 return emojis[id] || '❓';
             },
@@ -7153,27 +8491,27 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 
                 // --- GRAVITY / SWIMMING PHYSICS ---
                 if (swimming) {
-                    // SWIMMING MODE: Buoyancy and fluid drag
-                    const buoyancy = inLava ? 0.008 : 0.012;  // Lava is denser, less buoyancy
-                    const swimDrag = inLava ? 0.92 : 0.95;    // More drag in lava
+                    // SWIMMING MODE: Player sinks by default, must actively swim up
+                    const sinkSpeed = inLava ? 0.006 : 0.008;  // Slow sinking in fluids
+                    const swimDrag = inLava ? 0.92 : 0.95;     // Drag slows movement
                     
-                    // Natural buoyancy pushes player up
-                    this.velocity.y += buoyancy;
+                    // Default: sink slowly
+                    this.velocity.y -= sinkSpeed;
                     
-                    // SPACE = swim up
+                    // SPACE = swim up (hold to float/rise)
                     if (this.keys[' ']) {
                         const swimUpSpeed = inLava ? 0.04 : 0.06;
                         this.velocity.y += swimUpSpeed;
                     }
                     
-                    // SHIFT = swim down
+                    // SHIFT = swim down faster
                     if (this.keys['shift']) {
                         const swimDownSpeed = inLava ? 0.03 : 0.04;
                         this.velocity.y -= swimDownSpeed;
                     }
                     
                     // Clamp swim velocity
-                    const maxSwimSpeed = inLava ? 0.12 : 0.15;
+                    const maxSwimSpeed = inLava ? 0.12 : 0.18;
                     this.velocity.y = Math.max(-maxSwimSpeed, Math.min(maxSwimSpeed, this.velocity.y));
                     
                     // Apply drag (velocity decays over time in fluid)
@@ -7383,25 +8721,39 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 const camDirX = -Math.sin(this.camera.rotY);
                 const camDirZ = Math.cos(this.camera.rotY);
                 
-                // Performance: Cache world keys if not changed
-                const worldKeys = Object.keys(this.world);
+                // OPTIMIZATION: Only iterate over blocks within render distance
+                // Instead of checking all world blocks, iterate a fixed volume around camera
+                const camBlockX = Math.floor(camX);
+                const camBlockY = Math.floor(camY);
+                const camBlockZ = Math.floor(camZ);
+                const rd = Math.ceil(renderDist);
                 
-                for (let i = 0; i < worldKeys.length; i++) {
-                    const key = worldKeys[i];
-                    const [x, y, z] = key.split(',').map(Number);
-                    const dx = x + 0.5 - camX;
-                    const dy = y + 0.5 - camY;
-                    const dz = z + 0.5 - camZ;
-                    const distSq = dx * dx + dy * dy + dz * dz;
-                    
-                    // Distance culling
-                    if (distSq > renderDistSq) continue;
-                    
-                    // Basic frustum culling - skip blocks behind camera
-                    const dot = dx * camDirX + dz * camDirZ;
-                    if (dot < -3 && distSq > 16) continue; // Behind camera and not too close
-                    
-                    blocks.push({ x, y, z, dist: distSq, type: this.world[key] });
+                for (let x = camBlockX - rd; x <= camBlockX + rd; x++) {
+                    for (let z = camBlockZ - rd; z <= camBlockZ + rd; z++) {
+                        // Quick horizontal distance check
+                        const hdx = x + 0.5 - camX;
+                        const hdz = z + 0.5 - camZ;
+                        const hDistSq = hdx * hdx + hdz * hdz;
+                        if (hDistSq > renderDistSq) continue;
+                        
+                        // Frustum culling - skip columns behind camera
+                        const dot = hdx * camDirX + hdz * camDirZ;
+                        if (dot < -3 && hDistSq > 16) continue;
+                        
+                        // Check vertical range
+                        for (let y = Math.max(0, camBlockY - rd); y <= Math.min(60, camBlockY + rd); y++) {
+                            const key = `${x},${y},${z}`;
+                            const type = this.world[key];
+                            if (!type) continue;
+                            
+                            const dy = y + 0.5 - camY;
+                            const distSq = hDistSq + dy * dy;
+                            
+                            if (distSq > renderDistSq) continue;
+                            
+                            blocks.push({ x, y, z, dist: distSq, type });
+                        }
+                    }
                 }
                 
                 // Sort back-to-front (painter's algorithm)
@@ -8107,8 +9459,32 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                             // Apply texture with OVERLAY blend for detail without over-darkening
                             ctx.globalCompositeOperation = 'overlay';
                             ctx.globalAlpha = 0.4; // Subtle texture overlay
-                            ctx.fillStyle = texture;
-                            ctx.fillRect(minX - 5, minY - 5, maxX - minX + 10, maxY - minY + 10);
+                            
+                            if (this.settings.textureMode === 'fixed') {
+                                // FIXED MODE: Texture anchored to each face
+                                // Use the face's screen center as texture origin
+                                const faceCenterX = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) / 4;
+                                const faceCenterY = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) / 4;
+                                
+                                // Create transform matrix that anchors pattern to face center
+                                ctx.save();
+                                
+                                // Move pattern origin to face center
+                                const pattern = texture as CanvasPattern;
+                                if (pattern && pattern.setTransform) {
+                                    const matrix = new DOMMatrix();
+                                    matrix.translateSelf(faceCenterX, faceCenterY);
+                                    pattern.setTransform(matrix);
+                                }
+                                
+                                ctx.fillStyle = texture;
+                                ctx.fillRect(minX - 5, minY - 5, maxX - minX + 10, maxY - minY + 10);
+                                ctx.restore();
+                            } else {
+                                // TRIPPY MODE: Texture moves with screen (Chowder style)
+                                ctx.fillStyle = texture;
+                                ctx.fillRect(minX - 5, minY - 5, maxX - minX + 10, maxY - minY + 10);
+                            }
                             
                             ctx.restore();
                             
@@ -9563,58 +10939,63 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     const npc = this.repairNPC;
                     const center = project(npc.x, npc.y + 1.2, npc.z);
                     if (center) {
-                        // Larger NPC - increased base size and multiplier
-                        const screenSize = Math.max(35, 120 / center.z);
+                        // Use same perspective formula as blocks (fov / distance)
+                        // NPC is about 2 blocks tall, scale accordingly
+                        const npcWorldHeight = 2.0;
+                        const screenSize = (npcWorldHeight * fov) / center.z;
+                        
+                        // Clamp to reasonable screen bounds (not too small when far, not too huge when close)
+                        const clampedSize = Math.min(400, Math.max(20, screenSize));
                         
                         // Body - blue robes
                         ctx.fillStyle = '#4169e1';
-                        ctx.fillRect(center.x - screenSize * 0.35, center.y - screenSize * 0.3, screenSize * 0.7, screenSize * 0.8);
+                        ctx.fillRect(center.x - clampedSize * 0.175, center.y - clampedSize * 0.15, clampedSize * 0.35, clampedSize * 0.4);
                         
                         // Head - tan/beige
                         ctx.fillStyle = '#d2b48c';
                         ctx.beginPath();
-                        ctx.arc(center.x, center.y - screenSize * 0.6, screenSize * 0.3, 0, Math.PI * 2);
+                        ctx.arc(center.x, center.y - clampedSize * 0.3, clampedSize * 0.15, 0, Math.PI * 2);
                         ctx.fill();
                         
                         // Wizard hat - dark blue
                         ctx.fillStyle = '#191970';
                         ctx.beginPath();
-                        ctx.moveTo(center.x - screenSize * 0.35, center.y - screenSize * 0.8);
-                        ctx.lineTo(center.x, center.y - screenSize * 1.3);
-                        ctx.lineTo(center.x + screenSize * 0.35, center.y - screenSize * 0.8);
+                        ctx.moveTo(center.x - clampedSize * 0.175, center.y - clampedSize * 0.4);
+                        ctx.lineTo(center.x, center.y - clampedSize * 0.65);
+                        ctx.lineTo(center.x + clampedSize * 0.175, center.y - clampedSize * 0.4);
                         ctx.closePath();
                         ctx.fill();
                         
                         // Hat brim
-                        ctx.fillRect(center.x - screenSize * 0.4, center.y - screenSize * 0.85, screenSize * 0.8, screenSize * 0.1);
+                        ctx.fillRect(center.x - clampedSize * 0.2, center.y - clampedSize * 0.425, clampedSize * 0.4, clampedSize * 0.05);
                         
                         // Beard - white/gray
                         ctx.fillStyle = '#ddd';
                         ctx.beginPath();
-                        ctx.moveTo(center.x - screenSize * 0.2, center.y - screenSize * 0.5);
-                        ctx.lineTo(center.x - screenSize * 0.15, center.y - screenSize * 0.2);
-                        ctx.lineTo(center.x + screenSize * 0.15, center.y - screenSize * 0.2);
-                        ctx.lineTo(center.x + screenSize * 0.2, center.y - screenSize * 0.5);
+                        ctx.moveTo(center.x - clampedSize * 0.1, center.y - clampedSize * 0.25);
+                        ctx.lineTo(center.x - clampedSize * 0.075, center.y - clampedSize * 0.1);
+                        ctx.lineTo(center.x + clampedSize * 0.075, center.y - clampedSize * 0.1);
+                        ctx.lineTo(center.x + clampedSize * 0.1, center.y - clampedSize * 0.25);
                         ctx.closePath();
                         ctx.fill();
                         
                         // Eyes - wise expression
                         ctx.fillStyle = '#000';
                         ctx.beginPath();
-                        ctx.arc(center.x - screenSize * 0.12, center.y - screenSize * 0.65, screenSize * 0.05, 0, Math.PI * 2);
+                        ctx.arc(center.x - clampedSize * 0.06, center.y - clampedSize * 0.325, clampedSize * 0.025, 0, Math.PI * 2);
                         ctx.fill();
                         ctx.beginPath();
-                        ctx.arc(center.x + screenSize * 0.12, center.y - screenSize * 0.65, screenSize * 0.05, 0, Math.PI * 2);
+                        ctx.arc(center.x + clampedSize * 0.06, center.y - clampedSize * 0.325, clampedSize * 0.025, 0, Math.PI * 2);
                         ctx.fill();
                         
                         // Interaction prompt if close
                         if (npc.showPrompt) {
                             ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                            ctx.fillRect(center.x - 80, center.y - screenSize - 40, 160, 30);
+                            ctx.fillRect(center.x - 80, center.y - clampedSize * 0.5 - 40, 160, 30);
                             ctx.fillStyle = '#ffd700';
                             ctx.font = '14px Arial';
                             ctx.textAlign = 'center';
-                            ctx.fillText('[E] Talk to Gunsmith', center.x, center.y - screenSize - 22);
+                            ctx.fillText('[E] Talk to Gunsmith', center.x, center.y - clampedSize * 0.5 - 22);
                         }
                     }
                 }
@@ -10773,6 +12154,142 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         const h = 2 + Math.floor(random(i * 345) * 3);
                         ctx.fillRect(x, y, w, h);
                     }
+                } else if (type === 'sakuraLeaves') {
+                    // Sakura leaves texture - pink with petal-like patterns
+                    for (let y = 0; y < size; y++) {
+                        for (let x = 0; x < size; x++) {
+                            const seed = x * 1000 + y;
+                            const noise = random(seed) * 0.35 - 0.175;
+                            const r = Math.max(0, Math.min(255, base.r + base.r * noise));
+                            const g = Math.max(0, Math.min(255, base.g + base.g * noise));
+                            const b = Math.max(0, Math.min(255, base.b + base.b * noise));
+                            ctx.fillStyle = `rgb(${Math.floor(r)},${Math.floor(g)},${Math.floor(b)})`;
+                            ctx.fillRect(x, y, 1, 1);
+                        }
+                    }
+                    
+                    // Add petal shapes - small ellipses scattered
+                    for (let i = 0; i < 12; i++) {
+                        const px = Math.floor(random(i * 111) * size);
+                        const py = Math.floor(random(i * 222) * size);
+                        const petalSize = 2 + Math.floor(random(i * 333) * 3);
+                        
+                        // Lighter pink petal highlight
+                        ctx.fillStyle = 'rgba(255, 220, 230, 0.5)';
+                        ctx.beginPath();
+                        ctx.ellipse(px, py, petalSize, petalSize * 0.6, random(i * 444) * Math.PI, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    
+                    // Add darker gaps between petals
+                    ctx.fillStyle = 'rgba(180, 100, 120, 0.4)';
+                    for (let i = 0; i < 10; i++) {
+                        const x = Math.floor(random(i * 555) * size);
+                        const y = Math.floor(random(i * 666) * size);
+                        const w = 1 + Math.floor(random(i * 777) * 2);
+                        const h = 1 + Math.floor(random(i * 888) * 2);
+                        ctx.fillRect(x, y, w, h);
+                    }
+                    
+                    // Add occasional white highlight (blossom centers)
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                    for (let i = 0; i < 5; i++) {
+                        const x = Math.floor(random(i * 999) * size);
+                        const y = Math.floor(random(i * 1111) * size);
+                        ctx.fillRect(x, y, 1, 1);
+                    }
+                } else if (type === 'water') {
+                    // Water texture - bubbly like cool seltzer water
+                    // Base ripple pattern
+                    for (let y = 0; y < size; y++) {
+                        for (let x = 0; x < size; x++) {
+                            const seed = x * 1000 + y;
+                            // Wave-like noise pattern
+                            const wave = Math.sin((x + random(seed) * 5) * 0.4) * 0.15;
+                            const ripple = Math.cos((y + random(seed + 500) * 5) * 0.3) * 0.1;
+                            const noise = (wave + ripple) + random(seed) * 0.2 - 0.1;
+                            const r = Math.max(0, Math.min(255, base.r + base.r * noise));
+                            const g = Math.max(0, Math.min(255, base.g + base.g * noise));
+                            const b = Math.max(0, Math.min(255, base.b + base.b * noise));
+                            ctx.fillStyle = `rgb(${Math.floor(r)},${Math.floor(g)},${Math.floor(b)})`;
+                            ctx.fillRect(x, y, 1, 1);
+                        }
+                    }
+                    
+                    // Add bubbles - seltzer effect
+                    for (let i = 0; i < 25; i++) {
+                        const bx = Math.floor(random(i * 123) * size);
+                        const by = Math.floor(random(i * 456) * size);
+                        const bubbleSize = 1 + Math.floor(random(i * 789) * 2);
+                        
+                        // Light bubble highlight
+                        ctx.fillStyle = 'rgba(200, 230, 255, 0.6)';
+                        ctx.beginPath();
+                        ctx.arc(bx, by, bubbleSize, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Tiny bright center
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                        ctx.fillRect(bx, by, 1, 1);
+                    }
+                    
+                    // Light caustic patterns
+                    ctx.fillStyle = 'rgba(150, 220, 255, 0.25)';
+                    for (let i = 0; i < 8; i++) {
+                        const cx = Math.floor(random(i * 321) * size);
+                        const cy = Math.floor(random(i * 654) * size);
+                        const cw = 3 + Math.floor(random(i * 987) * 4);
+                        ctx.fillRect(cx, cy, cw, 1);
+                    }
+                } else if (type === 'lava') {
+                    // Lava texture - hot like bubbling soup
+                    // Base molten pattern with hot spots
+                    for (let y = 0; y < size; y++) {
+                        for (let x = 0; x < size; x++) {
+                            const seed = x * 1000 + y;
+                            // Swirling heat pattern
+                            const swirl = Math.sin((x * 0.3 + y * 0.2) + random(seed) * 3) * 0.2;
+                            const bubble = random(seed + 100) > 0.85 ? 0.3 : 0;
+                            const noise = swirl + bubble + random(seed) * 0.15 - 0.075;
+                            
+                            // Vary between orange and yellow for heat
+                            const heatBoost = random(seed + 200) > 0.7 ? 30 : 0;
+                            const r = Math.max(0, Math.min(255, base.r + base.r * noise + heatBoost));
+                            const g = Math.max(0, Math.min(255, base.g + base.g * noise + heatBoost * 0.8));
+                            const b = Math.max(0, Math.min(255, base.b + base.b * noise));
+                            ctx.fillStyle = `rgb(${Math.floor(r)},${Math.floor(g)},${Math.floor(b)})`;
+                            ctx.fillRect(x, y, 1, 1);
+                        }
+                    }
+                    
+                    // Add hot bubbling spots
+                    for (let i = 0; i < 12; i++) {
+                        const bx = Math.floor(random(i * 111) * size);
+                        const by = Math.floor(random(i * 222) * size);
+                        const spotSize = 2 + Math.floor(random(i * 333) * 3);
+                        
+                        // Bright yellow-orange center (hot spot)
+                        ctx.fillStyle = 'rgba(255, 200, 50, 0.7)';
+                        ctx.beginPath();
+                        ctx.arc(bx, by, spotSize, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // White-hot core
+                        ctx.fillStyle = 'rgba(255, 255, 200, 0.9)';
+                        ctx.fillRect(bx - 1, by - 1, 2, 2);
+                    }
+                    
+                    // Dark cooling crust veins
+                    ctx.strokeStyle = 'rgba(80, 20, 0, 0.4)';
+                    ctx.lineWidth = 1;
+                    for (let i = 0; i < 6; i++) {
+                        const sx = Math.floor(random(i * 444) * size);
+                        const sy = Math.floor(random(i * 555) * size);
+                        ctx.beginPath();
+                        ctx.moveTo(sx, sy);
+                        ctx.lineTo(sx + random(i * 666) * 8 - 4, sy + random(i * 777) * 6);
+                        ctx.stroke();
+                    }
                 } else if (type === 'wood') {
                     // Wood texture with grain and rings
                     if (face === 'top') {
@@ -10937,9 +12454,14 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 this.gameLoopId = requestAnimationFrame((ts) => this.gameLoop(ts));
             },
             
-            start() {
-                // Initialize world on first start (deferred from page load)
-                this.fullInit();
+            async start() {
+                // Show loading screen and game container first
+                document.getElementById('minecraftGame').classList.add('active');
+                document.getElementById('loadingScreen').classList.add('active');
+                document.getElementById('clickToPlay').classList.remove('active');
+                
+                // Initialize world (async - loading screen updates during this)
+                await this.fullInit();
                 
                 // Expose game instance for dialogue onclick handlers
                 (window as any).game = this;
@@ -10948,7 +12470,6 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 this.isPaused = false;
                 this.pointerLocked = false;
                 this.stats = { blocksPlaced: 0, blocksBroken: 0, distance: 0, jumps: 0, startTime: Date.now() };
-                document.getElementById('minecraftGame').classList.add('active');
                 document.getElementById('pauseMenu').classList.remove('active');
                 document.getElementById('gameUI').style.display = 'flex';
                 

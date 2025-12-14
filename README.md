@@ -8,39 +8,37 @@ A voxel-based browser game with cherry blossom aesthetics, built with TypeScript
 
 ### 🎨 Advanced Rendering
 - **Polished Painter's Algorithm**: Optimized depth-sorting for proper transparency and layering
-- **Real-time Debugging**: Visual debugging tools for rendering pipeline inspection
+- **Fancy Leaf Rendering**: Minecraft-style "fancy" graphics with internal face rendering and wind animation
+- **Real-time Debugging**: Visual debugging tools for rendering pipeline inspection (`render treediag`, `render heatmap`)
 - **Performance Monitoring**: Built-in FPS counter and performance metrics
-- **Advanced Graphics Options**: Brightness, color filters, render distance, shadows, lighting, antialiasing
+- **Advanced Graphics Options**: Brightness, color filters, render distance, shadows, lighting, antialiasing, tree style presets
 
-### 🏗️ Core Gameplay
-- **Procedural World Generation**: Unique worlds with hills, water bodies, cherry blossom trees, and structures
-- **Building System**: Place and break multiple block types (grass, dirt, stone, wood, bricks, sakura blocks)
-- **Inventory & Crafting**: Manage items across hotbar and inventory slots with intuitive UI
+### 🌍 Biome System (NEW!)
+- **6 Unique Biomes**: Plains, Forest, Sakura Forest, Desert, Mountains, Ocean
+- **Voronoi-based Generation**: Organic biome boundaries with noise-based blending
+- **Guaranteed Variety**: At least one of each biome type per world
+- **Biome-specific Features**: Different tree densities, terrain heights, and surface blocks
+
+### 🏗️ World Generation
+- **Async Incremental Loading**: Smooth world generation with animated loading screen
+- **Large World Support**: 301x301 block worlds (3x larger than original)
+- **Structure Collision Prevention**: Trees and buildings never overlap
+- **Progress Visualization**: Fun loading screen with tips, biome previews, and progress bars
+
+### 🎮 Core Gameplay
+- **Procedural World Generation**: Unique worlds with varied terrain, water bodies, trees, and structures
+- **Building System**: Place and break multiple block types
+- **Inventory & Crafting**: Manage items across hotbar and inventory slots
 - **Survival Elements**: Defend against pest birds, collect ritual items, complete the Omamori blessing
+- **NPC System**: Gunsmith (sells KA-69, repairs weapons), dialogue system with quests
 
 ### 🌸 Aesthetic Features
-- **Cherry Blossom Theme**: Beautiful pink sakura trees throughout the world
+- **Cherry Blossom Theme**: Beautiful pink sakura trees in dedicated biomes
 - **Falling Petal Particles**: Atmospheric particle effects
+- **Wind Animation**: Leaves rustle in the wind (Fancy + Wind mode)
 - **Japanese-Inspired Design**: Authentic aesthetic with cultural elements
 
-## 🚀 TypeScript Benefits
-
-### Development Experience
-- ✅ **Full Type Safety**: Catch errors at compile time, not runtime
-- ✅ **IntelliSense Support**: Rich autocomplete and inline documentation
-- ✅ **Path Aliases**: Clean imports with `@game/`, `@assets/`, `@utils/`
-- ✅ **Self-Documenting**: Types serve as living API documentation
-- ✅ **Refactoring Support**: Safely rename and restructure code with confidence
-- ✅ **Two-Mode System**: Relaxed mode for rapid prototyping, strict mode for production
-
-### Production Quality
-- ✅ **Automated CI/CD**: GitHub Actions for builds and deployment
-- ✅ **Optimized Bundling**: Terser minification with console.log removal
-- ✅ **Code Splitting**: Separate chunks for Three.js, physics, and vendor code
-- ✅ **Cache Busting**: Hash-based filenames for efficient updates
-- ✅ **70% Size Reduction**: From ~500KB to ~150KB minified + gzipped
-
-## 🎮 Quick Start
+## 🚀 Quick Start
 
 ### Development
 
@@ -55,8 +53,6 @@ npm install
 # Start development server
 npm run dev
 # Game runs at http://localhost:3000
-
-# Open in browser and start building!
 ```
 
 ### Building
@@ -74,10 +70,8 @@ npm run type-check
 
 ### Deployment
 
-The project uses automated CI/CD:
-
 ```bash
-# Push to main branch
+# Push to main branch triggers automatic deployment
 git push origin main
 
 # GitHub Actions automatically:
@@ -86,42 +80,42 @@ git push origin main
 # 3. Live at https://geket.github.io/games/sakuracraft/
 ```
 
-## 🎯 Development Modes
+## 🎯 Controls
 
-### Relaxed Mode (Current Default)
-Perfect for rapid prototyping and game development:
+| Key | Action |
+|-----|--------|
+| WASD | Move |
+| SPACE | Jump / Swim up |
+| SHIFT | Sneak / Swim down |
+| LEFT CLICK | Break block |
+| RIGHT CLICK | Place block / Use |
+| E | Open inventory |
+| Q | Drop item |
+| R | Ritual menu |
+| SCROLL | Change hotbar slot |
+| ` (backtick) | Debug console |
+| ESC | Pause menu |
 
-```json
-// tsconfig.json
-{
-  "compilerOptions": {
-    "strict": false,
-    "noImplicitAny": false,
-    "allowJs": true
-  }
-}
-```
+## ⚙️ Graphics Settings
 
-**Benefits:**
-- ⚡ Faster iteration
-- 🎨 More flexible coding
-- 🔄 Easy JS/TS mixing
-- 🧪 Great for experimentation
+Access via ESC → Options:
 
-### Strict Mode (Production Ready)
-Switch when ready for production:
+| Setting | Options |
+|---------|---------|
+| **Brightness** | 50-150% |
+| **Color Filter** | Normal, Sepia, B&W, Trippy |
+| **Render Distance** | Near, Medium, Far, Ultra |
+| **Shadows** | On/Off |
+| **Enhanced Lighting** | On/Off |
+| **Anti-Aliasing** | On/Off |
+| **Tree Style** | Simple (Fast), Fancy, Fancy + Wind |
+| **Target FPS** | 15-240 |
 
-```bash
-cp tsconfig-strict.json tsconfig.json
-npm run type-check  # Fix any type errors
-npm run build
-```
+### Tree Style Modes
 
-**Benefits:**
-- 🛡️ Maximum type safety
-- 📚 Better documentation
-- ♻️ Safer refactoring
-- 👥 Team collaboration
+- **Simple (Fast)**: Opaque leaves, best performance
+- **Fancy**: Internal leaf faces rendered for depth (like Minecraft)
+- **Fancy + Wind**: Fancy mode + animated wind rustling effect
 
 ## 🏗️ Project Structure
 
@@ -132,332 +126,133 @@ sakuracraft-ts/
 │       └── deploy.yml          # CI/CD automation
 ├── src/
 │   ├── main.ts                 # Entry point
-│   ├── game/                   # Core game logic
-│   │   ├── engine.ts          # Main game engine
-│   │   ├── renderer.ts        # Painter's algorithm renderer
-│   │   ├── world.ts           # World generation
-│   │   ├── player.ts          # Player controller
-│   │   ├── inventory.ts       # Inventory system
-│   │   └── crafting.ts        # Crafting mechanics
-│   ├── assets/                # Images, sounds, textures
-│   ├── utils/                 # Utility functions
-│   └── types/                 # TypeScript type definitions
-├── dist/                      # Production build output
-├── index.html                 # Entry HTML
+│   ├── index.ts                # Game initialization
+│   ├── game/
+│   │   └── SakuraCraftGame.ts  # Main game engine (11,000+ lines)
+│   ├── styles/
+│   │   └── game.css            # Game styling
+│   └── types/
+│       └── index.ts            # TypeScript definitions
+├── dist/                       # Production build output
+├── index.html                  # Entry HTML
 ├── package.json
-├── tsconfig.json              # TypeScript config (relaxed)
-├── tsconfig-strict.json       # Strict mode config
-├── vite.config.ts             # Vite bundler config
+├── tsconfig.json               # TypeScript config
+├── vite.config.ts              # Vite bundler config
 └── README.md
-```
-
-## 🔧 Configuration
-
-### Path Aliases
-
-Clean, maintainable imports:
-
-```typescript
-// ❌ Before
-import Player from '../../../game/Player';
-import texture from '../../../assets/grass.png';
-
-// ✅ After
-import Player from '@game/Player';
-import texture from '@assets/grass.png';
-```
-
-### Build Configuration
-
-Optimized production builds:
-
-```typescript
-// vite.config.ts
-export default defineConfig({
-  base: '/games/sakuracraft/',
-  
-  build: {
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,      // Remove console.log
-        drop_debugger: true,     // Remove debugger statements
-        passes: 2                // Two-pass compression
-      }
-    },
-    
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'three': ['three'],    // Separate Three.js chunk
-          'physics': ['cannon'], // Separate physics chunk
-          'vendor': [/* ... */]  // Separate vendor chunk
-        }
-      }
-    }
-  }
-});
-```
-
-## 🎨 Rendering Pipeline
-
-### Painter's Algorithm Implementation
-
-Optimized depth sorting for proper transparency:
-
-```typescript
-// Polished rendering with proper layering
-class Renderer {
-  render() {
-    // 1. Collect all visible objects
-    const objects = this.collectVisible();
-    
-    // 2. Sort by distance (painter's algorithm)
-    objects.sort((a, b) => b.depth - a.depth);
-    
-    // 3. Render back-to-front
-    for (const obj of objects) {
-      this.drawObject(obj);
-    }
-    
-    // 4. Apply post-processing
-    this.applyEffects();
-  }
-}
-```
-
-**Features:**
-- ✅ Proper transparency handling
-- ✅ Correct overlap rendering
-- ✅ Optimized for performance
-- ✅ Visual debugging tools
-
-### Debug Mode
-
-Real-time rendering inspection:
-
-```typescript
-// Enable debug mode
-game.debug.enabled = true;
-
-// Shows:
-// - Render order visualization
-// - Depth buffer display
-// - Draw call counter
-// - Triangle count
-// - Frame time breakdown
 ```
 
 ## 📊 Performance
 
 ### Bundle Size
 
-| Target | Size (Uncompressed) | Size (Gzipped) |
-|--------|---------------------|----------------|
-| **Before** | ~500 KB | ~180 KB |
-| **After** | ~150 KB | ~48 KB |
-| **Reduction** | 70% | 73% |
-
-### Optimizations
-
-- ✅ Terser minification (2 passes)
-- ✅ Console.log removal in production
-- ✅ Tree shaking for unused code
-- ✅ Code splitting by vendor
-- ✅ Hash-based cache busting
-- ✅ ES2020 target for smaller bundles
+| Build | Size (Gzipped) |
+|-------|----------------|
+| Main JS | ~55 KB |
+| CSS | ~3.6 KB |
+| Total | ~60 KB |
 
 ### Runtime Performance
 
 - 🎯 Target: 60 FPS
 - ⚡ Average: 55-60 FPS
-- 📊 Memory: ~50-80 MB
-- 🎮 Input latency: < 16ms
-
-## 🚀 CI/CD Pipeline
-
-### Automated Workflow
-
-```yaml
-# .github/workflows/deploy.yml
-Push to main → Build → Deploy → Live
-                ↓
-          - Type check
-          - Bundle assets
-          - Minify code
-          - Generate sourcemaps
-          - Deploy to GitHub Pages
-```
-
-### Deployment Process
-
-1. **Build Phase** (~30s)
-   - TypeScript compilation
-   - Asset bundling
-   - Minification
-   - Hash generation
-
-2. **Deploy Phase** (~20s)
-   - Deploy to GitHub Pages
-   - Update live site
-   - Generate deployment summary
-
-3. **Live** 🎉
-   - Game at: https://geket.github.io/games/sakuracraft/
-   - Updates in ~2 minutes
-   - Zero downtime
-
-## 🎮 API Reference
-
-### Game Instance
-
-```typescript
-import { SakuraCraft } from './game/SakuraCraft';
-
-const game = new SakuraCraft({
-  container: document.body,
-  settings: {
-    renderDistance: 8,
-    shadows: true,
-    lighting: true,
-    antialiasing: true
-  }
-});
-
-// Control game
-game.start();
-game.pause();
-game.resume();
-game.stop();
-
-// Access systems
-game.world.generate();
-game.player.move(x, y, z);
-game.inventory.addItem(block);
-
-// Debug mode
-game.debug.enabled = true;
-game.debug.showDepthBuffer = true;
-game.debug.showRenderOrder = true;
-```
-
-### Type Definitions
-
-```typescript
-interface GameSettings {
-  brightness: number;
-  filter: 'none' | 'sepia' | 'grayscale' | 'trippy';
-  renderDistance: number;
-  shadows: boolean;
-  lighting: boolean;
-  antialiasing: boolean;
-  showFps: boolean;
-  targetFps: number;
-}
-
-interface GameStats {
-  blocksPlaced: number;
-  blocksBroken: number;
-  distance: number;
-  jumps: number;
-  playtime: number;
-  fps: number;
-}
-
-interface DebugInfo {
-  enabled: boolean;
-  showDepthBuffer: boolean;
-  showRenderOrder: boolean;
-  drawCalls: number;
-  triangles: number;
-  frameTime: number;
-}
-```
-
-## 🎯 Comparison: JavaScript vs TypeScript
-
-| Feature | JavaScript | TypeScript (This Project) |
-|---------|------------|---------------------------|
-| **Type Safety** | ❌ Runtime errors | ✅ Compile-time checks |
-| **IDE Support** | Basic | ⭐ Excellent |
-| **Refactoring** | Manual | ✅ Automated |
-| **Documentation** | Separate | ✅ Built-in types |
-| **Path Aliases** | ❌ Relative paths | ✅ `@game/`, `@assets/` |
-| **Build Pipeline** | Basic | ✅ Advanced (terser, splitting) |
-| **CI/CD** | Manual | ✅ Automated |
-| **Bundle Size** | 500KB | ✅ 150KB (70% smaller) |
-| **Debug Tools** | Basic | ✅ Advanced rendering debug |
-| **Learning Curve** | Lower | Higher (worth it!) |
-
-## 🛠️ Troubleshooting
-
-### Common Issues
-
-**Build fails with terser error:**
-```bash
-npm install --save-dev terser
-npm run build
-```
-
-**Type errors after switching to strict mode:**
-```bash
-# Use relaxed mode during development
-cp tsconfig-relaxed.json tsconfig.json
-
-# Switch to strict when ready
-cp tsconfig-strict.json tsconfig.json
-npm run type-check  # Fix errors gradually
-```
-
-**Import path issues:**
-```typescript
-// Make sure tsconfig.json and vite.config.ts
-// have matching path aliases
-```
-
-**Game not loading:**
-```bash
-# Check base path in vite.config.ts matches deployment
-base: '/games/sakuracraft/'  # For geket.github.io/games/sakuracraft/
-```
-
-## 📚 Documentation
-
-- [Setup Guide](docs/SETUP.md) - Getting started
-- [Architecture](docs/ARCHITECTURE.md) - Code structure
-- [Rendering](docs/RENDERING.md) - Painter's algorithm details
-- [Deployment](docs/DEPLOYMENT.md) - CI/CD setup
-- [Contributing](CONTRIBUTING.md) - How to contribute
+- 📊 Memory: ~50-100 MB
+- 🌍 World Size: 301x301 blocks
 
 ## 🗺️ Roadmap
 
-### Phase 1: Core (Current) ✅
+### Phase 1: Core ✅
 - [x] TypeScript setup with relaxed/strict modes
 - [x] Polished painter's algorithm
 - [x] Debug rendering tools
 - [x] CI/CD automation
 - [x] Optimized bundling
 
-### Phase 2: Enhancement 🚧
-- [ ] Three.js integration for 3D rendering
-- [ ] Cannon.js for physics
+### Phase 2: World Generation ✅
+- [x] Biome system (6 biomes)
+- [x] Async incremental world generation
+- [x] Loading screen with progress
+- [x] Structure collision prevention
+- [x] Larger world support (3x)
+
+### Phase 3: Rendering ✅
+- [x] Fancy leaf rendering (Minecraft-style)
+- [x] Wind animation for leaves
+- [x] Tree style presets in settings
+- [x] Transparent block rendering fixes
+- [x] Face culling optimization
+
+### Phase 4: Gameplay ✅
+- [x] NPC system (Gunsmith)
+- [x] Dialogue & quest UI
+- [x] Weapon durability system
+- [x] Repair mechanics
+- [x] Ground collision fixes
+
+### Phase 5: Enhancement 🚧
+- [ ] More biomes (Swamp, Tundra, Jungle)
+- [ ] Day/night cycle
+- [ ] Weather system
+- [ ] More NPC types
 - [ ] Multiplayer support (WebRTC)
-- [ ] Mobile controls
-- [ ] Touch support
+- [ ] Mobile/touch controls
 
-### Phase 3: Content 📋
+### Phase 6: Content 📋
 - [ ] More block types
-- [ ] Crafting recipes
-- [ ] Biome system
-- [ ] Structure generation
-- [ ] Quest system
+- [ ] Extended crafting recipes
+- [ ] Dungeons & caves
+- [ ] Boss encounters
+- [ ] Achievement system
 
-### Phase 4: Polish 🎨
+### Phase 7: Polish 🎨
 - [ ] Shader effects
 - [ ] Advanced particles
 - [ ] Sound system
 - [ ] Music integration
 - [ ] Localization
+
+## 🔧 Debug Commands
+
+Open debug console with ` (backtick):
+
+```
+help              - Show all commands
+tp <x> <y> <z>    - Teleport to coordinates
+give <item> [n]   - Give item
+spawn <mob>       - Spawn entity
+time <set/add>    - Control time
+render <mode>     - Switch render mode (painter/zbuffer/bsp)
+render treediag   - Tree diagnostic overlay
+render heatmap    - Performance heatmap
+render stats      - Rendering statistics
+biome             - Show current biome
+pos               - Show current position
+```
+
+## 🛠️ Technical Highlights
+
+### Biome Generation
+- Voronoi-based region assignment with noise-smoothed boundaries
+- Guaranteed placement of all biome types via quadrant seeding
+- Height modifiers per biome (mountains: +12, ocean: -8)
+- Biome-aware tree and structure spawning
+
+### Async World Generation
+- Non-blocking generation with `async/await`
+- UI updates via `setTimeout(resolve, 0)` yielding
+- Progress tracking across 9 generation phases
+- Animated loading screen with tips
+
+### Leaf Rendering
+- "Fancy" mode renders internal faces between adjacent leaves
+- Proper face culling: hide only when adjacent to opaque blocks
+- Wind animation via multi-frequency sine wave vertex displacement
+- Configurable transparency (75% alpha in fancy modes)
+
+### Structure Placement
+- AABB collision detection before placement
+- Buildings check for existing blocks (trees) before spawning
+- Trees check for existing structures before spawning
+- Incremental placement with UI feedback
 
 ## 🤝 Contributing
 
@@ -466,9 +261,8 @@ Contributions welcome! Please:
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests if applicable
-5. Update documentation
-6. Submit a pull request
+4. Update documentation if needed
+5. Submit a pull request
 
 ## 📄 License
 
@@ -483,14 +277,13 @@ MIT License - See [LICENSE](LICENSE) file for details
 - GitHub Actions - CI/CD automation
 
 **Inspired by:**
-- Minecraft - Block-based gameplay
+- Minecraft - Block-based gameplay & graphics modes
 - Japanese aesthetics - Cherry blossom theme
 - Retro pixel art - Visual style
 
 **Special Thanks:**
 - Claude (Anthropic) - Development assistance
-- Notepad++ - Primary IDE during development
-- The open source community - Your time and expertise
+- The open source community
 
 ---
 
