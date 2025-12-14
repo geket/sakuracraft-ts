@@ -4590,6 +4590,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 disableFaceCulling: false,
                 showOverdraw: false,
                 highlightZFighting: false,
+                showTargetInfo: false,
                 renderAlgorithm: 'painter' as 'painter' | 'zbuffer' | 'bsp'
             },
             debugFly: false,
@@ -5150,6 +5151,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         this.debugLog('    projection - Test projection', 'info');
                         this.debugLog('    culling - Disable face culling', 'info');
                         this.debugLog('    overdraw - Show overdraw heatmap', 'info');
+                        this.debugLog('    targetinfo - Raycast vs render diagnostic', 'info');
                         this.debugLog('    all - Toggle all render debug', 'info');
                         this.debugLog('    none - Turn all render debug OFF', 'info');
                         break;
@@ -5404,6 +5406,14 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                 this.debugLog(`Overdraw visualization: ${this.debugSettings.showOverdraw ? 'ON' : 'OFF'}`, 'success');
                                 break;
                                 
+                            case 'targetinfo':
+                                this.debugSettings.showTargetInfo = !this.debugSettings.showTargetInfo;
+                                this.debugLog(`Target info: ${this.debugSettings.showTargetInfo ? 'ON' : 'OFF'}`, 'success');
+                                if (this.debugSettings.showTargetInfo) {
+                                    this.debugLog('Shows raycast hit position, world data, and render status', 'info');
+                                }
+                                break;
+                                
                             case 'all':
                                 const newState = !this.debugSettings.wireframeOnly;
                                 this.debugSettings.wireframeOnly = newState;
@@ -5413,6 +5423,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                 this.debugSettings.showRaycastVector = newState;
                                 this.debugSettings.showProjectionTest = newState;
                                 this.debugSettings.showOverdraw = newState;
+                                this.debugSettings.showTargetInfo = newState;
                                 this.debugLog(`All render debug: ${newState ? 'ON' : 'OFF'}`, newState ? 'success' : 'warn');
                                 break;
                                 
@@ -5426,12 +5437,13 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                 this.debugSettings.showProjectionTest = false;
                                 this.debugSettings.showOverdraw = false;
                                 this.debugSettings.disableFaceCulling = false;
+                                this.debugSettings.showTargetInfo = false;
                                 this.debugLog('All render debug: OFF', 'warn');
                                 break;
                                 
                             default:
                                 this.debugLog(`Unknown render option: ${subcommand}`, 'error');
-                                this.debugLog('Options: wireframe, depthorder, normals, bounds, raycast, projection, culling, overdraw, all, none', 'info');
+                                this.debugLog('Options: wireframe, depthorder, normals, bounds, raycast, projection, culling, overdraw, targetinfo, all, none', 'info');
                         }
                         break;
                         
@@ -6537,8 +6549,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 
                 // Direction vector in projection's coordinate system
                 // This MUST produce the ray that goes through screen center
-                const dx = sinYaw * cosPitch;  // Note: positive sinYaw (not negative)
-                const dy = sinPitch;           // Note: positive sinPitch
+                const dx = sinYaw * cosPitch;
+                const dy = sinPitch;
                 const dz = cosYaw * cosPitch;
                 
                 // Normalize direction (important for accurate distance calculation)
@@ -6547,10 +6559,10 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 const dirY = dy / len;
                 const dirZ = dz / len;
                 
-                // Ray origin - start from camera eye position
-                let x = this.camera.x;
-                let y = this.camera.y;
-                let z = this.camera.z;
+                // Ray origin - start from camera eye position (must match projection!)
+                const x = this.camera.x;
+                const y = this.camera.y + this.getEyeHeight();  // CRITICAL: Must include eye height to match projection!
+                const z = this.camera.z;
                 
                 // Current voxel position
                 let voxelX = Math.floor(x);
@@ -6615,14 +6627,11 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     if (block) {
                         // Skip fluid blocks - continue raycast through them
                         if (block === 'water' || block === 'lava') {
-                            // Track which fluid we passed through
                             if (block === 'water') throughWater = true;
                             if (block === 'lava') throughLava = true;
-                            // Don't update lastSolidFace, just continue
                         } else {
                             // Hit a solid block! Calculate placement position
                             let placePos = null;
-                            // Use lastSolidFace if we came through fluids, otherwise use enteredFace
                             const placeFace = lastSolidFace || enteredFace;
                             if (placeFace && (placeFace.x !== 0 || placeFace.y !== 0 || placeFace.z !== 0)) {
                                 placePos = {
@@ -6637,7 +6646,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                 place: placePos,
                                 block: block,
                                 throughWater: throughWater,
-                                throughLava: throughLava
+                                throughLava: throughLava,
+                                hitT: t
                             };
                         }
                     } else {
@@ -7991,6 +8001,401 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     ctx.fillText(text, 10, 100);
                 }
                 
+                // 7. TARGET INFO - Diagnostic for raycast vs render discrepancies
+                if (this.debugSettings.showTargetInfo) {
+                    const hit = this.raycast();
+                    const infoX = 10;
+                    let infoY = 130;
+                    const lineHeight = 18;
+                    
+                    ctx.font = 'bold 14px monospace';
+                    ctx.lineWidth = 3;
+                    
+                    // Background panel
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                    ctx.fillRect(5, 115, 620, hit ? 680 : 60);
+                    
+                    // Title
+                    ctx.fillStyle = '#ff69b4';
+                    ctx.fillText('=== TARGET DIAGNOSTIC ===', infoX, infoY);
+                    infoY += lineHeight + 5;
+                    
+                    if (hit && hit.hit) {
+                        const hx = hit.hit.x;
+                        const hy = hit.hit.y;
+                        const hz = hit.hit.z;
+                        const worldKey = `${hx},${hy},${hz}`;
+                        const worldBlock = this.world[worldKey];
+                        
+                        // Camera position for debugging
+                        ctx.fillStyle = '#fff';
+                        ctx.fillText(`Camera: (${camX.toFixed(1)}, ${camY.toFixed(1)}, ${camZ.toFixed(1)})`, infoX, infoY);
+                        infoY += lineHeight;
+                        
+                        // First voxel (where DDA starts)
+                        const startVoxelX = Math.floor(camX);
+                        const startVoxelY = Math.floor(camY);
+                        const startVoxelZ = Math.floor(camZ);
+                        const startVoxelBlock = this.world[`${startVoxelX},${startVoxelY},${startVoxelZ}`];
+                        ctx.fillStyle = startVoxelBlock ? '#f55' : '#0f0';
+                        ctx.fillText(`Start Voxel: (${startVoxelX}, ${startVoxelY}, ${startVoxelZ}) = ${startVoxelBlock || 'air'}`, infoX, infoY);
+                        infoY += lineHeight;
+                        
+                        // Raycast hit position
+                        ctx.fillStyle = '#0ff';
+                        ctx.fillText(`Raycast Hit: (${hx}, ${hy}, ${hz})${hit.hitT ? ` at t=${hit.hitT.toFixed(2)}` : ''}`, infoX, infoY);
+                        infoY += lineHeight;
+                        
+                        // What raycast reports
+                        ctx.fillStyle = '#ff0';
+                        ctx.fillText(`Raycast Block: "${hit.block || 'null'}"`, infoX, infoY);
+                        infoY += lineHeight;
+                        
+                        // What world data contains
+                        ctx.fillStyle = worldBlock ? '#0f0' : '#f55';
+                        ctx.fillText(`World Data: "${worldBlock || 'EMPTY'}"`, infoX, infoY);
+                        infoY += lineHeight;
+                        
+                        // Check if block is in render list
+                        const inRenderList = allBlocks.some(b => b.x === hx && b.y === hy && b.z === hz);
+                        ctx.fillStyle = inRenderList ? '#0f0' : '#f55';
+                        ctx.fillText(`In Render List: ${inRenderList ? 'YES' : 'NO'}`, infoX, infoY);
+                        infoY += lineHeight;
+                        
+                        // Distance check
+                        const dx = hx + 0.5 - camX;
+                        const dy = hy + 0.5 - camY;
+                        const dz = hz + 0.5 - camZ;
+                        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                        const renderDist = Math.sqrt(renderDistSq);
+                        ctx.fillStyle = dist <= renderDist ? '#0f0' : '#f55';
+                        ctx.fillText(`Distance: ${dist.toFixed(1)} (max: ${renderDist.toFixed(0)})`, infoX, infoY);
+                        infoY += lineHeight;
+                        
+                        // Frustum check (behind camera)
+                        const camDirXCheck = -Math.sin(this.camera.rotY);
+                        const camDirZCheck = Math.cos(this.camera.rotY);
+                        const dot = dx * camDirXCheck + dz * camDirZCheck;
+                        const behindCamera = dot < -3 && (dist * dist) > 16;
+                        ctx.fillStyle = behindCamera ? '#f55' : '#0f0';
+                        ctx.fillText(`Frustum: ${behindCamera ? 'CULLED (behind cam)' : 'VISIBLE'}`, infoX, infoY);
+                        infoY += lineHeight;
+                        
+                        // FACE CULLING ANALYSIS - Check which faces would render
+                        if (worldBlock) {
+                            const adjTop = getBlock(hx, hy + 1, hz);
+                            const adjBottom = getBlock(hx, hy - 1, hz);
+                            const adjFront = getBlock(hx, hy, hz + 1);
+                            const adjBack = getBlock(hx, hy, hz - 1);
+                            const adjLeft = getBlock(hx - 1, hy, hz);
+                            const adjRight = getBlock(hx + 1, hy, hz);
+                            
+                            const isCurrentTransparent = this.blockColors[worldBlock] && this.blockColors[worldBlock].transparent;
+                            const isFluid = this.fluidBlocks.includes(worldBlock);
+                            
+                            let hasTop, hasBottom, hasFront, hasBack, hasLeft, hasRight;
+                            
+                            if (isFluid) {
+                                hasTop = !adjTop || adjTop !== worldBlock;
+                                hasBottom = !adjBottom || !this.fluidBlocks.includes(adjBottom);
+                                hasFront = !adjFront || adjFront !== worldBlock;
+                                hasBack = !adjBack || adjBack !== worldBlock;
+                                hasLeft = !adjLeft || adjLeft !== worldBlock;
+                                hasRight = !adjRight || adjRight !== worldBlock;
+                            } else if (isCurrentTransparent) {
+                                hasTop = adjTop !== worldBlock;
+                                hasBottom = adjBottom !== worldBlock;
+                                hasFront = adjFront !== worldBlock;
+                                hasBack = adjBack !== worldBlock;
+                                hasLeft = adjLeft !== worldBlock;
+                                hasRight = adjRight !== worldBlock;
+                            } else {
+                                const isTransparentBlock = (block) => {
+                                    if (!block) return true;
+                                    if (this.fluidBlocks.includes(block)) return true;
+                                    const props = this.blockColors[block];
+                                    return props && props.transparent;
+                                };
+                                hasTop = isTransparentBlock(adjTop);
+                                hasBottom = isTransparentBlock(adjBottom);
+                                hasFront = isTransparentBlock(adjFront);
+                                hasBack = isTransparentBlock(adjBack);
+                                hasLeft = isTransparentBlock(adjLeft);
+                                hasRight = isTransparentBlock(adjRight);
+                            }
+                            
+                            const visibleFaces = [hasTop, hasBottom, hasFront, hasBack, hasLeft, hasRight].filter(Boolean).length;
+                            ctx.fillStyle = visibleFaces > 0 ? '#0f0' : '#f55';
+                            ctx.fillText(`Visible Faces: ${visibleFaces}/6`, infoX, infoY);
+                            infoY += lineHeight;
+                            
+                            // Show face details
+                            const faceStr = [
+                                hasTop ? 'T' : '-',
+                                hasBottom ? 'B' : '-', 
+                                hasFront ? 'F' : '-',
+                                hasBack ? 'K' : '-',
+                                hasLeft ? 'L' : '-',
+                                hasRight ? 'R' : '-'
+                            ].join(' ');
+                            ctx.fillStyle = '#888';
+                            ctx.fillText(`Faces [T B F K L R]: ${faceStr}`, infoX, infoY);
+                            infoY += lineHeight;
+                            
+                            // Show adjacent blocks  
+                            ctx.font = '12px monospace';
+                            ctx.fillText(`Adj: T:${adjTop||'air'} B:${adjBottom||'air'} F:${adjFront||'air'}`, infoX, infoY);
+                            infoY += 14;
+                            ctx.fillText(`     K:${adjBack||'air'} L:${adjLeft||'air'} R:${adjRight||'air'}`, infoX, infoY);
+                            infoY += lineHeight;
+                            ctx.font = 'bold 14px monospace';
+                            
+                            if (visibleFaces === 0) {
+                                ctx.fillStyle = '#f00';
+                                ctx.fillText('⚠ ALL FACES CULLED - block invisible!', infoX, infoY);
+                                infoY += lineHeight;
+                            }
+                            
+                            // PROJECT CENTER - Show where block center projects to screen
+                            const blockCenterProj = project(hx + 0.5, hy + 0.5, hz + 0.5);
+                            if (blockCenterProj) {
+                                // Draw a cyan circle where the block center SHOULD appear
+                                ctx.strokeStyle = '#0ff';
+                                ctx.lineWidth = 3;
+                                ctx.beginPath();
+                                ctx.arc(blockCenterProj.x, blockCenterProj.y, 15, 0, Math.PI * 2);
+                                ctx.stroke();
+                                
+                                // Draw crosshair at projected center
+                                ctx.beginPath();
+                                ctx.moveTo(blockCenterProj.x - 20, blockCenterProj.y);
+                                ctx.lineTo(blockCenterProj.x + 20, blockCenterProj.y);
+                                ctx.moveTo(blockCenterProj.x, blockCenterProj.y - 20);
+                                ctx.lineTo(blockCenterProj.x, blockCenterProj.y + 20);
+                                ctx.stroke();
+                                
+                                // Label
+                                ctx.fillStyle = '#0ff';
+                                ctx.font = 'bold 12px monospace';
+                                ctx.fillText('PROJECTED', blockCenterProj.x + 20, blockCenterProj.y - 5);
+                                ctx.fillText(`Z=${blockCenterProj.z.toFixed(2)}`, blockCenterProj.x + 20, blockCenterProj.y + 10);
+                                ctx.font = 'bold 14px monospace';
+                                
+                                // Show projection coordinates in panel
+                                ctx.fillStyle = '#0ff';
+                                ctx.fillText(`Proj Center: (${blockCenterProj.x.toFixed(0)}, ${blockCenterProj.y.toFixed(0)}) z=${blockCenterProj.z.toFixed(2)}`, infoX, infoY);
+                                infoY += lineHeight;
+                            } else {
+                                ctx.fillStyle = '#f55';
+                                ctx.fillText('⚠ Block center fails projection (z <= 0.1)!', infoX, infoY);
+                                infoY += lineHeight;
+                            }
+                            
+                            // Check if any corner projects successfully
+                            const corners = [
+                                [hx, hy, hz], [hx+1, hy, hz], [hx, hy+1, hz], [hx, hy, hz+1],
+                                [hx+1, hy+1, hz], [hx+1, hy, hz+1], [hx, hy+1, hz+1], [hx+1, hy+1, hz+1]
+                            ];
+                            const projectedCorners = corners.map(c => project(c[0], c[1], c[2]));
+                            const validCorners = projectedCorners.filter(p => p !== null).length;
+                            ctx.fillStyle = validCorners === 8 ? '#0f0' : (validCorners > 0 ? '#ff0' : '#f55');
+                            ctx.fillText(`Projected Corners: ${validCorners}/8`, infoX, infoY);
+                            infoY += lineHeight;
+                            
+                            // RAYCAST DIRECTION TEST - Where does the ray direction point in screen space?
+                            // Calculate a point 2 units along the raycast direction
+                            const pitch = -this.camera.rotX;
+                            const yaw = -this.camera.rotY;
+                            const cosPitch = Math.cos(pitch);
+                            const sinPitch = Math.sin(pitch);
+                            const cosYaw = Math.cos(yaw);
+                            const sinYaw = Math.sin(yaw);
+                            const rayDirX = sinYaw * cosPitch;
+                            const rayDirY = sinPitch;
+                            const rayDirZ = cosYaw * cosPitch;
+                            
+                            // Project a point 3 units along the ray
+                            const rayTestX = camX + rayDirX * 3;
+                            const rayTestY = camY + rayDirY * 3;
+                            const rayTestZ = camZ + rayDirZ * 3;
+                            const rayTestProj = project(rayTestX, rayTestY, rayTestZ);
+                            
+                            if (rayTestProj) {
+                                // Draw GREEN marker where raycast direction points in screen space
+                                ctx.strokeStyle = '#0f0';
+                                ctx.lineWidth = 3;
+                                ctx.beginPath();
+                                ctx.moveTo(rayTestProj.x - 15, rayTestProj.y - 15);
+                                ctx.lineTo(rayTestProj.x + 15, rayTestProj.y + 15);
+                                ctx.moveTo(rayTestProj.x + 15, rayTestProj.y - 15);
+                                ctx.lineTo(rayTestProj.x - 15, rayTestProj.y + 15);
+                                ctx.stroke();
+                                ctx.fillStyle = '#0f0';
+                                ctx.font = 'bold 12px monospace';
+                                ctx.fillText('RAY DIR', rayTestProj.x + 20, rayTestProj.y);
+                                ctx.font = 'bold 14px monospace';
+                                
+                                // Show distance from screen center
+                                const screenCenterX = halfW;
+                                const screenCenterY = halfH;
+                                const rayOffsetX = rayTestProj.x - screenCenterX;
+                                const rayOffsetY = rayTestProj.y - screenCenterY;
+                                ctx.fillStyle = Math.abs(rayOffsetX) < 10 && Math.abs(rayOffsetY) < 10 ? '#0f0' : '#f55';
+                                ctx.fillText(`Ray→Screen offset: (${rayOffsetX.toFixed(0)}, ${rayOffsetY.toFixed(0)})`, infoX, infoY);
+                                infoY += lineHeight;
+                                
+                                // Draw the ACTUAL RAY PATH from camera to hit block
+                                // This shows if the raycast is following the correct direction
+                                const hitCenterX = hx + 0.5;
+                                const hitCenterY = hy + 0.5;
+                                const hitCenterZ = hz + 0.5;
+                                const hitProj = project(hitCenterX, hitCenterY, hitCenterZ);
+                                
+                                if (hitProj) {
+                                    // Draw dotted line from screen center to where hit block actually is
+                                    ctx.strokeStyle = '#ff0';
+                                    ctx.lineWidth = 2;
+                                    ctx.setLineDash([5, 5]);
+                                    ctx.beginPath();
+                                    ctx.moveTo(halfW, halfH);  // Screen center (where we're aiming)
+                                    ctx.lineTo(hitProj.x, hitProj.y);  // Where hit block is
+                                    ctx.stroke();
+                                    ctx.setLineDash([]);
+                                    
+                                    // Calculate angular deviation
+                                    const devX = hitProj.x - halfW;
+                                    const devY = hitProj.y - halfH;
+                                    const devDist = Math.sqrt(devX * devX + devY * devY);
+                                    
+                                    ctx.fillStyle = devDist < 50 ? '#0f0' : '#f55';
+                                    ctx.fillText(`Hit deviation: ${devDist.toFixed(0)}px from center`, infoX, infoY);
+                                    infoY += lineHeight;
+                                    
+                                    if (devDist > 50) {
+                                        ctx.fillStyle = '#f00';
+                                        ctx.fillText('⚠ DDA BUG: Hit block not on ray path!', infoX, infoY);
+                                        infoY += lineHeight;
+                                        
+                                        // Show DDA direction info
+                                        ctx.fillStyle = '#ff0';
+                                        ctx.font = '12px monospace';
+                                        ctx.fillText(`Ray dir: (${rayDirX.toFixed(4)}, ${rayDirY.toFixed(4)}, ${rayDirZ.toFixed(4)})`, infoX, infoY);
+                                        infoY += 14;
+                                        
+                                        // Calculate where the ray SHOULD hit at the same distance
+                                        const hitDist = Math.sqrt((hx+0.5-camX)**2 + (hy+0.5-camY)**2 + (hz+0.5-camZ)**2);
+                                        const expectedX = camX + rayDirX * hitDist;
+                                        const expectedY = camY + rayDirY * hitDist;
+                                        const expectedZ = camZ + rayDirZ * hitDist;
+                                        ctx.fillText(`Expected at dist ${hitDist.toFixed(1)}: (${expectedX.toFixed(1)}, ${expectedY.toFixed(1)}, ${expectedZ.toFixed(1)})`, infoX, infoY);
+                                        infoY += 14;
+                                        
+                                        // Check what block is at the expected location
+                                        const expectedVoxelX = Math.floor(expectedX);
+                                        const expectedVoxelY = Math.floor(expectedY);
+                                        const expectedVoxelZ = Math.floor(expectedZ);
+                                        const expectedBlock = this.world[`${expectedVoxelX},${expectedVoxelY},${expectedVoxelZ}`] || 'air';
+                                        ctx.fillText(`Expected voxel [${expectedVoxelX},${expectedVoxelY},${expectedVoxelZ}] = ${expectedBlock}`, infoX, infoY);
+                                        infoY += 14;
+                                        
+                                        ctx.fillText(`Actual hit: (${hx+0.5}, ${hy+0.5}, ${hz+0.5})`, infoX, infoY);
+                                        infoY += 14;
+                                        
+                                        // Show the angular error
+                                        const toHitX = (hx+0.5) - camX;
+                                        const toHitY = (hy+0.5) - camY;
+                                        const toHitZ = (hz+0.5) - camZ;
+                                        const toHitLen = Math.sqrt(toHitX*toHitX + toHitY*toHitY + toHitZ*toHitZ);
+                                        const dotProduct = (rayDirX*(toHitX/toHitLen) + rayDirY*(toHitY/toHitLen) + rayDirZ*(toHitZ/toHitLen));
+                                        const angleDeg = Math.acos(Math.min(1, Math.max(-1, dotProduct))) * 180 / Math.PI;
+                                        ctx.fillStyle = '#f55';
+                                        ctx.fillText(`Angular error: ${angleDeg.toFixed(1)}° off ray direction`, infoX, infoY);
+                                        infoY += lineHeight;
+                                        ctx.font = 'bold 14px monospace';
+                                        
+                                        // Trace first few ray march steps
+                                        ctx.fillStyle = '#aaa';
+                                        ctx.font = '11px monospace';
+                                        
+                                        // Use actual debug steps from raycast if available
+                                        if (hit.debugSteps && hit.debugSteps.length > 0) {
+                                            ctx.fillStyle = '#0ff';
+                                            ctx.fillText('ACTUAL RAYCAST STEPS:', infoX, infoY);
+                                            infoY += 14;
+                                            ctx.fillStyle = '#aaa';
+                                            for (let si = 0; si < Math.min(hit.debugSteps.length, 8); si++) {
+                                                const step = hit.debugSteps[si];
+                                                ctx.fillText(`t=${step.t.toFixed(1)}: (${step.px.toFixed(1)},${step.py.toFixed(1)},${step.pz.toFixed(1)}) → [${step.voxelX},${step.voxelY},${step.voxelZ}] = ${step.block}`, infoX, infoY);
+                                                infoY += 12;
+                                            }
+                                            
+                                            // Show the actual direction used
+                                            if (hit.debugDir) {
+                                                ctx.fillStyle = '#f0f';
+                                                ctx.fillText(`ACTUAL dir: (${hit.debugDir.x.toFixed(4)}, ${hit.debugDir.y.toFixed(4)}, ${hit.debugDir.z.toFixed(4)})`, infoX, infoY);
+                                                infoY += 14;
+                                            }
+                                            if (hit.debugOrigin) {
+                                                ctx.fillStyle = '#f0f';
+                                                ctx.fillText(`ACTUAL origin: (${hit.debugOrigin.x.toFixed(2)}, ${hit.debugOrigin.y.toFixed(2)}, ${hit.debugOrigin.z.toFixed(2)})`, infoX, infoY);
+                                                infoY += 14;
+                                                
+                                                // Check if origin matches camera
+                                                const originDiffX = Math.abs(hit.debugOrigin.x - camX);
+                                                const originDiffY = Math.abs(hit.debugOrigin.y - camY);
+                                                const originDiffZ = Math.abs(hit.debugOrigin.z - camZ);
+                                                if (originDiffX > 0.01 || originDiffY > 0.01 || originDiffZ > 0.01) {
+                                                    ctx.fillStyle = '#f00';
+                                                    ctx.fillText(`⚠ ORIGIN MISMATCH! Diff: (${originDiffX.toFixed(2)}, ${originDiffY.toFixed(2)}, ${originDiffZ.toFixed(2)})`, infoX, infoY);
+                                                    infoY += 14;
+                                                }
+                                            }
+                                        } else {
+                                            const traceSteps = 5;
+                                            for (let step = 1; step <= traceSteps; step++) {
+                                                const traceT = step * 0.8; // Check at 0.8, 1.6, 2.4, 3.2, 4.0
+                                                const tracePx = camX + rayDirX * traceT;
+                                                const tracePy = camY + rayDirY * traceT;
+                                                const tracePz = camZ + rayDirZ * traceT;
+                                                const traceVoxelX = Math.floor(tracePx);
+                                                const traceVoxelY = Math.floor(tracePy);
+                                                const traceVoxelZ = Math.floor(tracePz);
+                                                const traceBlock = this.world[`${traceVoxelX},${traceVoxelY},${traceVoxelZ}`] || 'air';
+                                                ctx.fillText(`t=${traceT.toFixed(1)}: (${tracePx.toFixed(1)},${tracePy.toFixed(1)},${tracePz.toFixed(1)}) → [${traceVoxelX},${traceVoxelY},${traceVoxelZ}] = ${traceBlock}`, infoX, infoY);
+                                                infoY += 12;
+                                            }
+                                        }
+                                        ctx.font = 'bold 14px monospace';
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // MISMATCH DETECTION
+                        if (hit.block && !worldBlock) {
+                            ctx.fillStyle = '#f00';
+                            ctx.fillText('⚠ GHOST BLOCK: raycast sees block not in world!', infoX, infoY);
+                            infoY += lineHeight;
+                        } else if (!inRenderList && worldBlock) {
+                            ctx.fillStyle = '#ff0';
+                            ctx.fillText('⚠ CULLED: block exists but not rendering', infoX, infoY);
+                            infoY += lineHeight;
+                        }
+                        
+                        // Transparent block check
+                        if (worldBlock) {
+                            const blockProps = this.blockColors[worldBlock];
+                            if (blockProps && blockProps.transparent) {
+                                ctx.fillStyle = '#ff0';
+                                ctx.fillText(`Note: "${worldBlock}" is transparent`, infoX, infoY);
+                            }
+                        }
+                    } else {
+                        ctx.fillStyle = '#888';
+                        ctx.fillText('No raycast hit (air or out of range)', infoX, infoY);
+                    }
+                }
+                
                 // ═══════════════════════════════════════════════════════════
                 // END DEBUG VISUALIZATIONS
                 // ═══════════════════════════════════════════════════════════
@@ -8916,6 +9321,22 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         ];
                         
                         const projected = corners.map(c => project(c[0], c[1], c[2]));
+                        
+                        // DEBUG: Store wireframe center for comparison
+                        if (this.debugSettings.showTargetInfo && projected.every(p => p !== null)) {
+                            const wireframeCenterX = projected.reduce((sum, p) => sum + p.x, 0) / 8;
+                            const wireframeCenterY = projected.reduce((sum, p) => sum + p.y, 0) / 8;
+                            // Draw a MAGENTA marker where wireframe center actually is
+                            ctx.strokeStyle = '#f0f';
+                            ctx.lineWidth = 4;
+                            ctx.beginPath();
+                            ctx.arc(wireframeCenterX, wireframeCenterY, 25, 0, Math.PI * 2);
+                            ctx.stroke();
+                            ctx.fillStyle = '#f0f';
+                            ctx.font = 'bold 12px monospace';
+                            ctx.fillText('WIREFRAME', wireframeCenterX + 30, wireframeCenterY - 5);
+                            ctx.fillText(`(${bx},${by},${bz})`, wireframeCenterX + 30, wireframeCenterY + 10);
+                        }
                         
                         // Draw edges if all corners are visible
                         if (projected.every(p => p !== null)) {
