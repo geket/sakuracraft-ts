@@ -1851,10 +1851,15 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 const safeMinZ = bounds.minZ + 10;
                 const safeMaxZ = bounds.maxZ - 10;
                 
+                this.debugLog('🔍 Attempting to spawn Gunsmith Wizard...', 'info');
+                this.debugLog(`  Player at: (${this.camera.x.toFixed(1)}, ${this.camera.y.toFixed(1)}, ${this.camera.z.toFixed(1)})`, 'info');
+                this.debugLog(`  Safe bounds: X[${safeMinX.toFixed(0)}, ${safeMaxX.toFixed(0)}] Z[${safeMinZ.toFixed(0)}, ${safeMaxZ.toFixed(0)}]`, 'info');
+                
                 // Find valid spawn location with proper surface block
                 let spawnX = 0, spawnY = 0, spawnZ = 0;
                 let foundValidSpawn = false;
                 const maxAttempts = 100; // Try many times to find valid spot
+                let spawnAttemptLog = [];
                 
                 for (let attempts = 0; attempts < maxAttempts; attempts++) {
                     // Try random position 15-25 blocks from player
@@ -1887,12 +1892,33 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                 spawnY = y + 1; // Stand on top of the grass/sand block
                                 spawnZ = testZ;
                                 foundValidSpawn = true;
+                                
+                                // Log first 5 attempts for debugging
+                                if (attempts < 5) {
+                                    spawnAttemptLog.push(`  Attempt ${attempts}: Found valid at (${bx}, ${y+1}, ${bz}) on ${blockType}`);
+                                }
                                 break;
+                            } else {
+                                if (attempts < 5) {
+                                    spawnAttemptLog.push(`  Attempt ${attempts}: (${bx}, ${y}, ${bz}) ${blockType} - blocked above: ${!air1 ? 'Y+1' : ''} ${!air2 ? 'Y+2' : ''} ${!air3 ? 'Y+3' : ''}`);
+                                }
                             }
                         }
                     }
                     
                     if (foundValidSpawn) break; // Success!
+                    
+                    // Log failures for first 5 attempts
+                    if (attempts < 5 && !foundValidSpawn) {
+                        const blockAt10 = this.getBlock(bx, 10, bz) || 'air';
+                        const blockAt9 = this.getBlock(bx, 9, bz) || 'air';
+                        spawnAttemptLog.push(`  Attempt ${attempts}: (${bx}, ?, ${bz}) - no grass/sand found (Y=10: ${blockAt10}, Y=9: ${blockAt9})`);
+                    }
+                }
+                
+                // Log attempt details
+                for (const log of spawnAttemptLog) {
+                    this.debugLog(log, 'info');
                 }
                 
                 if (!foundValidSpawn) {
@@ -1917,8 +1943,18 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 };
                 
                 const blockBelow = this.getBlock(Math.floor(spawnX), Math.floor(spawnY - 1), Math.floor(spawnZ));
-                this.debugLog('✨ A wandering gunsmith has appeared!', 'success');
-                this.debugLog(`Spawned at (${spawnX.toFixed(1)}, ${spawnY}, ${spawnZ.toFixed(1)}) on ${blockBelow}`, 'info');
+                const blockAt = this.getBlock(Math.floor(spawnX), Math.floor(spawnY), Math.floor(spawnZ));
+                
+                this.debugLog('✨ Gunsmith Wizard spawned!', 'success');
+                this.debugLog(`  Position: (${spawnX.toFixed(2)}, ${spawnY}, ${spawnZ.toFixed(2)})`, 'success');
+                this.debugLog(`  Standing on: ${blockBelow || 'air'} at Y=${spawnY - 1}`, 'success');
+                this.debugLog(`  Block at feet: ${blockAt || 'air (correct)'}`, blockAt ? 'warn' : 'success');
+                
+                // Verify ground height function agrees
+                const groundCheck = this.getGroundHeightBelow(spawnX, spawnZ, spawnY + 5);
+                if (groundCheck !== spawnY) {
+                    this.debugLog(`  ⚠️ getGroundHeightBelow disagrees! Returns ${groundCheck}, expected ${spawnY}`, 'warn');
+                }
             },
             
             updateRepairNPC() {
@@ -1958,9 +1994,16 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 npc.vy -= 0.03;
                 npc.y += npc.vy;
                 
-                // Ground collision
-                const groundY = this.getGroundHeightBelow(npc.x, npc.z, npc.y);
+                // Ground collision - NPC Y is at feet level, so pass eyeHeight=0
+                const groundY = this.getGroundHeightBelow(npc.x, npc.z, npc.y, 0);
                 if (npc.y <= groundY) {
+                    // Log if NPC teleported significantly (fell through ground)
+                    if (npc.lastLoggedY !== undefined && Math.abs(groundY - npc.lastLoggedY) > 2) {
+                        this.debugLog(`⚠️ Gunsmith Y changed significantly: ${npc.lastLoggedY} → ${groundY}`, 'warn');
+                        const blockBelow = this.getBlock(Math.floor(npc.x), groundY - 1, Math.floor(npc.z));
+                        this.debugLog(`  Now standing on: ${blockBelow || 'nothing'} at Y=${groundY - 1}`, 'warn');
+                    }
+                    npc.lastLoggedY = groundY;
                     npc.y = groundY;
                     npc.vy = 0;
                     npc.onGround = true;
@@ -7076,10 +7119,12 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             },
             
             // Get ground height directly below player (not teleporting to trees)
-            getGroundHeightBelow(x, z, currentY) {
+            getGroundHeightBelow(x, z, currentY, eyeHeight = null) {
                 const bx = Math.floor(x);
                 const bz = Math.floor(z);
-                const startY = Math.floor(currentY - this.playerEyeHeight); // Start from feet level
+                // Use provided eyeHeight, or default to playerEyeHeight for player calls
+                const adjustedEyeHeight = eyeHeight !== null ? eyeHeight : this.playerEyeHeight;
+                const startY = Math.floor(currentY - adjustedEyeHeight); // Start from feet level
                 
                 for (let y = startY; y >= 0; y--) {
                     const block = this.getBlock(bx, y, bz);
