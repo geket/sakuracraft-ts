@@ -1164,6 +1164,37 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
+/* Container slot tooltips */
+.container-slot[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.95);
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 200;
+  pointer-events: none;
+  border: 1px solid #8b6914;
+  margin-bottom: 5px;
+}
+
+.container-slot[data-tooltip]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.95);
+  z-index: 200;
+  pointer-events: none;
+}
+
 .container-slot.has-item {
   border-color: #7a7a8a;
 }
@@ -1240,6 +1271,41 @@
   color: #fff;
   text-shadow: 1px 1px 2px #000, -1px -1px 2px #000;
   font-family: monospace;
+}
+
+/* Inventory held item ghost (follows cursor when item picked up) */
+.inv-held-ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 2000;
+  transform: translate(-50%, -50%);
+  opacity: 0.95;
+  filter: drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.7));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid #ffd700;
+  border-radius: 6px;
+  padding: 4px;
+}
+
+.inv-held-ghost .ghost-icon {
+  font-size: 32px;
+}
+
+.inv-held-ghost .ghost-count {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 1px 1px 2px #000, -1px -1px 2px #000;
+  font-family: monospace;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 1px 4px;
+  border-radius: 3px;
 }
 
 /* Furnace specific */

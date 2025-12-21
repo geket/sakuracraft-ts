@@ -157,6 +157,7 @@ const gameTemplate = `
             <select class="option-select" id="optTextureMode">
               <option value="fixed" selected>Fixed (Stable)</option>
               <option value="trippy">Trippy (Chowder)</option>
+              <option value="vacuum">Trippy (Vacuum)</option>
             </select>
           </div>
           <div class="option-row">
@@ -279,6 +280,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             swimming: false,
             headSubmergedWater: false,
             headSubmergedLava: false,
+            lastSwimTime: 0,  // Track when we last exited water for smooth transitions
+            swimDebugInfo: null,  // Debug info for swimming system
             
             // Player dimensions - camera at waist/hip level
             playerEyeHeight: 1.2,  // How high camera is above feet
@@ -418,7 +421,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 showFps: true,
                 targetFps: 60,
                 treeStyle: 'simple' as 'simple' | 'transparent' | 'bushy',
-                textureMode: 'fixed' as 'fixed' | 'trippy'  // fixed = stationary, trippy = moves with scene
+                textureMode: 'fixed' as 'fixed' | 'trippy' | 'vacuum'  // fixed = stationary, trippy = moves with scene, vacuum = current glitchy effect
             },
             
             // FPS tracking
@@ -494,8 +497,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 cherryWood: { top: '#c4a07a', side: '#8b5a5a', bottom: '#8b5a5a', useTexture: true, texture: 'wood' },
                 cherryLeaves: { top: '#ffb7c5', side: '#ffc0cb', bottom: '#ff90a5', transparent: false, useTexture: true, texture: 'sakuraLeaves' },
                 chest: { top: '#8b6914', side: '#a0780a', bottom: '#705010' },
-                ritualChest: { top: '#4a0080', side: '#6a00b0', bottom: '#300060' },
-                buildingChest: { top: '#c0c0c0', side: '#a0a0a0', bottom: '#808080' },
+                ritualChest: { top: '#daa520', side: '#cd853f', bottom: '#8b4513' }, // Golden mystical chest
+                buildingChest: { top: '#a0825a', side: '#8b6914', bottom: '#705010' }, // Wooden chest
                 // Underground blocks
                 bedrock: { top: '#1a1a1a', side: '#0f0f0f', bottom: '#050505' },
                 deepslate: { top: '#3a3a3a', side: '#2a2a2a', bottom: '#1a1a1a' },
@@ -517,7 +520,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 crate: { top: '#c4a07a', side: '#a08060', bottom: '#806040' },
                 furnace: { top: '#555555', side: '#666666', bottom: '#444444' },
                 furnaceActive: { top: '#555555', side: '#886644', bottom: '#444444' },
-                alchemyTable: { top: '#4a3a6a', side: '#3a2a5a', bottom: '#2a1a4a' },
+                alchemyTable: { top: '#4a3a3a', side: '#3a2a2a', bottom: '#2a1a1a' }, // Dark wood table
                 storageShrine: { top: '#ffd700', side: '#daa520', bottom: '#b8860b' },
                 // Ritual Temple blocks
                 ritualStone: { top: '#4a4a6a', side: '#3a3a5a', bottom: '#2a2a4a' },
@@ -554,6 +557,37 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             
             // Texture cache for procedurally generated patterns
             textureCache: {},
+            
+            // Custom block models for non-cube blocks
+            // Values: [offsetX, offsetY, offsetZ, scaleX, scaleY, scaleZ]
+            // Default full block is [0, 0, 0, 1, 1, 1]
+            blockModels: {
+                // Furniture - smaller/offset shapes
+                table: [0.1, 0, 0.1, 0.8, 0.5, 0.8],           // Flat top table
+                chair: [0.15, 0, 0.15, 0.7, 0.6, 0.7],         // Small chair
+                stool: [0.2, 0, 0.2, 0.6, 0.5, 0.6],           // Small stool
+                bed: [0.05, 0, 0.05, 0.9, 0.4, 0.9],           // Low bed
+                bedPillow: [0.25, 0.4, 0.25, 0.5, 0.25, 0.5],  // Pillow on bed
+                counter: [0, 0, 0, 1, 0.6, 1],                 // Counter height
+                cashRegister: [0.2, 0, 0.2, 0.6, 0.5, 0.6],    // Small register
+                lamp: [0.35, 0, 0.35, 0.3, 0.7, 0.3],          // Tall thin lamp
+                plant: [0.3, 0, 0.3, 0.4, 0.6, 0.4],           // Potted plant
+                sink: [0.1, 0, 0.1, 0.8, 0.5, 0.8],            // Sink basin
+                stove: [0, 0, 0, 1, 0.6, 1],                   // Stove
+                fridge: [0.05, 0, 0.05, 0.9, 1, 0.9],          // Tall fridge
+                bookshelf: [0, 0, 0, 1, 1, 0.8],               // Flat back
+                
+                // Containers - slightly smaller than full blocks
+                chest: [0.1, 0, 0.1, 0.8, 0.7, 0.8],
+                ritualChest: [0.1, 0, 0.1, 0.8, 0.7, 0.8],
+                buildingChest: [0.1, 0, 0.1, 0.8, 0.7, 0.8],
+                dungeonChest: [0.1, 0, 0.1, 0.8, 0.7, 0.8],
+                barrel: [0.1, 0, 0.1, 0.8, 0.9, 0.8],
+                crate: [0.05, 0, 0.05, 0.9, 0.8, 0.9],
+                furnace: [0, 0, 0, 1, 0.9, 1],
+                alchemyTable: [0, 0, 0, 1, 0.7, 1],
+                storageShrine: [0.15, 0, 0.15, 0.7, 0.8, 0.7]
+            },
             
             // Item definitions with properties
             itemTypes: {
@@ -1164,67 +1198,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 console.log(`Generated ${dungeons.length} dungeons, ${oreVeins.length} ore veins`);
                 
                 // ════════════════════════════════════════════════════════════════════════
-                // PHASE 4: Generate Trees (Biome-aware)
+                // PHASE 4: Generate Buildings FIRST (before trees)
                 // ════════════════════════════════════════════════════════════════════════
-                updateLoading('Planting Trees...', 60, 'Growing forests', '🌲', 'Forest');
-                await yieldToUI();
-                
-                let treesPlanted = 0;
-                const treePositions = [];
-                
-                for (let x = -worldSize; x <= worldSize; x += 3) {
-                    for (let z = -worldSize; z <= worldSize; z += 3) {
-                        const key = `${x},${z}`;
-                        const height = heightMap[key];
-                        const biome = biomeCache[key];
-                        const biomeData = biomeTypes[biome];
-                        
-                        if (height > waterLevel + 1 && biomeData.treeChance > 0) {
-                            const treeNoise = this.noise2D(x * 0.3 + 300, z * 0.3 + 300);
-                            
-                            if (treeNoise > 0.3 && Math.random() < biomeData.treeChance) {
-                                const treeSize = 5;
-                                const treeX = x - 2;
-                                const treeZ = z - 2;
-                                
-                                const inBounds = treeX >= this.worldBounds.minX + 2 &&
-                                    treeX + treeSize <= this.worldBounds.maxX - 2 &&
-                                    treeZ >= this.worldBounds.minZ + 2 &&
-                                    treeZ + treeSize <= this.worldBounds.maxZ - 2;
-                                
-                                if (inBounds && !this.checkStructureCollision(treeX, height + 1, treeZ, treeSize, 8, treeSize)) {
-                                    treePositions.push({ x, z, height, biome });
-                                    
-                                    if (biome === 'sakuraForest') {
-                                        this.generateCherryTree(x, height + 1, z);
-                                    } else if (biome === 'forest' && Math.random() < 0.15) {
-                                        this.generateCherryTree(x, height + 1, z);
-                                    } else {
-                                        // Regular or apple tree
-                                        if (Math.random() < 0.2) {
-                                            this.generateTree(x, height + 1, z, true); // Apple tree
-                                        } else {
-                                            this.generateTree(x, height + 1, z);
-                                        }
-                                    }
-                                    treesPlanted++;
-                                }
-                            }
-                        }
-                    }
-                    
-                    if (x % 30 === 0) {
-                        const biomeData = biomeTypes[biomeCache[`${x},0`] || 'plains'];
-                        const progress = 60 + ((x + worldSize) / (worldSize * 2)) * 15;
-                        updateLoading('Planting Trees...', progress, `${treesPlanted} trees planted`, biomeData.icon, biomeData.name);
-                        await yieldToUI();
-                    }
-                }
-                
-                // ════════════════════════════════════════════════════════════════════════
-                // PHASE 5: Generate Buildings (Incremental)
-                // ════════════════════════════════════════════════════════════════════════
-                updateLoading('Constructing Buildings...', 75, 'Planning structures', '🏠', 'Village');
+                updateLoading('Constructing Buildings...', 60, 'Planning structures', '🏠', 'Village');
                 await yieldToUI();
                 
                 const buildingTypes = ['church', 'house1', 'house2', 'house3', 'grocery', 'wcdonalds'];
@@ -1232,6 +1208,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 let buildingsPlaced = 0;
                 let wcdonaldsCount = 0;
                 const maxWcDonalds = 4; // Allow multiple WcDonalds
+                
+                // Store building bounds for tree collision
+                const buildingBounds = [];
                 
                 for (let qx = -Math.floor(worldSize / quadrantSize); qx <= Math.floor(worldSize / quadrantSize); qx++) {
                     for (let qz = -Math.floor(worldSize / quadrantSize); qz <= Math.floor(worldSize / quadrantSize); qz++) {
@@ -1257,17 +1236,21 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                 if (this.tryPlaceBuilding(bx, bz, ['wcdonalds'], heightMap)) {
                                     wcdonaldsCount++;
                                     buildingsPlaced++;
+                                    // Store building bounds (WcDonalds is larger)
+                                    buildingBounds.push({ x: bx - 2, z: bz - 2, w: 20, d: 18 });
                                     continue;
                                 }
                             }
                             
                             if (this.tryPlaceBuilding(bx, bz, buildingTypes, heightMap)) {
                                 buildingsPlaced++;
+                                // Store building bounds
+                                buildingBounds.push({ x: bx - 2, z: bz - 2, w: 14, d: 14 });
                             }
                         }
                     }
                     
-                    const progress = 75 + ((qx + Math.floor(worldSize / quadrantSize)) / (Math.floor(worldSize / quadrantSize) * 2)) * 10;
+                    const progress = 60 + ((qx + Math.floor(worldSize / quadrantSize)) / (Math.floor(worldSize / quadrantSize) * 2)) * 10;
                     updateLoading('Constructing Buildings...', progress, `${buildingsPlaced} structures built`, '🏗️', 'Construction');
                     await yieldToUI();
                 }
@@ -1279,6 +1262,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         const bz = 40 + Math.floor(Math.random() * 80) * (Math.random() < 0.5 ? 1 : -1);
                         if (this.tryPlaceBuilding(bx, bz, ['wcdonalds'], heightMap)) {
                             wcdonaldsCount++;
+                            buildingBounds.push({ x: bx - 2, z: bz - 2, w: 20, d: 18 });
                             break;
                         }
                     }
@@ -1286,6 +1270,76 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 }
                 
                 console.log(`Generated ${buildingsPlaced} buildings, ${wcdonaldsCount} WcDonalds`);
+                
+                // ════════════════════════════════════════════════════════════════════════
+                // PHASE 5: Generate Trees AFTER buildings (with collision check)
+                // ════════════════════════════════════════════════════════════════════════
+                updateLoading('Planting Trees...', 72, 'Growing forests', '🌲', 'Forest');
+                await yieldToUI();
+                
+                let treesPlanted = 0;
+                const treePositions = [];
+                
+                // Helper to check if position is near a building
+                const isNearBuilding = (x, z, radius = 8) => {
+                    for (const b of buildingBounds) {
+                        if (x >= b.x - radius && x <= b.x + b.w + radius &&
+                            z >= b.z - radius && z <= b.z + b.d + radius) {
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+                
+                for (let x = -worldSize; x <= worldSize; x += 3) {
+                    for (let z = -worldSize; z <= worldSize; z += 3) {
+                        const key = `${x},${z}`;
+                        const height = heightMap[key];
+                        const biome = biomeCache[key];
+                        const biomeData = biomeTypes[biome];
+                        
+                        if (height > waterLevel + 1 && biomeData.treeChance > 0) {
+                            const treeNoise = this.noise2D(x * 0.3 + 300, z * 0.3 + 300);
+                            
+                            if (treeNoise > 0.3 && Math.random() < biomeData.treeChance) {
+                                const treeSize = 5;
+                                const treeX = x - 2;
+                                const treeZ = z - 2;
+                                
+                                const inBounds = treeX >= this.worldBounds.minX + 2 &&
+                                    treeX + treeSize <= this.worldBounds.maxX - 2 &&
+                                    treeZ >= this.worldBounds.minZ + 2 &&
+                                    treeZ + treeSize <= this.worldBounds.maxZ - 2;
+                                
+                                // Check NOT near any building AND no structure collision
+                                if (inBounds && !isNearBuilding(x, z) && !this.checkStructureCollision(treeX, height + 1, treeZ, treeSize, 8, treeSize)) {
+                                    treePositions.push({ x, z, height, biome });
+                                    
+                                    if (biome === 'sakuraForest') {
+                                        this.generateCherryTree(x, height + 1, z);
+                                    } else if (biome === 'forest' && Math.random() < 0.15) {
+                                        this.generateCherryTree(x, height + 1, z);
+                                    } else {
+                                        // Regular or apple tree
+                                        if (Math.random() < 0.2) {
+                                            this.generateTree(x, height + 1, z, true); // Apple tree
+                                        } else {
+                                            this.generateTree(x, height + 1, z);
+                                        }
+                                    }
+                                    treesPlanted++;
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (x % 30 === 0) {
+                        const biomeData = biomeTypes[biomeCache[`${x},0`] || 'plains'];
+                        const progress = 72 + ((x + worldSize) / (worldSize * 2)) * 12;
+                        updateLoading('Planting Trees...', progress, `${treesPlanted} trees planted`, biomeData.icon, biomeData.name);
+                        await yieldToUI();
+                    }
+                }
                 
                 // ════════════════════════════════════════════════════════════════════════
                 // PHASE 6: Special Structures
@@ -1367,9 +1421,12 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                             x: sx + 0.5,
                             y: sHeight + 1.2,
                             z: sz + 0.5,
+                            vy: 0,
                             type: 'seeds',
                             count: 1 + Math.floor(Math.random() * 3),
-                            bobPhase: Math.random() * Math.PI * 2
+                            bobPhase: Math.random() * Math.PI * 2,
+                            pickupDelay: 0,
+                            age: 0
                         });
                     }
                 }
@@ -1384,9 +1441,12 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                     x: tree.x + (Math.random() - 0.5) * 4,
                                     y: tree.y - 3,
                                     z: tree.z + (Math.random() - 0.5) * 4,
+                                    vy: 0,
                                     type: 'apple',
                                     count: 1,
-                                    bobPhase: Math.random() * Math.PI * 2
+                                    bobPhase: Math.random() * Math.PI * 2,
+                                    pickupDelay: 0,
+                                    age: 0
                                 });
                             }
                         }
@@ -1739,15 +1799,15 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 }
             },
             
-            // WcDonald's Drive-Thru - larger with outdoor lane
+            // WcDonald's Drive-Thru - larger with wraparound drive-thru lane
             generateWcDonaldsDriveThru(x, y, z) {
-                const w = 14, d = 12, h = 5;
-                const ruinFactor = 0.15;
+                const w = 12, d = 10, h = 5;
+                const ruinFactor = 0.1;
                 
                 // Clear interior
-                for (let dx = 1; dx < w - 1; dx++) {
-                    for (let dz = 1; dz < d - 1; dz++) {
-                        for (let dy = 0; dy < h + 3; dy++) {
+                for (let dx = 0; dx < w; dx++) {
+                    for (let dz = 0; dz < d; dz++) {
+                        for (let dy = 0; dy < h + 5; dy++) {
                             const existing = this.getBlock(x + dx, y + dy, z + dz);
                             if (existing && existing !== 'water' && existing !== 'lava') {
                                 this.setBlock(x + dx, y + dy, z + dz, null);
@@ -1756,82 +1816,110 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     }
                 }
                 
-                // Foundation - red brick parking lot extends beyond building
+                // Wraparound drive-thru lane (stone road)
+                // Front entrance/driveway
                 for (let dx = -3; dx < w + 3; dx++) {
-                    for (let dz = -2; dz < d + 2; dz++) {
-                        this.setBlock(x + dx, y - 1, z + dz, 'brick');
-                    }
+                    this.setBlock(x + dx, y - 1, z + d + 1, 'stone');
+                    this.setBlock(x + dx, y - 1, z + d + 2, 'stone');
+                }
+                // Right side lane
+                for (let dz = -3; dz < d + 3; dz++) {
+                    this.setBlock(x + w + 1, y - 1, z + dz, 'stone');
+                    this.setBlock(x + w + 2, y - 1, z + dz, 'stone');
+                }
+                // Back lane
+                for (let dx = -3; dx < w + 3; dx++) {
+                    this.setBlock(x + dx, y - 1, z - 2, 'stone');
+                    this.setBlock(x + dx, y - 1, z - 1, 'stone');
+                }
+                // Left side exit
+                for (let dz = -3; dz < d + 3; dz++) {
+                    this.setBlock(x - 2, y - 1, z + dz, 'stone');
+                    this.setBlock(x - 1, y - 1, z + dz, 'stone');
                 }
                 
-                // Main building floor - stone tile look
-                for (let dx = 0; dx < w - 4; dx++) {
+                // Crosswalk stripes at front entrance
+                for (let dx = 2; dx < w - 2; dx += 2) {
+                    this.setBlock(x + dx, y - 1, z + d + 1, 'whiteBrick');
+                    this.setBlock(x + dx, y - 1, z + d + 2, 'whiteBrick');
+                }
+                
+                // Building foundation - red/white tile floor
+                for (let dx = 0; dx < w; dx++) {
                     for (let dz = 0; dz < d; dz++) {
-                        this.setBlock(x + dx, y - 1, z + dz, (dx + dz) % 2 === 0 ? 'stone' : 'whiteBrick');
+                        this.setBlock(x + dx, y - 1, z + dz, (dx + dz) % 2 === 0 ? 'whiteBrick' : 'redBrick');
                     }
                 }
                 
                 // Walls
-                for (let dx = 0; dx < w - 4; dx++) {
+                for (let dx = 0; dx < w; dx++) {
                     for (let dz = 0; dz < d; dz++) {
                         for (let dy = 0; dy < h; dy++) {
-                            const isWall = dx === 0 || dx === w - 5 || dz === 0 || dz === d - 1;
+                            const isWall = dx === 0 || dx === w - 1 || dz === 0 || dz === d - 1;
                             if (isWall && Math.random() > ruinFactor) {
                                 // Front entrance (double doors)
-                                if (dz === d - 1 && dx >= 3 && dx <= 5 && dy < 3) continue;
+                                if (dz === d - 1 && dx >= 4 && dx <= 6 && dy < 3) continue;
                                 // Windows on front
-                                if (dz === d - 1 && (dx === 1 || dx === 7 || dx === 8) && dy >= 1 && dy <= 2) continue;
-                                // Drive-thru window on side
-                                if (dx === w - 5 && dz >= 3 && dz <= 5 && dy >= 1 && dy <= 2) continue;
+                                if (dz === d - 1 && (dx === 1 || dx === 2 || dx === 9 || dx === 10) && dy >= 1 && dy <= 2) continue;
+                                // Drive-thru window on right side
+                                if (dx === w - 1 && dz >= 3 && dz <= 5 && dy >= 1 && dy <= 2) continue;
                                 
                                 // Color scheme: red bottom, cream top
-                                this.setBlock(x + dx, y + dy, z + dz, dy < 2 ? 'brick' : 'whiteBrick');
+                                this.setBlock(x + dx, y + dy, z + dz, dy < 2 ? 'redBrick' : 'whiteBrick');
                             }
                         }
                     }
                 }
                 
-                // Flat roof with slight overhang
-                for (let dx = -1; dx < w - 3; dx++) {
-                    for (let dz = -1; dz < d + 1; dz++) {
-                        if (Math.random() > ruinFactor * 0.5) {
-                            this.setBlock(x + dx, y + h, z + dz, 'brick');
-                        }
+                // Flat roof
+                for (let dx = 0; dx < w; dx++) {
+                    for (let dz = 0; dz < d; dz++) {
+                        this.setBlock(x + dx, y + h, z + dz, 'redBrick');
                     }
                 }
                 
-                // Drive-thru lane (raised curb)
-                for (let dz = -2; dz < d + 2; dz++) {
-                    this.setBlock(x + w - 3, y - 1, z + dz, 'stone');
-                    this.setBlock(x + w - 2, y - 1, z + dz, 'stone');
-                    this.setBlock(x + w - 1, y - 1, z + dz, 'stone');
-                }
-                
-                // Drive-thru menu board
-                this.setBlock(x + w - 2, y, z + 1, 'wood');
-                this.setBlock(x + w - 2, y + 1, z + 1, 'wood');
-                this.setBlock(x + w - 2, y + 2, z + 1, 'obsidian'); // Screen
+                // Drive-thru menu board (on right side approach)
+                this.setBlock(x + w + 1, y, z + 7, 'wood');
+                this.setBlock(x + w + 1, y + 1, z + 7, 'wood');
+                this.setBlock(x + w + 1, y + 2, z + 7, 'obsidian'); // Screen
+                this.setBlock(x + w + 1, y + 3, z + 7, 'obsidian');
                 
                 // Drive-thru order speaker
-                this.setBlock(x + w - 1, y, z + 3, 'stone');
-                this.setBlock(x + w - 1, y + 1, z + 3, 'obsidian');
+                this.setBlock(x + w + 1, y, z + 5, 'stone');
+                this.setBlock(x + w + 1, y + 1, z + 5, 'cashRegister');
                 
-                // The famous "W" arches - BIG golden arches
-                const wX = x + 4;
+                // THE FAMOUS "W" ARCHES - Proper W shape (golden arches inverted)
+                const wX = x + w / 2;
                 const wZ = z + d;
                 const wY = y + h;
                 
-                // Large W on front
-                for (let i = 0; i < 5; i++) {
-                    this.setBlock(wX - 3, wY + i, wZ, 'sand');
-                    this.setBlock(wX + 3, wY + i, wZ, 'sand');
-                }
-                this.setBlock(wX - 2, wY, wZ, 'sand');
-                this.setBlock(wX - 2, wY + 1, wZ, 'sand');
-                this.setBlock(wX - 1, wY, wZ, 'sand');
-                this.setBlock(wX, wY, wZ, 'sand');
-                this.setBlock(wX + 1, wY, wZ, 'sand');
-                this.setBlock(wX + 2, wY, wZ, 'sand');
-                this.setBlock(wX + 2, wY + 1, wZ, 'sand');
+                // Left arch of W (upside down U)
+                this.setBlock(wX - 3, wY + 0, wZ, 'sand');
+                this.setBlock(wX - 3, wY + 1, wZ, 'sand');
+                this.setBlock(wX - 3, wY + 2, wZ, 'sand');
+                this.setBlock(wX - 3, wY + 3, wZ, 'sand');
+                this.setBlock(wX - 2, wY + 3, wZ, 'sand');
+                this.setBlock(wX - 2, wY + 4, wZ, 'sand');
+                this.setBlock(wX - 1, wY + 4, wZ, 'sand');
+                this.setBlock(wX - 1, wY + 3, wZ, 'sand');
+                this.setBlock(wX - 1, wY + 2, wZ, 'sand');
+                this.setBlock(wX - 1, wY + 1, wZ, 'sand');
+                
+                // Middle dip of W
+                this.setBlock(wX, wY + 0, wZ, 'sand');
+                this.setBlock(wX, wY + 1, wZ, 'sand');
+                
+                // Right arch of W (upside down U)
+                this.setBlock(wX + 1, wY + 1, wZ, 'sand');
+                this.setBlock(wX + 1, wY + 2, wZ, 'sand');
+                this.setBlock(wX + 1, wY + 3, wZ, 'sand');
+                this.setBlock(wX + 1, wY + 4, wZ, 'sand');
+                this.setBlock(wX + 2, wY + 4, wZ, 'sand');
+                this.setBlock(wX + 2, wY + 3, wZ, 'sand');
+                this.setBlock(wX + 3, wY + 3, wZ, 'sand');
+                this.setBlock(wX + 3, wY + 2, wZ, 'sand');
+                this.setBlock(wX + 3, wY + 1, wZ, 'sand');
+                this.setBlock(wX + 3, wY + 0, wZ, 'sand');
                 
                 // Interior - service counter with cash registers
                 for (let dx = 1; dx < 8; dx++) {
@@ -1949,26 +2037,44 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     }
                 }
                 
-                // Giant W arches on front - ICONIC
+                // Giant W arches on front - PROPER W SHAPE
                 const wX = x + 8;
                 const wZ = z + d;
                 const wY = y + h;
                 
-                for (let i = 0; i < 6; i++) {
-                    this.setBlock(wX - 4, wY + i, wZ, 'sand');
-                    this.setBlock(wX + 4, wY + i, wZ, 'sand');
-                }
-                for (let i = 0; i < 3; i++) {
-                    this.setBlock(wX - 3, wY + i, wZ, 'sand');
-                    this.setBlock(wX + 3, wY + i, wZ, 'sand');
-                }
-                this.setBlock(wX - 2, wY, wZ, 'sand');
+                // Left arch of W (upside down U shape)
+                this.setBlock(wX - 4, wY + 0, wZ, 'sand');
+                this.setBlock(wX - 4, wY + 1, wZ, 'sand');
+                this.setBlock(wX - 4, wY + 2, wZ, 'sand');
+                this.setBlock(wX - 4, wY + 3, wZ, 'sand');
+                this.setBlock(wX - 4, wY + 4, wZ, 'sand');
+                this.setBlock(wX - 3, wY + 4, wZ, 'sand');
+                this.setBlock(wX - 3, wY + 5, wZ, 'sand');
+                this.setBlock(wX - 2, wY + 5, wZ, 'sand');
+                this.setBlock(wX - 2, wY + 4, wZ, 'sand');
+                this.setBlock(wX - 2, wY + 3, wZ, 'sand');
+                this.setBlock(wX - 2, wY + 2, wZ, 'sand');
                 this.setBlock(wX - 2, wY + 1, wZ, 'sand');
-                this.setBlock(wX - 1, wY, wZ, 'sand');
-                this.setBlock(wX, wY, wZ, 'sand');
-                this.setBlock(wX + 1, wY, wZ, 'sand');
-                this.setBlock(wX + 2, wY, wZ, 'sand');
+                
+                // Middle dip of W
+                this.setBlock(wX - 1, wY + 0, wZ, 'sand');
+                this.setBlock(wX, wY + 0, wZ, 'sand');
+                this.setBlock(wX, wY + 1, wZ, 'sand');
+                this.setBlock(wX + 1, wY + 0, wZ, 'sand');
+                
+                // Right arch of W (upside down U shape)
                 this.setBlock(wX + 2, wY + 1, wZ, 'sand');
+                this.setBlock(wX + 2, wY + 2, wZ, 'sand');
+                this.setBlock(wX + 2, wY + 3, wZ, 'sand');
+                this.setBlock(wX + 2, wY + 4, wZ, 'sand');
+                this.setBlock(wX + 2, wY + 5, wZ, 'sand');
+                this.setBlock(wX + 3, wY + 5, wZ, 'sand');
+                this.setBlock(wX + 3, wY + 4, wZ, 'sand');
+                this.setBlock(wX + 4, wY + 4, wZ, 'sand');
+                this.setBlock(wX + 4, wY + 3, wZ, 'sand');
+                this.setBlock(wX + 4, wY + 2, wZ, 'sand');
+                this.setBlock(wX + 4, wY + 1, wZ, 'sand');
+                this.setBlock(wX + 4, wY + 0, wZ, 'sand');
                 
                 // Long service counter with cash registers
                 for (let dx = 2; dx < 14; dx++) {
@@ -3729,9 +3835,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         document.getElementById('clickToPlay').classList.remove('active');
                     } else {
                         // Lock released (user pressed ESC or we exited)
-                        // If game is active and not paused and inventory/console/dialogue is NOT open
+                        // If game is active and not paused and no UI is open
                         // and we didn't just close the inventory, pause
-                        if (this.isActive && !this.isPaused && !this.inventoryOpen && !this.debugConsoleOpen && !this.dialogueOpen && !this.journalOpen && !this.justClosedInventory) {
+                        if (this.isActive && !this.isPaused && !this.inventoryOpen && !this.containerOpen && !this.debugConsoleOpen && !this.dialogueOpen && !this.journalOpen && !this.justClosedInventory) {
                             this.pause();
                         }
                     }
@@ -3929,7 +4035,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                         this.inventory.hotbar[this.selectedSlot] = null;
                                         this.selectedItem = null;
                                     }
-                                    this.updateHotbar();
+                                    this.updateHotbarDisplay();
                                 }
                             }
                         } else if (this.selectedBlock) {
@@ -4023,7 +4129,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                             leaves: 'Leaves', water: 'Water', sand: 'Sand', brick: 'Brick',
                             ka69: 'KA-69', water_bucket: 'Water Bucket', lava_bucket: 'Lava Bucket',
                             seed: 'Seed', berdger: 'Berdger', cherry_wood: 'Cherry Wood',
-                            cherry_leaves: 'Cherry Leaves', glowstone: 'Glowstone', 
+                            cherry_leaves: 'Cherry Leaves', glowstone: 'Burgerstone', 
                             ritual_item: 'Omamori Charm', lava: 'Lava', ice: 'Ice'
                         };
                         const itemId = slot.id || slot.type;
@@ -4194,7 +4300,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 });
                 
                 document.getElementById('optTextureMode').addEventListener('change', (e) => {
-                    this.settings.textureMode = (e.target as HTMLSelectElement).value as 'fixed' | 'trippy';
+                    this.settings.textureMode = (e.target as HTMLSelectElement).value as 'fixed' | 'trippy' | 'vacuum';
                 });
                 
                 // Toggle switches
@@ -4825,7 +4931,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     type: type,
                     count: count,
                     bobPhase: Math.random() * Math.PI * 2,
-                    pickupDelay: 30 // Frames before can be picked up
+                    pickupDelay: 30, // Frames before can be picked up
+                    age: 0
                 });
             },
             
@@ -4839,33 +4946,121 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     // Pickup delay
                     if (item.pickupDelay > 0) item.pickupDelay--;
                     
-                    // Physics
-                    item.vy -= 0.015; // Gravity
-                    item.y += item.vy;
-                    
-                    // Ground collision - check block directly below item
+                    // Check what blocks the item is in/on
                     const bx = Math.floor(item.x);
-                    const by = Math.floor(item.y - 0.1); // Check slightly below
+                    const by = Math.floor(item.y);
                     const bz = Math.floor(item.z);
-                    const blockBelow = this.getBlock(bx, by, bz);
                     
-                    // If there's a solid block below, rest on top of it
-                    if (blockBelow && !this.fluidBlocks.includes(blockBelow)) {
-                        const restY = by + 1.3; // Rest on top of block
-                        if (item.y < restY) {
-                            item.y = restY;
-                            item.vy = 0;
+                    // Check the block directly under the item's base
+                    // Items rest at y = blockTop + 0.3, so check block at floor(y - 0.5)
+                    const byBelow = Math.floor(item.y - 0.5);
+                    
+                    const blockAt = this.getBlock(bx, by, bz);
+                    const blockBelow = this.getBlock(bx, byBelow, bz);
+                    const blockAbove1 = this.getBlock(bx, by + 1, bz);
+                    const blockAbove2 = this.getBlock(bx, by + 2, bz);
+                    const blockAbove3 = this.getBlock(bx, by + 3, bz);
+                    
+                    const inWater = blockAt === 'water';
+                    const inLava = blockAt === 'lava';
+                    const waterAbove = blockAbove1 === 'water' || blockAbove2 === 'water' || blockAbove3 === 'water';
+                    const lavaAbove = blockAbove1 === 'lava' || blockAbove2 === 'lava' || blockAbove3 === 'lava';
+                    const inFluid = inWater || inLava || waterAbove || lavaAbove;
+                    const waterBelow = blockBelow === 'water';
+                    const solidBelow = blockBelow && !this.fluidBlocks.includes(blockBelow);
+                    
+                    // Initialize properties if missing
+                    if (item.vy === undefined) item.vy = 0;
+                    if (item.bobPhase === undefined) item.bobPhase = Math.random() * Math.PI * 2;
+                    if (item.resting === undefined) item.resting = false;
+                    
+                    // Update bob phase (always runs for smooth animation)
+                    item.bobPhase += 0.06;
+                    
+                    if (inFluid) {
+                        // IN FLUID - Float to surface
+                        item.resting = false;
+                        const buoyancy = (inLava || lavaAbove) ? 0.03 : 0.06;
+                        const drag = (inLava || lavaAbove) ? 0.82 : 0.85;
+                        
+                        item.vy += buoyancy;
+                        item.vy *= drag;
+                        item.vy = Math.max(-0.05, Math.min(0.20, item.vy));
+                        
+                        // Find water surface
+                        let surfaceY = by + 1;
+                        for (let checkY = by; checkY < by + 10; checkY++) {
+                            const checkBlock = this.getBlock(bx, checkY, bz);
+                            if (checkBlock !== 'water' && checkBlock !== 'lava') {
+                                surfaceY = checkY - 0.1;
+                                break;
+                            }
                         }
+                        
+                        if (item.y > surfaceY - 0.5 && item.vy > 0) {
+                            item.vy *= 0.6;
+                        }
+                        
+                        if (item.y >= surfaceY - 0.3 && item.y <= surfaceY + 0.3 && Math.abs(item.vy) < 0.08) {
+                            item.y = surfaceY;
+                            item.vy = 0;
+                        } else {
+                            item.y += item.vy;
+                        }
+                        
+                    } else if (waterBelow && !solidBelow) {
+                        // Above water - float on surface
+                        item.resting = false;
+                        const surfaceY = byBelow + 1.4;
+                        
+                        if (item.y < surfaceY) {
+                            item.vy += 0.02;
+                        } else {
+                            item.vy -= 0.005;
+                        }
+                        item.vy *= 0.88;
+                        
+                        if (Math.abs(item.y - surfaceY) < 0.1 && Math.abs(item.vy) < 0.02) {
+                            item.y = surfaceY;
+                            item.vy = 0;
+                        } else {
+                            item.y += item.vy;
+                        }
+                        
+                    } else if (item.resting) {
+                        // RESTING ON GROUND - Minecraft-style
+                        // Just stay at rest position, bobbing is visual only (in render code)
+                        item.vy = 0;
+                        
+                        // Check if we should stop resting (block removed, etc)
+                        if (!solidBelow) {
+                            item.resting = false;
+                        }
+                        
                     } else {
-                        // No block below, keep falling but clamp to y=1 minimum
-                        if (item.y < 1) {
+                        // FALLING - Standard gravity
+                        item.vy -= 0.025;  // Gravity
+                        item.vy *= 0.98;   // Air resistance
+                        item.vy = Math.max(-0.5, item.vy);  // Terminal velocity
+                        
+                        item.y += item.vy;
+                        
+                        // Ground collision
+                        if (solidBelow) {
+                            const groundTop = byBelow + 1 + 0.3;  // Block top + small offset
+                            if (item.y <= groundTop) {
+                                // Land on ground - start resting
+                                item.y = groundTop;
+                                item.vy = 0;
+                                item.resting = true;
+                            }
+                        } else if (item.y < 1) {
+                            // World floor
                             item.y = 1;
                             item.vy = 0;
+                            item.resting = true;
                         }
                     }
-                    
-                    // Bobbing animation
-                    item.bobPhase += 0.05;
                     
                     // Check pickup by player
                     if (item.pickupDelay <= 0) {
@@ -4875,14 +5070,14 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
                         
                         if (dist < 2) {
-                            // Try to add to inventory
                             if (this.addToInventory(item.type, item.count)) {
                                 this.droppedItems.splice(i, 1);
+                                continue;
                             }
                         }
                     }
                     
-                    // Remove items that have been on ground too long (5 minutes)
+                    // Remove items that have been around too long (5 minutes)
                     item.age = (item.age || 0) + 1;
                     if (item.age > 60 * 60 * 5) {
                         this.droppedItems.splice(i, 1);
@@ -4980,7 +5175,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         chest: 'Chest', seeds: 'Seeds', berdger: 'The Berdger', apple: 'Apple',
                         sakuraPetal: 'Cherry Petal', shimenawa: 'Sacred Rope', omamori: 'Charm',
                         ema: 'Wish Plaque', incense: 'Incense', whiteBrick: 'White Brick',
-                        redBrick: 'Red Brick', glowstone: 'Glowstone', ritualStone: 'Ritual Stone',
+                        redBrick: 'Red Brick', glowstone: 'Burgerstone', ritualStone: 'Ritual Stone',
                         table: 'Table', chair: 'Chair', bed: 'Bed', bedPillow: 'Pillow',
                         cashRegister: 'Cash Register', stool: 'Stool', counter: 'Counter',
                         lamp: 'Lamp', bookshelf: 'Bookshelf', plant: 'Plant',
@@ -5710,6 +5905,27 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 
                 const contents = this.chestContents[containerKey] || [];
                 
+                // Item name helper
+                const getItemName = (id) => {
+                    const names = {
+                        grass: 'Grass', dirt: 'Dirt', stone: 'Stone', wood: 'Wood',
+                        leaves: 'Leaves', water: 'Water', sand: 'Sand', brick: 'Brick',
+                        ka69: 'KA-69', water_bucket: 'Water Bucket', lava_bucket: 'Lava Bucket',
+                        lava: 'Lava', obsidian: 'Obsidian', cherryWood: 'Cherry Wood',
+                        cherryLeaves: 'Cherry Leaves', chest: 'Chest', seeds: 'Seeds',
+                        berdger: 'The Berdger', apple: 'Apple', sakuraPetal: 'Cherry Petal',
+                        shimenawa: 'Sacred Rope', omamori: 'Charm', ema: 'Wish Plaque',
+                        incense: 'Incense', sakuraite: 'Sakuraite', moonstone: 'Moonstone',
+                        jadite: 'Jadite', crimsonite: 'Crimsonite', voidstone: 'Voidstone',
+                        spirite: 'Spirite', glowstone: 'Burgerstone', whiteBrick: 'White Brick',
+                        redBrick: 'Red Brick', table: 'Table', chair: 'Chair', bed: 'Bed',
+                        counter: 'Counter', stool: 'Stool', cashRegister: 'Cash Register',
+                        lamp: 'Lamp', fridge: 'Fridge', stove: 'Stove', sink: 'Sink',
+                        plant: 'Plant', bookshelf: 'Bookshelf', barrel: 'Barrel', crate: 'Crate'
+                    };
+                    return names[id] || id;
+                };
+                
                 // Render container slots
                 let containerHTML = '';
                 for (let i = 0; i < this.containerSlots; i++) {
@@ -5717,10 +5933,12 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     const hasItem = item && item.type;
                     const emoji = hasItem ? this.getItemEmoji({ id: item.type }) : '';
                     const count = hasItem && item.count > 1 ? item.count : '';
+                    const tooltip = hasItem ? getItemName(item.type) : '';
                     
                     containerHTML += `
                         <div class="container-slot ${hasItem ? 'has-item' : ''}" 
-                             data-slot="${i}" data-source="container">
+                             data-slot="${i}" data-source="container"
+                             ${tooltip ? `data-tooltip="${tooltip}"` : ''}>
                             ${hasItem ? `<span class="slot-icon">${emoji}</span>` : ''}
                             ${count ? `<span class="slot-count">${count}</span>` : ''}
                         </div>
@@ -5737,10 +5955,12 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     const hasItem = slot && slot.id;
                     const emoji = hasItem ? this.getItemEmoji(slot) : '';
                     const count = hasItem && slot.count > 1 ? slot.count : '';
+                    const tooltip = hasItem ? getItemName(slot.id) : '';
                     
                     playerHTML += `
                         <div class="container-slot ${hasItem ? 'has-item' : ''}" 
-                             data-slot="${i}" data-source="hotbar">
+                             data-slot="${i}" data-source="hotbar"
+                             ${tooltip ? `data-tooltip="${tooltip}"` : ''}>
                             ${hasItem ? `<span class="slot-icon">${emoji}</span>` : ''}
                             ${count ? `<span class="slot-count">${count}</span>` : ''}
                         </div>
@@ -5753,10 +5973,12 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     const hasItem = slot && slot.id;
                     const emoji = hasItem ? this.getItemEmoji(slot) : '';
                     const count = hasItem && slot.count > 1 ? slot.count : '';
+                    const tooltip = hasItem ? getItemName(slot.id) : '';
                     
                     playerHTML += `
                         <div class="container-slot ${hasItem ? 'has-item' : ''}" 
-                             data-slot="${i}" data-source="main">
+                             data-slot="${i}" data-source="main"
+                             ${tooltip ? `data-tooltip="${tooltip}"` : ''}>
                             ${hasItem ? `<span class="slot-icon">${emoji}</span>` : ''}
                             ${count ? `<span class="slot-count">${count}</span>` : ''}
                         </div>
@@ -6007,7 +6229,17 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 showDistanceHeatmap: false,
                 pauseRendering: false,
                 capturedFrame: null as any[] | null,
-                showRenderStats: false
+                showRenderStats: false,
+                // Near-plane debugging
+                showNearPlaneClipping: false,
+                // Furniture/custom model debugging
+                showBlockModels: false,
+                // Camera angle debugging
+                showCameraAngle: false,
+                // Swimming debug
+                showSwimDebug: false,
+                // Console logging for swim debugging
+                swimConsoleLog: false
             },
             debugFly: false,
             debugMoveSpeed: null,
@@ -6895,6 +7127,53 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                     this.debugLog('Render RESUMED', 'success');
                                 }
                                 break;
+                            
+                            case 'nearplane':
+                                this.debugSettings.showNearPlaneClipping = !this.debugSettings.showNearPlaneClipping;
+                                this.debugLog(`Near-plane clipping debug: ${this.debugSettings.showNearPlaneClipping ? 'ON' : 'OFF'}`, 'success');
+                                if (this.debugSettings.showNearPlaneClipping) {
+                                    this.debugLog('Shows faces with clamped vertices (prevents see-through)', 'info');
+                                    this.debugLog('Green outline = normal, Red = clamped vertex', 'info');
+                                }
+                                break;
+                            
+                            case 'blockmodels':
+                            case 'models':
+                                this.debugSettings.showBlockModels = !this.debugSettings.showBlockModels;
+                                this.debugLog(`Block models debug: ${this.debugSettings.showBlockModels ? 'ON' : 'OFF'}`, 'success');
+                                if (this.debugSettings.showBlockModels) {
+                                    this.debugLog('Shows custom block model bounds for furniture/containers', 'info');
+                                    const modelBlocks = Object.keys(this.blockModels || {});
+                                    this.debugLog(`Blocks with custom models: ${modelBlocks.join(', ')}`, 'info');
+                                }
+                                break;
+                            
+                            case 'angle':
+                            case 'camera':
+                                this.debugSettings.showCameraAngle = !this.debugSettings.showCameraAngle;
+                                this.debugLog(`Camera angle debug: ${this.debugSettings.showCameraAngle ? 'ON' : 'OFF'}`, 'success');
+                                if (this.debugSettings.showCameraAngle) {
+                                    this.debugLog('Shows camera rotation angles and look direction', 'info');
+                                }
+                                break;
+                            
+                            case 'swim':
+                            case 'swimming':
+                                this.debugSettings.showSwimDebug = !this.debugSettings.showSwimDebug;
+                                this.debugLog(`Swimming debug: ${this.debugSettings.showSwimDebug ? 'ON' : 'OFF'}`, 'success');
+                                if (this.debugSettings.showSwimDebug) {
+                                    this.debugLog('Shows swimming state, physics branch, and velocities', 'info');
+                                    this.debugLog('Key insight: BRANCH shows which physics code is running', 'info');
+                                }
+                                break;
+                            
+                            case 'swimlog':
+                                this.debugSettings.swimConsoleLog = !this.debugSettings.swimConsoleLog;
+                                this.debugLog(`Swim console logging: ${this.debugSettings.swimConsoleLog ? 'ON' : 'OFF'}`, 'success');
+                                if (this.debugSettings.swimConsoleLog) {
+                                    this.debugLog('Check browser console (F12) for frame-by-frame swim data', 'info');
+                                }
+                                break;
                                 
                             case 'all':
                                 const newState = !this.debugSettings.wireframeOnly;
@@ -6927,12 +7206,17 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                 this.debugSettings.highlightBlockType = null;
                                 this.debugSettings.pauseRendering = false;
                                 this.debugSettings.capturedFrame = null;
+                                this.debugSettings.showNearPlaneClipping = false;
+                                this.debugSettings.showBlockModels = false;
+                                this.debugSettings.showCameraAngle = false;
+                                this.debugSettings.showSwimDebug = false;
+                                this.debugSettings.swimConsoleLog = false;
                                 this.debugLog('All render debug: OFF', 'warn');
                                 break;
                                 
                             default:
                                 this.debugLog(`Unknown render option: ${subcommand}`, 'error');
-                                this.debugLog('Options: wireframe, depthorder, normals, bounds, raycast, projection, culling, overdraw, targetinfo, treediag, faceorder, heatmap, stats, highlight, pause, all, none', 'info');
+                                this.debugLog('Options: wireframe, depthorder, normals, bounds, raycast, projection, culling, overdraw, targetinfo, treediag, faceorder, heatmap, stats, highlight, pause, nearplane, blockmodels, angle, swim, swimlog, all, none', 'info');
                         }
                         break;
                         
@@ -7047,7 +7331,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     chest: 'Chest', seeds: 'Seeds', berdger: 'The Berdger', apple: 'Apple',
                     sakuraPetal: 'Cherry Petal', shimenawa: 'Sacred Rope', omamori: 'Charm',
                     ema: 'Wish Plaque', incense: 'Incense', whiteBrick: 'White Brick',
-                    redBrick: 'Red Brick', glowstone: 'Glowstone', ritualStone: 'Ritual Stone'
+                    redBrick: 'Red Brick', glowstone: 'Burgerstone', ritualStone: 'Ritual Stone'
                 };
                 
                 for (const [type, count] of Object.entries(this.pickupQueue)) {
@@ -7237,6 +7521,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     }
                 } else {
                     this.inventoryHeldItem = null; // Clear held item when closing
+                    this.updateInventoryHeldCursor(); // Hide the ghost
                     // Set flag to prevent pause from pointer lock release
                     this.justClosedInventory = true;
                     setTimeout(() => { this.justClosedInventory = false; }, 100);
@@ -7720,7 +8005,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         storageShrine: 'Storage Shrine',
                         // Other
                         whiteBrick: 'White Brick', redBrick: 'Red Brick',
-                        glowstone: 'Glowstone', ritualStone: 'Ritual Stone',
+                        glowstone: 'Burgerstone', ritualStone: 'Ritual Stone',
                         appleLeaves: 'Apple Tree Leaves'
                     };
                     return names[id] || id;
@@ -7847,12 +8132,14 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                 index
                             );
                             this.inventoryHeldItem = null;
+                            this.updateInventoryHeldCursor();
                             this.renderInventory();
                             this.updateHotbar();
                             this.updateHotbarDisplay();
                         } else if (clickedItem && clickedItem.count > 0) {
                             // Pick up this item
                             this.inventoryHeldItem = { source, index };
+                            this.updateInventoryHeldCursor();
                             this.renderInventory();
                         }
                     });
@@ -7922,6 +8209,44 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         }
                     });
                 });
+            },
+            
+            updateInventoryHeldCursor() {
+                let ghost = document.getElementById('invHeldGhost');
+                
+                if (this.inventoryHeldItem) {
+                    const { source, index } = this.inventoryHeldItem;
+                    const slotArray = source === 'hotbar' ? this.inventory.hotbar : this.inventory.main;
+                    const item = slotArray[index];
+                    
+                    if (item && item.count > 0) {
+                        if (!ghost) {
+                            ghost = document.createElement('div');
+                            ghost.id = 'invHeldGhost';
+                            ghost.className = 'inv-held-ghost';
+                            document.body.appendChild(ghost);
+                            
+                            // Add persistent mouse tracking
+                            document.addEventListener('mousemove', (e) => {
+                                const g = document.getElementById('invHeldGhost');
+                                if (g && g.style.display !== 'none') {
+                                    g.style.left = e.clientX + 'px';
+                                    g.style.top = e.clientY + 'px';
+                                }
+                            });
+                        }
+                        
+                        ghost.innerHTML = `<span class="ghost-icon">${this.getItemEmoji(item)}</span>`;
+                        if (item.count > 1) {
+                            ghost.innerHTML += `<span class="ghost-count">${item.count}</span>`;
+                        }
+                        ghost.style.display = 'block';
+                    } else {
+                        if (ghost) ghost.style.display = 'none';
+                    }
+                } else {
+                    if (ghost) ghost.style.display = 'none';
+                }
             },
             
             swapInventorySlots(srcType, srcIdx, destType, destIdx) {
@@ -8357,26 +8682,52 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 const feetBlock = this.getBlock(px, Math.floor(playerFeetY), pz);
                 const waistBlock = this.getBlock(px, Math.floor(playerFeetY + 0.9), pz);
                 const headBlock = this.getBlock(px, Math.floor(playerHeadY - 0.1), pz);
+                const belowFeetBlock = this.getBlock(px, Math.floor(playerFeetY) - 1, pz);
                 
+                // Simple fluid detection - ONLY when body part is INSIDE fluid block
                 const feetInWater = feetBlock === 'water';
                 const feetInLava = feetBlock === 'lava';
                 const waistInWater = waistBlock === 'water';
                 const waistInLava = waistBlock === 'lava';
                 const headInWater = headBlock === 'water';
                 const headInLava = headBlock === 'lava';
+                const belowFeetInWater = belowFeetBlock === 'water';
+                const belowFeetInLava = belowFeetBlock === 'lava';
                 
-                // Determine swimming state (in fluid at feet or waist level)
+                // Swimming = feet or waist are INSIDE a fluid block
                 const inWater = feetInWater || waistInWater;
                 const inLava = feetInLava || waistInLava;
                 const swimming = inWater || inLava;
                 const submerged = headInWater || headInLava;
                 
+                // Surface floating ONLY when:
+                // 1. Waist is in water (deep enough to float)
+                // 2. Head is NOT in water (above surface)
+                // 3. Player has upward or near-zero velocity (not actively falling in)
+                // This prevents floating from triggering when entering water from above
+                const stableAtSurface = waistInWater && !headInWater && this.velocity.y > -0.02;
+                const atFluidSurface = stableAtSurface && !this.keys['shift'];
+                
                 // Store fluid state for rendering effects
                 this.inWater = inWater || headInWater;
                 this.inLava = inLava || headInLava;
                 this.swimming = swimming;
-                this.headSubmergedWater = headInWater;  // Only show blue overlay when head is underwater
-                this.headSubmergedLava = headInLava;    // Only show lava overlay when head is in lava
+                this.headSubmergedWater = headInWater;
+                this.headSubmergedLava = headInLava;
+                
+                // DEBUG: Store swim debug info for display
+                this.swimDebugInfo = {
+                    feetBlock: feetBlock || 'air',
+                    waistBlock: waistBlock || 'air', 
+                    headBlock: headBlock || 'air',
+                    belowFeetBlock: belowFeetBlock || 'air',
+                    feetInWater, waistInWater, headInWater,
+                    inWater, swimming, submerged,
+                    stableAtSurface, atFluidSurface,
+                    velocityY: this.velocity.y,
+                    playerFeetY,
+                    physicsBranch: 'none'  // Will be set by physics code
+                };
                 
                 // Apply speed modifier when in fluid
                 let speedMod = 1.0;
@@ -8491,55 +8842,112 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 
                 // --- GRAVITY / SWIMMING PHYSICS ---
                 if (swimming) {
-                    // SWIMMING MODE: Player sinks by default, must actively swim up
-                    const sinkSpeed = inLava ? 0.006 : 0.008;  // Slow sinking in fluids
-                    const swimDrag = inLava ? 0.92 : 0.95;     // Drag slows movement
+                    // MINECRAFT-STYLE SWIMMING:
+                    // - At surface (stable): FLOAT by default
+                    // - Underwater or entering: SINK, SPACE to swim up
                     
-                    // Default: sink slowly
-                    this.velocity.y -= sinkSpeed;
+                    const isLava = inLava;
+                    const swimDrag = isLava ? 0.90 : 0.92;
+                    const maxSwimSpeed = isLava ? 0.10 : 0.14;
                     
-                    // SPACE = swim up (hold to float/rise)
-                    if (this.keys[' ']) {
-                        const swimUpSpeed = inLava ? 0.04 : 0.06;
-                        this.velocity.y += swimUpSpeed;
+                    if (atFluidSurface) {
+                        // === STABLE AT SURFACE - FLOAT ===
+                        // Only triggers when waist in water, head out, velocity stable
+                        if (this.swimDebugInfo) this.swimDebugInfo.physicsBranch = 'FLOAT';
+                        
+                        const equilibriumForce = 0.002;
+                        const heavyDamping = 0.75;
+                        
+                        if (this.velocity.y < -0.002) {
+                            this.velocity.y += equilibriumForce * 4;
+                        } else if (this.velocity.y > 0.002) {
+                            this.velocity.y -= equilibriumForce * 3;
+                        }
+                        
+                        this.velocity.y *= heavyDamping;
+                        this.velocity.y = Math.max(-0.006, Math.min(0.006, this.velocity.y));
+                        
+                        // SPACE at surface = jump out of water
+                        if (this.keys[' ']) {
+                            this.velocity.y = 0.22;
+                            if (this.swimDebugInfo) this.swimDebugInfo.physicsBranch = 'JUMP';
+                        }
+                        
+                    } else {
+                        // === UNDERWATER / ENTERING / DIVING - SINK ===
+                        if (this.swimDebugInfo) this.swimDebugInfo.physicsBranch = 'SINK';
+                        
+                        const sinkSpeed = isLava ? 0.010 : 0.014;
+                        const swimUpForce = isLava ? 0.032 : 0.048;
+                        const swimDownForce = isLava ? 0.018 : 0.028;
+                        
+                        // Sink by default
+                        this.velocity.y -= sinkSpeed;
+                        
+                        // SPACE = swim up
+                        if (this.keys[' ']) {
+                            this.velocity.y += swimUpForce;
+                            if (this.swimDebugInfo) this.swimDebugInfo.physicsBranch = 'SWIM_UP';
+                        }
+                        
+                        // SHIFT = swim down faster
+                        if (this.keys['shift']) {
+                            this.velocity.y -= swimDownForce;
+                            if (this.swimDebugInfo) this.swimDebugInfo.physicsBranch = 'DIVE';
+                        }
+                        
+                        // Apply drag
+                        this.velocity.y *= swimDrag;
+                        
+                        // Clamp velocity
+                        this.velocity.y = Math.max(-maxSwimSpeed, Math.min(maxSwimSpeed, this.velocity.y));
                     }
                     
-                    // SHIFT = swim down faster
-                    if (this.keys['shift']) {
-                        const swimDownSpeed = inLava ? 0.03 : 0.04;
-                        this.velocity.y -= swimDownSpeed;
-                    }
-                    
-                    // Clamp swim velocity
-                    const maxSwimSpeed = inLava ? 0.12 : 0.18;
-                    this.velocity.y = Math.max(-maxSwimSpeed, Math.min(maxSwimSpeed, this.velocity.y));
-                    
-                    // Apply drag (velocity decays over time in fluid)
-                    this.velocity.y *= swimDrag;
-                    
-                    // Surface boost - when at surface and pressing space, jump out
-                    if (!submerged && this.keys[' '] && this.velocity.y < 0.15) {
-                        this.velocity.y = 0.2;
-                    }
                 } else {
                     // NORMAL MODE: Standard gravity
+                    if (this.swimDebugInfo) this.swimDebugInfo.physicsBranch = 'GRAVITY';
                     this.velocity.y += this.gravity;
+                }
+                
+                // Console logging for swim debugging
+                if (this.debugSettings.swimConsoleLog && this.swimDebugInfo && this.swimming) {
+                    console.log(`[SWIM] branch=${this.swimDebugInfo.physicsBranch} velY=${this.velocity.y.toFixed(4)} waist=${this.swimDebugInfo.waistInWater} head=${this.swimDebugInfo.headInWater} stable=${this.swimDebugInfo.stableAtSurface} atSurf=${this.swimDebugInfo.atFluidSurface}`);
                 }
                 
                 const newY = this.camera.y + this.velocity.y;
                 
                 // Ground collision - camera is at hip/waist level (playerEyeHeight above ground)
                 const groundY = this.getGroundHeightBelow(this.camera.x, this.camera.z, this.camera.y) + this.playerEyeHeight + 0.5;
-                if (newY < groundY) {
+                
+                if (swimming) {
+                    // SWIMMING: Only prevent falling through solid ground, but don't "land"
+                    // Player should sink/swim in water, not stand on underwater ground
+                    if (newY < groundY) {
+                        // Hit solid ground under the water - stop sinking but stay in swim mode
+                        this.camera.y = groundY;
+                        this.velocity.y = Math.max(0, this.velocity.y); // Only allow upward movement
+                    } else {
+                        this.camera.y = newY;
+                    }
+                    // Player is never "on ground" while swimming - no jumping allowed
+                    this.isJumping = true; // Prevents ground-based jumping
+                } else if (newY < groundY) {
+                    // NORMAL: Land on ground
                     this.camera.y = groundY;
                     this.velocity.y = 0;
                     this.isJumping = false;
                     
-                    // Continuous jumping - if space is held and on ground, jump immediately
-                    if (this.keys[' '] && !swimming) {
+                    // Jump cooldown system - prevent spam jumping
+                    const now = Date.now();
+                    const jumpCooldown = 350; // 350ms between jumps
+                    if (!this.lastJumpTime) this.lastJumpTime = 0;
+                    
+                    // Continuous jumping - if space is held and on ground, jump (with cooldown)
+                    if (this.keys[' '] && (now - this.lastJumpTime > jumpCooldown)) {
                         this.velocity.y = 0.28;
                         this.isJumping = true;
                         this.stats.jumps++;
+                        this.lastJumpTime = now;
                     }
                 } else {
                     this.camera.y = newY;
@@ -8704,6 +9112,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 const renderDistSq = renderDist * renderDist;
                 
                 // Inline project function for speed
+                // Near plane distance - smaller value = can get closer to blocks
+                const nearPlane = 0.05; // Reduced from 0.1 for closer viewing
+                
                 const project = (x, y, z) => {
                     const dx = x - camX;
                     const dy = y - camY;
@@ -8712,7 +9123,20 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     const rz = dx * sinY + dz * cosY;
                     const ry = dy * cosX - rz * sinX;
                     const finalZ = dy * sinX + rz * cosX;
-                    if (finalZ <= 0.1) return null;
+                    
+                    // Clamp to near plane instead of returning null
+                    // This prevents faces from disappearing when partially behind camera
+                    if (finalZ <= nearPlane) {
+                        // For extremely close/behind vertices, clamp and scale to near plane
+                        const clampedZ = nearPlane;
+                        const scale = clampedZ / Math.max(finalZ, 0.001);
+                        return { 
+                            x: halfW + (rx * scale / clampedZ) * fov, 
+                            y: halfH - (ry * scale / clampedZ) * fov, 
+                            z: clampedZ,
+                            clamped: true 
+                        };
+                    }
                     return { x: halfW + (rx / finalZ) * fov, y: halfH - (ry / finalZ) * fov, z: finalZ };
                 };
                 
@@ -9059,8 +9483,15 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     
                     let hasTop, hasBottom, hasFront, hasBack, hasLeft, hasRight;
                     
+                    // Check if this block has a custom model (smaller than full block)
+                    const hasCustomModel = this.blockModels && this.blockModels[type];
+                    
                     // DEBUG: Disable face culling - show all faces
                     if (this.debugSettings.disableFaceCulling) {
+                        hasTop = hasBottom = hasFront = hasBack = hasLeft = hasRight = true;
+                    } else if (hasCustomModel) {
+                        // Custom model blocks (furniture, containers) - ALWAYS show all faces
+                        // They don't fill the full block space so faces should never be culled
                         hasTop = hasBottom = hasFront = hasBack = hasLeft = hasRight = true;
                     } else if (isFluid) {
                         // For fluids, show top if not covered by same fluid above
@@ -9137,6 +9568,24 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     // Fancy leaves are OPAQUE but show internal faces (like Minecraft)
                     const leafFancyMode = isLeafBlock && (treeStyle === 'transparent' || treeStyle === 'bushy');
                     
+                    // Get block model (custom dimensions for non-cube blocks)
+                    const model = this.blockModels[type];
+                    // Model format: [offsetX, offsetY, offsetZ, scaleX, scaleY, scaleZ]
+                    const ox = model ? model[0] : 0;
+                    const oy = model ? model[1] : 0;
+                    const oz = model ? model[2] : 0;
+                    const sx = model ? model[3] : 1;
+                    const sy = model ? model[4] : 1;
+                    const sz = model ? model[5] : 1;
+                    
+                    // Calculate block bounds with model
+                    const x0 = x + ox;
+                    const y0 = y + oy;
+                    const z0 = z + oz;
+                    const x1 = x + ox + sx;
+                    const y1 = y + oy + sy;
+                    const z1 = z + oz + sz;
+                    
                     // Define visible faces
                     const faces = [];
                     
@@ -9179,34 +9628,38 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         return [vx, vy, vz];
                     };
                     
-                    // Front face (+Z)
+                    // Apply model to topY (for leaves with reduced height)
+                    const modelTopY = model ? y1 : topY;
+                    const modelBottomY = model ? y0 : y;
+                    
+                    // Front face (+Z) - use model bounds
                     if (hasFront) {
-                        const v = [[x, y, z+1], [x+1, y, z+1], [x+1, topY, z+1], [x, topY, z+1]].map(([vx, vy, vz]) => applyWind(vx, vy, vz));
+                        const v = [[x0, modelBottomY, z1], [x1, modelBottomY, z1], [x1, modelTopY, z1], [x0, modelTopY, z1]].map(([vx, vy, vz]) => applyWind(vx, vy, vz));
                         faces.push({ v, color: sideColor, dark: frontDark, isTop: false, isLeaf: isLeafBlock });
                     }
                     // Back face (-Z)
                     if (hasBack) {
-                        const v = [[x+1, y, z], [x, y, z], [x, topY, z], [x+1, topY, z]].map(([vx, vy, vz]) => applyWind(vx, vy, vz));
+                        const v = [[x1, modelBottomY, z0], [x0, modelBottomY, z0], [x0, modelTopY, z0], [x1, modelTopY, z0]].map(([vx, vy, vz]) => applyWind(vx, vy, vz));
                         faces.push({ v, color: sideColor, dark: backDark, isTop: false, isLeaf: isLeafBlock });
                     }
                     // Top face (+Y)
                     if (hasTop) {
-                        const v = [[x, topY, z], [x+1, topY, z], [x+1, topY, z+1], [x, topY, z+1]].map(([vx, vy, vz]) => applyWind(vx, vy, vz));
+                        const v = [[x0, modelTopY, z0], [x1, modelTopY, z0], [x1, modelTopY, z1], [x0, modelTopY, z1]].map(([vx, vy, vz]) => applyWind(vx, vy, vz));
                         faces.push({ v, color: topColor, dark: topDark, isTop: true, isLeaf: isLeafBlock });
                     }
                     // Bottom face (-Y)
                     if (hasBottom) {
-                        const v = [[x, y, z+1], [x+1, y, z+1], [x+1, y, z], [x, y, z]].map(([vx, vy, vz]) => applyWind(vx, vy, vz));
+                        const v = [[x0, modelBottomY, z1], [x1, modelBottomY, z1], [x1, modelBottomY, z0], [x0, modelBottomY, z0]].map(([vx, vy, vz]) => applyWind(vx, vy, vz));
                         faces.push({ v, color: bottomColor, dark: bottomDark, isTop: false, isLeaf: isLeafBlock });
                     }
                     // Left face (-X)
                     if (hasLeft) {
-                        const v = [[x, y, z], [x, y, z+1], [x, topY, z+1], [x, topY, z]].map(([vx, vy, vz]) => applyWind(vx, vy, vz));
+                        const v = [[x0, modelBottomY, z0], [x0, modelBottomY, z1], [x0, modelTopY, z1], [x0, modelTopY, z0]].map(([vx, vy, vz]) => applyWind(vx, vy, vz));
                         faces.push({ v, color: sideColor, dark: leftDark, isTop: false, isLeaf: isLeafBlock });
                     }
                     // Right face (+X)
                     if (hasRight) {
-                        const v = [[x+1, y, z+1], [x+1, y, z], [x+1, topY, z], [x+1, topY, z+1]].map(([vx, vy, vz]) => applyWind(vx, vy, vz));
+                        const v = [[x1, modelBottomY, z1], [x1, modelBottomY, z0], [x1, modelTopY, z0], [x1, modelTopY, z1]].map(([vx, vy, vz]) => applyWind(vx, vy, vz));
                         faces.push({ v, color: sideColor, dark: rightDark, isTop: false, isLeaf: isLeafBlock });
                     }
                     
@@ -9234,14 +9687,22 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     for (let f = 0; f < facesWithDist.length; f++) {
                         const { face } = facesWithDist[f];
                         const pts = [];
-                        let valid = true;
+                        let clampedCount = 0;
                         
                         for (let v = 0; v < 4; v++) {
                             const p = project(face.v[v][0], face.v[v][1], face.v[v][2]);
-                            if (!p) { valid = false; break; }
                             pts.push(p);
+                            if (p.clamped) clampedCount++;
                         }
-                        if (!valid || pts.length !== 4) continue;
+                        
+                        // CRITICAL FIX: If ALL vertices are clamped (face entirely behind camera), skip it
+                        // This prevents screen-filling polygons when looking up/down
+                        if (clampedCount >= 4) continue;
+                        
+                        // Track if any vertices were clamped (for debug visualization)
+                        const hasClampedVertex = clampedCount > 0;
+                        
+                        if (pts.length !== 4) continue;
                         
                         // Apply shadow and get base color
                         let fillColor = face.color;
@@ -9461,15 +9922,42 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                             ctx.globalAlpha = 0.4; // Subtle texture overlay
                             
                             if (this.settings.textureMode === 'fixed') {
-                                // FIXED MODE: Texture anchored to each face
-                                // Use the face's screen center as texture origin
+                                // TRUE FIXED MODE: Texture clipped to face and anchored to block world position
+                                // This mode makes textures stay in place relative to blocks
+                                ctx.save();
+                                
+                                // Clip to face polygon
+                                ctx.beginPath();
+                                ctx.moveTo(pts[0].x, pts[0].y);
+                                ctx.lineTo(pts[1].x, pts[1].y);
+                                ctx.lineTo(pts[2].x, pts[2].y);
+                                ctx.lineTo(pts[3].x, pts[3].y);
+                                ctx.closePath();
+                                ctx.clip();
+                                
+                                // Use block world coordinates to create stable texture offset
+                                const pattern = texture as CanvasPattern;
+                                if (pattern && pattern.setTransform) {
+                                    // Hash the block position for stable texture placement
+                                    const textureSize = 32;
+                                    const worldOffsetX = (block.x * textureSize * 0.5) % textureSize;
+                                    const worldOffsetY = ((block.y + block.z) * textureSize * 0.5) % textureSize;
+                                    const matrix = new DOMMatrix();
+                                    matrix.translateSelf(worldOffsetX, worldOffsetY);
+                                    pattern.setTransform(matrix);
+                                }
+                                
+                                ctx.fillStyle = texture;
+                                ctx.fillRect(minX - 5, minY - 5, maxX - minX + 10, maxY - minY + 10);
+                                ctx.restore();
+                            } else if (this.settings.textureMode === 'vacuum') {
+                                // VACUUM MODE: Creates the cool glitchy vacuum effect
+                                // Texture anchored to face center (creates stretching illusion)
                                 const faceCenterX = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) / 4;
                                 const faceCenterY = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) / 4;
                                 
-                                // Create transform matrix that anchors pattern to face center
                                 ctx.save();
                                 
-                                // Move pattern origin to face center
                                 const pattern = texture as CanvasPattern;
                                 if (pattern && pattern.setTransform) {
                                     const matrix = new DOMMatrix();
@@ -9504,6 +9992,34 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                             
                             // REMOVED: Edge lines caused "hollow block" appearance
                             // Solid blocks look better without edge lines
+                        }
+                        
+                        // DEBUG: Near-plane clipping visualization
+                        if (this.debugSettings.showNearPlaneClipping && hasClampedVertex) {
+                            ctx.strokeStyle = '#ff0000';
+                            ctx.lineWidth = 3;
+                            ctx.beginPath();
+                            ctx.moveTo(pts[0].x, pts[0].y);
+                            ctx.lineTo(pts[1].x, pts[1].y);
+                            ctx.lineTo(pts[2].x, pts[2].y);
+                            ctx.lineTo(pts[3].x, pts[3].y);
+                            ctx.closePath();
+                            ctx.stroke();
+                        }
+                        
+                        // DEBUG: Block model bounds visualization
+                        if (this.debugSettings.showBlockModels && this.blockModels[type]) {
+                            ctx.strokeStyle = '#00ffff';
+                            ctx.lineWidth = 2;
+                            ctx.setLineDash([4, 4]);
+                            ctx.beginPath();
+                            ctx.moveTo(pts[0].x, pts[0].y);
+                            ctx.lineTo(pts[1].x, pts[1].y);
+                            ctx.lineTo(pts[2].x, pts[2].y);
+                            ctx.lineTo(pts[3].x, pts[3].y);
+                            ctx.closePath();
+                            ctx.stroke();
+                            ctx.setLineDash([]);
                         }
                     }
                 }
@@ -10367,6 +10883,148 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     y += 10;
                     ctx.fillStyle = foliageCount > 50 ? '#f55' : '#0f0';
                     ctx.fillText(`Foliage: ${foliageCount} (${(foliageCount/allBlocks.length*100).toFixed(0)}%)`, this.canvas.width - 210, y);
+                }
+                
+                // Camera angle debug visualization
+                if (this.debugSettings.showCameraAngle) {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    ctx.fillRect(10, 100, 280, 150);
+                    ctx.strokeStyle = '#0ff';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(10, 100, 280, 150);
+                    
+                    ctx.font = 'bold 14px monospace';
+                    ctx.fillStyle = '#0ff';
+                    ctx.fillText('CAMERA ANGLES', 20, 120);
+                    
+                    ctx.font = '12px monospace';
+                    ctx.fillStyle = '#fff';
+                    
+                    // Convert radians to degrees
+                    const rotXDeg = (this.camera.rotX * 180 / Math.PI).toFixed(2);
+                    const rotYDeg = (this.camera.rotY * 180 / Math.PI).toFixed(2);
+                    
+                    ctx.fillText(`Pitch (rotX): ${rotXDeg}° (${this.camera.rotX.toFixed(4)} rad)`, 20, 140);
+                    ctx.fillText(`Yaw (rotY): ${rotYDeg}° (${this.camera.rotY.toFixed(4)} rad)`, 20, 158);
+                    
+                    // Look direction vector
+                    const lookDirX = -Math.sin(this.camera.rotY) * Math.cos(this.camera.rotX);
+                    const lookDirY = Math.sin(this.camera.rotX);
+                    const lookDirZ = Math.cos(this.camera.rotY) * Math.cos(this.camera.rotX);
+                    
+                    ctx.fillText(`Look Dir: (${lookDirX.toFixed(3)}, ${lookDirY.toFixed(3)}, ${lookDirZ.toFixed(3)})`, 20, 176);
+                    
+                    // Trig values used in projection
+                    const cosX = Math.cos(this.camera.rotX);
+                    const sinX = Math.sin(this.camera.rotX);
+                    const cosY = Math.cos(this.camera.rotY);
+                    const sinY = Math.sin(this.camera.rotY);
+                    
+                    ctx.fillText(`cos(X): ${cosX.toFixed(4)}, sin(X): ${sinX.toFixed(4)}`, 20, 194);
+                    ctx.fillText(`cos(Y): ${cosY.toFixed(4)}, sin(Y): ${sinY.toFixed(4)}`, 20, 212);
+                    
+                    // Looking direction indicator
+                    const lookingUp = this.camera.rotX > 0.5;
+                    const lookingDown = this.camera.rotX < -0.5;
+                    ctx.fillStyle = (lookingUp || lookingDown) ? '#ff0' : '#0f0';
+                    ctx.fillText(`Direction: ${lookingUp ? '⬆️ UP' : lookingDown ? '⬇️ DOWN' : '➡️ LEVEL'}`, 20, 230);
+                }
+                
+                // Swimming debug visualization
+                if (this.debugSettings.showSwimDebug) {
+                    ctx.fillStyle = 'rgba(0, 0, 80, 0.92)';
+                    ctx.fillRect(10, 260, 340, 260);
+                    ctx.strokeStyle = '#0af';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(10, 260, 340, 260);
+                    
+                    ctx.font = 'bold 14px monospace';
+                    ctx.fillStyle = '#0af';
+                    ctx.fillText('🏊 SWIM DEBUG', 20, 280);
+                    
+                    const dbg = this.swimDebugInfo;
+                    if (dbg) {
+                        ctx.font = '10px monospace';
+                        
+                        // Blocks
+                        const drawBlock = (label, block, y) => {
+                            ctx.fillStyle = block === 'water' ? '#0ff' : block === 'lava' ? '#f80' : '#666';
+                            ctx.fillText(`${label}: ${block}`, 20, y);
+                        };
+                        drawBlock('Head', dbg.headBlock, 298);
+                        drawBlock('Waist', dbg.waistBlock, 312);
+                        drawBlock('Feet', dbg.feetBlock, 326);
+                        drawBlock('Below', dbg.belowFeetBlock, 340);
+                        
+                        // Flags
+                        ctx.fillStyle = '#fff';
+                        ctx.fillText(`feetInWater: ${dbg.feetInWater}`, 150, 312);
+                        ctx.fillText(`waistInWater: ${dbg.waistInWater}`, 150, 326);
+                        ctx.fillText(`headInWater: ${dbg.headInWater}`, 150, 340);
+                        
+                        // States
+                        ctx.font = 'bold 11px monospace';
+                        ctx.fillStyle = dbg.swimming ? '#0f0' : '#f00';
+                        ctx.fillText(`swimming: ${dbg.swimming}`, 20, 358);
+                        ctx.fillStyle = dbg.submerged ? '#08f' : '#666';
+                        ctx.fillText(`submerged: ${dbg.submerged}`, 150, 358);
+                        
+                        ctx.fillStyle = dbg.stableAtSurface ? '#ff0' : '#666';
+                        ctx.fillText(`stableAtSurface: ${dbg.stableAtSurface}`, 20, 374);
+                        ctx.fillStyle = dbg.atFluidSurface ? '#0ff' : '#666';
+                        ctx.fillText(`atFluidSurface: ${dbg.atFluidSurface}`, 180, 374);
+                        
+                        // Physics branch - THE KEY INFO
+                        ctx.font = 'bold 14px monospace';
+                        const branchColors = {
+                            'FLOAT': '#0ff', 'SINK': '#f55', 'SWIM_UP': '#0f0',
+                            'DIVE': '#f80', 'JUMP': '#ff0', 'GRAVITY': '#888', 'none': '#444'
+                        };
+                        ctx.fillStyle = branchColors[dbg.physicsBranch] || '#fff';
+                        ctx.fillText(`BRANCH: ${dbg.physicsBranch}`, 20, 398);
+                        
+                        // Velocity
+                        ctx.font = '11px monospace';
+                        ctx.fillStyle = dbg.velocityY > 0.001 ? '#0f0' : dbg.velocityY < -0.001 ? '#f55' : '#ff0';
+                        ctx.fillText(`velocityY: ${dbg.velocityY.toFixed(5)} ${dbg.velocityY > 0 ? '↑' : dbg.velocityY < 0 ? '↓' : '—'}`, 20, 418);
+                        
+                        // Position
+                        ctx.fillStyle = '#aaa';
+                        ctx.fillText(`feetY: ${dbg.playerFeetY.toFixed(3)}`, 180, 418);
+                        
+                        // Ground
+                        const groundY = this.getGroundHeightBelow(this.camera.x, this.camera.z, this.camera.y);
+                        ctx.fillStyle = '#888';
+                        ctx.fillText(`ground: Y=${groundY}`, 20, 436);
+                        
+                        // Keys
+                        ctx.fillStyle = this.keys[' '] ? '#0f0' : '#444';
+                        ctx.fillText(`[SPACE]`, 20, 456);
+                        ctx.fillStyle = this.keys['shift'] ? '#f80' : '#444';
+                        ctx.fillText(`[SHIFT]`, 90, 456);
+                        
+                        // Water entry conditions
+                        ctx.fillStyle = '#888';
+                        ctx.font = '9px monospace';
+                        ctx.fillText(`Float requires: waistInWater && !headInWater && velY>-0.02`, 20, 476);
+                        ctx.fillText(`Current velY check: ${this.velocity.y > -0.02 ? 'PASS' : 'FAIL'} (${this.velocity.y.toFixed(3)} > -0.02)`, 20, 490);
+                        
+                        // Diagnosis
+                        ctx.font = 'bold 10px monospace';
+                        if (!dbg.swimming) {
+                            ctx.fillStyle = '#888';
+                            ctx.fillText('Not in water', 20, 508);
+                        } else if (dbg.physicsBranch === 'FLOAT') {
+                            ctx.fillStyle = '#0ff';
+                            ctx.fillText('⚠️ FLOATING - this prevents sinking!', 20, 508);
+                        } else if (dbg.physicsBranch === 'SINK') {
+                            ctx.fillStyle = '#0f0';
+                            ctx.fillText('✓ Sinking correctly', 20, 508);
+                        }
+                    } else {
+                        ctx.fillStyle = '#f00';
+                        ctx.fillText('No swim debug info (not in update loop)', 20, 300);
+                    }
                 }
                 
                 // ═══════════════════════════════════════════════════════════
@@ -11254,14 +11912,15 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         }
                         if (occluded) continue;
                         
-                        const bobOffset = Math.sin(item.bobPhase) * 0.1;
-                        const center = project(item.x, item.y + bobOffset, item.z);
+                        // Minecraft-style gentle bob - slower and smoother
+                        const bobOffset = Math.sin(item.bobPhase * 0.8) * 0.08;
+                        const center = project(item.x, item.y + bobOffset + 0.15, item.z);
                         if (!center || center.z <= 0) continue;
                         
                         const baseSize = Math.max(6, 30 / center.z);
                         
-                        // Draw 3D item based on type
-                        this.drawDroppedItem3D(ctx, center.x, center.y, baseSize, item.type, item.bobPhase);
+                        // Draw 3D item based on type (rotation is based on bobPhase)
+                        this.drawDroppedItem3D(ctx, center.x, center.y, baseSize, item.type, item.bobPhase * 0.5);
                         
                         // Count badge if more than 1
                         if (item.count > 1) {
@@ -12626,6 +13285,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 this.inWater = false;
                 this.inLava = false;
                 this.swimming = false;
+                this.lastSwimTime = 0;
                 this.headSubmergedWater = false;
                 this.headSubmergedLava = false;
                 
@@ -12770,6 +13430,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 this.inWater = false;
                 this.inLava = false;
                 this.swimming = false;
+                this.lastSwimTime = 0;
                 this.headSubmergedWater = false;
                 this.headSubmergedLava = false;
                 
