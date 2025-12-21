@@ -283,8 +283,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             lastSwimTime: 0,  // Track when we last exited water for smooth transitions
             swimDebugInfo: null,  // Debug info for swimming system
             
-            // Player dimensions - camera at waist/hip level
-            playerEyeHeight: 1.2,  // How high camera is above feet
+            // Player dimensions - camera at eye level
+            playerEyeHeight: 0.2,  // How high camera is above feet (lowered by 1 block)
             playerHeight: 1.8,     // Total player height
             
             // Birds and mobs
