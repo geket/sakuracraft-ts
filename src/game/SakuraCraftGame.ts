@@ -394,6 +394,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             inventoryOpen: false,
             draggedItem: null,
             dragSource: null,
+            lastMouseX: 0,
+            lastMouseY: 0,
+            craftingCollapsed: true,  // Start collapsed for compact view
             
             // Container UI state
             containerOpen: false,
@@ -5997,19 +6000,21 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 
                 slots.forEach(slot => {
                     slot.addEventListener('click', (e) => {
+                        const me = e as MouseEvent;
                         const slotIndex = parseInt((e.currentTarget as HTMLElement).dataset.slot);
                         const source = (e.currentTarget as HTMLElement).dataset.source;
                         
-                        this.handleContainerSlotClick(slotIndex, source, containerKey);
+                        this.handleContainerSlotClick(slotIndex, source, containerKey, false, me.clientX, me.clientY);
                     });
                     
                     slot.addEventListener('contextmenu', (e) => {
                         e.preventDefault();
+                        const me = e as MouseEvent;
                         const slotIndex = parseInt((e.currentTarget as HTMLElement).dataset.slot);
                         const source = (e.currentTarget as HTMLElement).dataset.source;
                         
                         // Right click - transfer half stack
-                        this.handleContainerSlotClick(slotIndex, source, containerKey, true);
+                        this.handleContainerSlotClick(slotIndex, source, containerKey, true, me.clientX, me.clientY);
                     });
                 });
                 
@@ -6020,7 +6025,12 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 }
             },
             
-            handleContainerSlotClick(slotIndex, source, containerKey, halfStack = false) {
+            handleContainerSlotClick(slotIndex, source, containerKey, halfStack = false, mouseX = 0, mouseY = 0) {
+                if (this.debugSettings.dragDebug) {
+                    console.log(`[DRAG] handleContainerSlotClick: slot=${slotIndex}, source=${source}, halfStack=${halfStack}, mouse=(${mouseX}, ${mouseY})`);
+                    console.log(`[DRAG] Before click: draggedItem=`, this.draggedItem);
+                }
+                
                 const contents = this.chestContents[containerKey] || [];
                 
                 if (this.draggedItem) {
@@ -6116,12 +6126,21 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 );
                 this.updateHotbarDisplay();
                 
-                // Update cursor
-                this.updateDragCursor();
+                if (this.debugSettings.dragDebug) {
+                    console.log(`[DRAG] After click: draggedItem=`, this.draggedItem);
+                }
+                
+                // Update cursor with mouse position
+                this.updateDragCursor(mouseX, mouseY);
             },
             
-            updateDragCursor() {
+            updateDragCursor(mouseX, mouseY) {
                 let ghost = document.getElementById('dragGhost');
+                
+                // Debug logging
+                if (this.debugSettings.dragDebug) {
+                    console.log(`[DRAG] updateDragCursor called: mouseX=${mouseX}, mouseY=${mouseY}, draggedItem=`, this.draggedItem);
+                }
                 
                 if (this.draggedItem) {
                     if (!ghost) {
@@ -6130,23 +6149,45 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         ghost.className = 'drag-ghost';
                         document.body.appendChild(ghost);
                         
-                        // Add single persistent mouse tracking
+                        if (this.debugSettings.dragDebug) {
+                            console.log('[DRAG] Created new ghost element');
+                        }
+                        
+                        // Track mouse position globally for the ghost
                         document.addEventListener('mousemove', (e) => {
                             const g = document.getElementById('dragGhost');
                             if (g && g.style.display !== 'none') {
                                 g.style.left = e.clientX + 'px';
                                 g.style.top = e.clientY + 'px';
                             }
+                            // Store last known position
+                            this.lastMouseX = e.clientX;
+                            this.lastMouseY = e.clientY;
                         });
                     }
                     
-                    ghost.innerHTML = `<span class="ghost-icon">${this.getItemEmoji({ id: this.draggedItem.type })}</span>`;
+                    const emoji = this.getItemEmoji({ id: this.draggedItem.type });
+                    ghost.innerHTML = `<span class="ghost-icon">${emoji}</span>`;
                     if (this.draggedItem.count > 1) {
                         ghost.innerHTML += `<span class="ghost-count">${this.draggedItem.count}</span>`;
                     }
+                    
+                    // Set initial position from passed coords or last known position
+                    const posX = mouseX || this.lastMouseX || 0;
+                    const posY = mouseY || this.lastMouseY || 0;
+                    ghost.style.left = posX + 'px';
+                    ghost.style.top = posY + 'px';
                     ghost.style.display = 'block';
+                    
+                    if (this.debugSettings.dragDebug) {
+                        console.log(`[DRAG] Ghost updated: emoji="${emoji}", pos=(${posX}, ${posY}), display=${ghost.style.display}`);
+                        console.log(`[DRAG] Ghost computed style:`, window.getComputedStyle(ghost));
+                    }
                 } else if (ghost) {
                     ghost.style.display = 'none';
+                    if (this.debugSettings.dragDebug) {
+                        console.log('[DRAG] Ghost hidden (no dragged item)');
+                    }
                 }
             },
             
@@ -6239,7 +6280,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 // Swimming debug
                 showSwimDebug: false,
                 // Console logging for swim debugging
-                swimConsoleLog: false
+                swimConsoleLog: false,
+                // Drag/drop debugging
+                dragDebug: false
             },
             debugFly: false,
             debugMoveSpeed: null,
@@ -7174,6 +7217,22 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                     this.debugLog('Check browser console (F12) for frame-by-frame swim data', 'info');
                                 }
                                 break;
+                            
+                            case 'drag':
+                            case 'dragdebug':
+                                this.debugSettings.dragDebug = !this.debugSettings.dragDebug;
+                                this.debugLog(`Drag debug: ${this.debugSettings.dragDebug ? 'ON' : 'OFF'}`, 'success');
+                                if (this.debugSettings.dragDebug) {
+                                    this.debugLog('Check browser console (F12) for drag/drop info when clicking items', 'info');
+                                    // Also show current ghost state
+                                    const ghost = document.getElementById('dragGhost');
+                                    this.debugLog(`Current ghost element: ${ghost ? 'exists' : 'not created'}`, 'info');
+                                    if (ghost) {
+                                        this.debugLog(`Ghost display: ${ghost.style.display}, position: (${ghost.style.left}, ${ghost.style.top})`, 'info');
+                                    }
+                                    this.debugLog(`draggedItem: ${this.draggedItem ? JSON.stringify(this.draggedItem) : 'null'}`, 'info');
+                                }
+                                break;
                                 
                             case 'all':
                                 const newState = !this.debugSettings.wireframeOnly;
@@ -7211,12 +7270,13 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                 this.debugSettings.showCameraAngle = false;
                                 this.debugSettings.showSwimDebug = false;
                                 this.debugSettings.swimConsoleLog = false;
+                                this.debugSettings.dragDebug = false;
                                 this.debugLog('All render debug: OFF', 'warn');
                                 break;
                                 
                             default:
                                 this.debugLog(`Unknown render option: ${subcommand}`, 'error');
-                                this.debugLog('Options: wireframe, depthorder, normals, bounds, raycast, projection, culling, overdraw, targetinfo, treediag, faceorder, heatmap, stats, highlight, pause, nearplane, blockmodels, angle, swim, swimlog, all, none', 'info');
+                                this.debugLog('Options: wireframe, depthorder, normals, bounds, raycast, projection, culling, overdraw, targetinfo, treediag, faceorder, heatmap, stats, highlight, pause, nearplane, blockmodels, angle, swim, swimlog, drag, all, none', 'info');
                         }
                         break;
                         
@@ -7992,18 +8052,14 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         sakuraPetal: 'Sacred Cherry Petal', shimenawa: 'Sacred Rope',
                         omamori: 'Protective Charm', ema: 'Wooden Wish Plaque',
                         incense: 'Purifying Incense',
-                        // Underground
                         bedrock: 'Bedrock', deepslate: 'Deepslate', mossyStone: 'Mossy Stone',
                         dungeonBrick: 'Dungeon Brick', dungeonMossy: 'Mossy Dungeon Brick',
-                        // Ores
                         sakuraite: 'Sakuraite Ore', moonstone: 'Moonstone Ore',
                         jadite: 'Jadite Ore', crimsonite: 'Crimsonite Ore',
                         voidstone: 'Voidstone Ore', spirite: 'Spirite Ore',
-                        // Containers
                         barrel: 'Storage Barrel', crate: 'Wooden Crate',
                         furnace: 'Furnace', alchemyTable: 'Alchemy Table',
                         storageShrine: 'Storage Shrine',
-                        // Other
                         whiteBrick: 'White Brick', redBrick: 'Red Brick',
                         glowstone: 'Burgerstone', ritualStone: 'Ritual Stone',
                         appleLeaves: 'Apple Tree Leaves'
@@ -8011,29 +8067,38 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     return names[id] || id;
                 };
                 
-                let html = '<div class="inventory-container">';
-                html += '<h2>Inventory</h2>';
+                // Check if crafting is collapsed
+                const craftingCollapsed = this.craftingCollapsed || false;
                 
-                // Crafting section
+                let html = '<div class="inventory-container">';
+                html += '<div class="inv-header"><h2>📦 Inventory</h2><button class="inv-close-btn" onclick="minecraftGame.toggleInventory()">✕</button></div>';
+                
+                // Collapsible Crafting section
                 html += '<div class="crafting-section">';
-                html += '<h3>Crafting</h3>';
-                html += '<div class="recipe-list">';
-                for (const recipe of this.recipes) {
-                    const canCraft = this.canCraftRecipe(recipe);
-                    html += `<div class="recipe ${canCraft ? 'craftable' : 'disabled'}" data-recipe="${recipe.name}">`;
-                    html += `<span class="recipe-name">${recipe.name}</span>`;
-                    html += `<span class="recipe-ingredients">`;
-                    recipe.ingredients.forEach(ing => {
-                        html += `${ing.count}x ${ing.id} `;
-                    });
-                    html += `</span>`;
-                    html += `<span class="recipe-result">→ ${recipe.result.count}x ${recipe.result.id}</span>`;
-                    if (canCraft) {
-                        html += `<button class="craft-btn" onclick="minecraftGame.craftRecipe('${recipe.name}')">Craft</button>`;
+                html += `<div class="crafting-header" onclick="minecraftGame.toggleCrafting()">`;
+                html += `<h3>🔨 Crafting ${craftingCollapsed ? '▶' : '▼'}</h3>`;
+                html += '</div>';
+                
+                if (!craftingCollapsed) {
+                    html += '<div class="recipe-list">';
+                    for (const recipe of this.recipes) {
+                        const canCraft = this.canCraftRecipe(recipe);
+                        html += `<div class="recipe ${canCraft ? 'craftable' : 'disabled'}" data-recipe="${recipe.name}">`;
+                        html += `<span class="recipe-name">${recipe.name}</span>`;
+                        html += `<span class="recipe-ingredients">`;
+                        recipe.ingredients.forEach(ing => {
+                            html += `${ing.count}x ${ing.id} `;
+                        });
+                        html += `</span>`;
+                        html += `<span class="recipe-result">→ ${recipe.result.count}x ${recipe.result.id}</span>`;
+                        if (canCraft) {
+                            html += `<button class="craft-btn" onclick="event.stopPropagation(); minecraftGame.craftRecipe('${recipe.name}')">Craft</button>`;
+                        }
+                        html += '</div>';
                     }
                     html += '</div>';
                 }
-                html += '</div></div>';
+                html += '</div>';
                 
                 // Hotbar
                 html += '<div class="inv-hotbar">';
@@ -8042,11 +8107,12 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 this.inventory.hotbar.forEach((slot, i) => {
                     const emoji = this.getItemEmoji(slot);
                     const hasItem = slot && slot.count > 0;
-                    const isHeld = this.inventoryHeldItem && this.inventoryHeldItem.source === 'hotbar' && this.inventoryHeldItem.index === i;
                     const tooltip = hasItem ? getItemName(slot) : '';
-                    html += `<div class="inv-slot ${i === this.selectedSlot ? 'selected' : ''} ${hasItem ? 'has-item' : ''} ${isHeld ? 'held' : ''}" 
-                        data-source="hotbar" data-index="${i}" ${tooltip ? `data-tooltip="${tooltip}"` : ''}
-                        draggable="${hasItem}">${emoji}<span class="count">${slot ? slot.count : ''}</span></div>`;
+                    html += `<div class="inv-slot ${i === this.selectedSlot ? 'selected' : ''} ${hasItem ? 'has-item' : ''}" 
+                        data-source="hotbar" data-index="${i}" ${tooltip ? `data-tooltip="${tooltip}"` : ''}>
+                        ${hasItem ? `<span class="slot-icon">${emoji}</span>` : ''}
+                        ${hasItem && slot.count > 1 ? `<span class="slot-count">${slot.count}</span>` : ''}
+                    </div>`;
                 });
                 html += '</div></div>';
                 
@@ -8057,161 +8123,136 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 for (let i = 0; i < 27; i++) {
                     const slot = this.inventory.main[i];
                     const hasItem = slot && slot.count > 0;
-                    const isHeld = this.inventoryHeldItem && this.inventoryHeldItem.source === 'main' && this.inventoryHeldItem.index === i;
-                    if (slot) {
-                        const emoji = this.getItemEmoji(slot);
-                        const tooltip = getItemName(slot);
-                        html += `<div class="inv-slot has-item ${isHeld ? 'held' : ''}" data-source="main" data-index="${i}" ${tooltip ? `data-tooltip="${tooltip}"` : ''} draggable="true">${emoji}<span class="count">${slot.count}</span></div>`;
-                    } else {
-                        html += `<div class="inv-slot empty" data-source="main" data-index="${i}" draggable="false"></div>`;
-                    }
+                    const emoji = hasItem ? this.getItemEmoji(slot) : '';
+                    const tooltip = hasItem ? getItemName(slot) : '';
+                    html += `<div class="inv-slot ${hasItem ? 'has-item' : 'empty'}" data-source="main" data-index="${i}" ${tooltip ? `data-tooltip="${tooltip}"` : ''}>
+                        ${hasItem ? `<span class="slot-icon">${emoji}</span>` : ''}
+                        ${hasItem && slot.count > 1 ? `<span class="slot-count">${slot.count}</span>` : ''}
+                    </div>`;
                 }
                 html += '</div></div>';
                 
-                html += '<p class="inv-hint">Click items to pick up/place | Drag also works | Press E or ESC to close</p>';
+                html += '<p class="inv-hint">Click to pick up/place items | ESC or E to close</p>';
                 html += '</div>';
                 
                 invScreen.innerHTML = html;
                 
-                // Setup drag and drop handlers
-                this.setupInventoryDragDrop();
+                // Setup click handlers
+                this.setupInventoryClickHandlers();
             },
             
-            setupInventoryDragDrop() {
-                const invScreen = document.getElementById('inventoryScreen');
+            toggleCrafting() {
+                this.craftingCollapsed = !this.craftingCollapsed;
+                // Store scroll position
+                const invContainer = document.querySelector('.inventory-container');
+                const scrollTop = invContainer ? invContainer.scrollTop : 0;
+                
+                this.renderInventory();
+                
+                // Restore scroll position
+                requestAnimationFrame(() => {
+                    const newContainer = document.querySelector('.inventory-container');
+                    if (newContainer) {
+                        newContainer.scrollTop = scrollTop;
+                    }
+                });
+            },
+            
+            setupInventoryClickHandlers() {
                 const slots = document.querySelectorAll('#inventoryScreen .inv-slot');
                 
-                // Track held item for click-to-move
-                if (!this.inventoryHeldItem) this.inventoryHeldItem = null;
-                
-                // Prevent page scrolling when scrolling inside inventory
-                const invContainer = invScreen.querySelector('.inventory-container');
-                if (invContainer) {
-                    invContainer.addEventListener('wheel', (e) => {
-                        e.stopPropagation();
-                        // Allow scrolling inside the container but prevent it from bubbling
-                        const { scrollTop, scrollHeight, clientHeight } = invContainer;
-                        const atTop = scrollTop === 0;
-                        const atBottom = scrollTop + clientHeight >= scrollHeight;
-                        
-                        // Only prevent default if we're trying to scroll beyond bounds
-                        if ((atTop && (e as WheelEvent).deltaY < 0) || (atBottom && (e as WheelEvent).deltaY > 0)) {
-                            e.preventDefault();
-                        }
-                    }, { passive: false });
-                }
-                
-                // Prevent scroll on the inventory screen during drag operations
-                invScreen.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                });
-                
-                invScreen.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                });
-                
                 slots.forEach(slot => {
-                    // Click to select/place items (more reliable than drag)
                     slot.addEventListener('click', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         
+                        const me = e as MouseEvent;
                         const source = (slot as HTMLElement).dataset.source;
                         const index = parseInt((slot as HTMLElement).dataset.index);
-                        const slotArray = source === 'hotbar' ? this.inventory.hotbar : this.inventory.main;
-                        const clickedItem = slotArray[index];
                         
-                        if (this.inventoryHeldItem) {
-                            // Place held item in this slot (swap if occupied)
-                            this.swapInventorySlots(
-                                this.inventoryHeldItem.source,
-                                this.inventoryHeldItem.index,
-                                source,
-                                index
-                            );
-                            this.inventoryHeldItem = null;
-                            this.updateInventoryHeldCursor();
-                            this.renderInventory();
-                            this.updateHotbar();
-                            this.updateHotbarDisplay();
-                        } else if (clickedItem && clickedItem.count > 0) {
-                            // Pick up this item
-                            this.inventoryHeldItem = { source, index };
-                            this.updateInventoryHeldCursor();
-                            this.renderInventory();
-                        }
+                        this.handleInventorySlotClick(source, index, me.clientX, me.clientY);
                     });
                     
-                    // Also support drag and drop
-                    slot.addEventListener('dragstart', (e) => {
-                        e.stopPropagation();
-                        const source = (slot as HTMLElement).dataset.source;
-                        const index = parseInt((slot as HTMLElement).dataset.index);
-                        this.draggedItem = { source, index };
-                        slot.classList.add('dragging');
-                        (e as DragEvent).dataTransfer.effectAllowed = 'move';
-                        (e as DragEvent).dataTransfer.setDragImage(slot, 20, 20);
-                    });
-                    
-                    slot.addEventListener('dragend', (e) => {
+                    slot.addEventListener('contextmenu', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        slot.classList.remove('dragging');
-                        this.draggedItem = null;
-                    });
-                    
-                    slot.addEventListener('dragover', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        (e as DragEvent).dataTransfer.dropEffect = 'move';
-                        slot.classList.add('drag-over');
-                    });
-                    
-                    slot.addEventListener('dragleave', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        slot.classList.remove('drag-over');
-                    });
-                    
-                    slot.addEventListener('drop', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        slot.classList.remove('drag-over');
-                        
-                        if (!this.draggedItem) return;
-                        
-                        const targetSource = (slot as HTMLElement).dataset.source;
-                        const targetIndex = parseInt((slot as HTMLElement).dataset.index);
-                        
-                        // Store scroll position
-                        const invContainer = document.querySelector('.inventory-container');
-                        const scrollTop = invContainer ? invContainer.scrollTop : 0;
-                        
-                        // Swap items between source and target
-                        this.swapInventorySlots(
-                            this.draggedItem.source, 
-                            this.draggedItem.index,
-                            targetSource,
-                            targetIndex
-                        );
-                        
-                        this.draggedItem = null;
-                        this.renderInventory();
-                        this.updateHotbar();
-                        this.updateHotbarDisplay();
-                        
-                        // Restore scroll position
-                        const newContainer = document.querySelector('.inventory-container');
-                        if (newContainer) {
-                            newContainer.scrollTop = scrollTop;
-                        }
+                        // Could add right-click for half-stack later
                     });
                 });
             },
             
-            updateInventoryHeldCursor() {
+            handleInventorySlotClick(source, index, mouseX, mouseY) {
+                const slotArray = source === 'hotbar' ? this.inventory.hotbar : this.inventory.main;
+                const clickedItem = slotArray[index];
+                
+                if (this.debugSettings.dragDebug) {
+                    console.log(`[INV] Click: source=${source}, index=${index}, mouse=(${mouseX}, ${mouseY})`);
+                    console.log(`[INV] inventoryHeldItem=`, this.inventoryHeldItem);
+                    console.log(`[INV] clickedItem=`, clickedItem);
+                }
+                
+                if (this.inventoryHeldItem) {
+                    // PLACE held item in this slot
+                    const heldSource = this.inventoryHeldItem.source;
+                    const heldIndex = this.inventoryHeldItem.index;
+                    const heldArray = heldSource === 'hotbar' ? this.inventory.hotbar : this.inventory.main;
+                    const heldItem = heldArray[heldIndex];
+                    
+                    // Swap items
+                    heldArray[heldIndex] = clickedItem;
+                    slotArray[index] = heldItem;
+                    
+                    // Clear held item
+                    this.inventoryHeldItem = null;
+                    
+                    // Update display without full re-render
+                    this.updateInventorySlotDisplay(heldSource, heldIndex);
+                    this.updateInventorySlotDisplay(source, index);
+                    this.updateInventoryHeldCursor(mouseX, mouseY);
+                    this.updateHotbarDisplay();
+                    
+                } else if (clickedItem && clickedItem.count > 0) {
+                    // PICK UP this item
+                    this.inventoryHeldItem = { source, index, item: { ...clickedItem } };
+                    
+                    // Update cursor immediately at mouse position
+                    this.updateInventoryHeldCursor(mouseX, mouseY);
+                    
+                    // Mark slot as held visually
+                    const slotEl = document.querySelector(`.inv-slot[data-source="${source}"][data-index="${index}"]`);
+                    if (slotEl) {
+                        slotEl.classList.add('held');
+                    }
+                    
+                    if (this.debugSettings.dragDebug) {
+                        console.log(`[INV] Picked up item:`, this.inventoryHeldItem);
+                    }
+                }
+            },
+            
+            updateInventorySlotDisplay(source, index) {
+                const slotArray = source === 'hotbar' ? this.inventory.hotbar : this.inventory.main;
+                const item = slotArray[index];
+                const slotEl = document.querySelector(`.inv-slot[data-source="${source}"][data-index="${index}"]`) as HTMLElement;
+                
+                if (!slotEl) return;
+                
+                slotEl.classList.remove('held', 'has-item', 'empty');
+                
+                if (item && item.count > 0) {
+                    slotEl.classList.add('has-item');
+                    const emoji = this.getItemEmoji(item);
+                    slotEl.innerHTML = `<span class="slot-icon">${emoji}</span>`;
+                    if (item.count > 1) {
+                        slotEl.innerHTML += `<span class="slot-count">${item.count}</span>`;
+                    }
+                } else {
+                    slotEl.classList.add('empty');
+                    slotEl.innerHTML = '';
+                }
+            },
+            
+            updateInventoryHeldCursor(mouseX?, mouseY?) {
                 let ghost = document.getElementById('invHeldGhost');
                 
                 if (this.inventoryHeldItem) {
@@ -8233,6 +8274,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                     g.style.left = e.clientX + 'px';
                                     g.style.top = e.clientY + 'px';
                                 }
+                                this.lastMouseX = e.clientX;
+                                this.lastMouseY = e.clientY;
                             });
                         }
                         
@@ -8240,6 +8283,12 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         if (item.count > 1) {
                             ghost.innerHTML += `<span class="ghost-count">${item.count}</span>`;
                         }
+                        
+                        // Set position immediately
+                        const posX = mouseX || this.lastMouseX || 0;
+                        const posY = mouseY || this.lastMouseY || 0;
+                        ghost.style.left = posX + 'px';
+                        ghost.style.top = posY + 'px';
                         ghost.style.display = 'block';
                     } else {
                         if (ghost) ghost.style.display = 'none';
@@ -13488,6 +13537,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 if (flameParticles) (flameParticles as HTMLElement).style.visibility = 'visible';
             }
 };
+
+// Make minecraftGame available globally for onclick handlers in HTML
+(window as any).minecraftGame = minecraftGame;
 
 /**
  * SakuraCraftGame Class
