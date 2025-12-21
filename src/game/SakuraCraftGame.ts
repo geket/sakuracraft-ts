@@ -331,6 +331,41 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
             gunsmithDialogueStage: 0,  // Tracks conversation progress
             gunsmithMetBefore: false,  // Has player met them?
             
+            // Mad Hermit (Unwise One) - rival wizard
+            madHermit: null,
+            hermitDialogues: [
+                "nnGGhhHHH-- kkkhhh HAHAHA!!",
+                "B-b-b-b - BUH BEEEE!!!",
+                "GrrrRRRmmmblle...",
+                "SKREEEE-hehehehe...",
+                "Mmmph... MMMPH!",
+                "Keh keh keh... KEHHH!!",
+                "Wh-wh-whaaaat?! AWAY!!",
+                "*incomprehensible muttering*"
+            ],
+            gunsmithBattleDialogues: [
+                "Who the heck are you, Unwise One?!",
+                "Your power, it's... NONEXISTENT!",
+                "Back off, you mad fool!",
+                "Is that all you've got?!",
+                "I've dealt with worse than you!",
+                "You dare challenge ME?!"
+            ],
+            hermitBattleDialogues: [
+                "nnGGhhHHH-- kkkhhh HAHAHA!!",
+                "B-b-b-b - BUH BEEEE!!!",
+                "SKREEEEEE!!!",
+                "Gah-gah-gah GAH!!",
+                "Hehehehe... HAHAHAHA!!",
+                "MMMRRRRGGGHH!!"
+            ],
+            wizardBattleActive: false,
+            lastWizardSpellTime: 0,
+            
+            // Dialogue stacking info (temporary rendering state)
+            _gunsmithDialogueInfo: null,
+            _hermitDialogueInfo: null,
+            
             // Items and inventory
             selectedSlot: 0,  // 0-8 for hotbar slots
             selectedBlock: 'grass',
@@ -2713,6 +2748,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 this.updateFish();
                 this.updateCats();
                 this.updateRepairNPC();
+                this.updateMadHermit();
                 this.updateCreepers();
                 
                 // Friendly birds can drop items
@@ -2850,8 +2886,19 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     cat.vx *= 0.85;
                     cat.vz *= 0.85;
                     
-                    // Gravity and ground collision
-                    cat.vy -= 0.02;
+                    // Check if cat is in water
+                    const catBlock = this.getBlock(Math.floor(cat.x), Math.floor(cat.y), Math.floor(cat.z));
+                    const catInWater = catBlock === 'water' || catBlock === 'lava';
+                    
+                    if (catInWater) {
+                        // Swimming physics - cats swim!
+                        cat.vy += 0.035; // Buoyancy
+                        cat.vy *= 0.85; // Water drag
+                        cat.vy = Math.max(-0.08, Math.min(0.08, cat.vy));
+                    } else {
+                        // Normal gravity
+                        cat.vy -= 0.02;
+                    }
                     cat.y += cat.vy;
                     
                     const groundY = Math.floor(cat.y);
@@ -3020,8 +3067,53 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     }
                 }
                 
-                // Gravity
-                npc.vy -= 0.03;
+                // Check if NPC is in water
+                const npcFeetBlock = this.getBlock(Math.floor(npc.x), Math.floor(npc.y), Math.floor(npc.z));
+                const npcBodyBlock = this.getBlock(Math.floor(npc.x), Math.floor(npc.y + 1), Math.floor(npc.z));
+                const npcInWater = npcFeetBlock === 'water' || npcFeetBlock === 'lava' || 
+                                   npcBodyBlock === 'water' || npcBodyBlock === 'lava';
+                
+                // Track swimming state for animation
+                npc.swimming = npcInWater;
+                
+                if (npcInWater) {
+                    // Find water surface level - scan upward to find air
+                    let waterSurfaceY = Math.floor(npc.y);
+                    for (let checkY = Math.floor(npc.y); checkY < Math.floor(npc.y) + 10; checkY++) {
+                        const blockAbove = this.getBlock(Math.floor(npc.x), checkY + 1, Math.floor(npc.z));
+                        if (blockAbove !== 'water' && blockAbove !== 'lava') {
+                            waterSurfaceY = checkY;
+                            break;
+                        }
+                    }
+                    
+                    // Target Y is at water surface level (body mostly submerged, head above)
+                    const targetY = waterSurfaceY + 0.3;
+                    
+                    // Smoothly move toward water surface
+                    if (npc.y < targetY - 0.1) {
+                        npc.vy += 0.02; // Buoyancy up
+                    } else if (npc.y > targetY + 0.1) {
+                        npc.vy -= 0.01; // Sink down
+                    } else {
+                        npc.vy *= 0.5; // Stabilize at surface
+                    }
+                    
+                    // Water drag
+                    npc.vy *= 0.9;
+                    npc.vx *= 0.85;
+                    npc.vz *= 0.85;
+                    
+                    // Clamp vertical speed in water
+                    npc.vy = Math.max(-0.15, Math.min(0.15, npc.vy));
+                    
+                    // Update swim animation phase
+                    npc.swimPhase = (npc.swimPhase || 0) + 0.15;
+                } else {
+                    // Normal gravity when not in water
+                    npc.vy -= 0.03;
+                    npc.swimming = false;
+                }
                 npc.y += npc.vy;
                 
                 // Ground collision - NPC Y is at feet level, so pass eyeHeight=0
@@ -3101,9 +3193,41 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     }
                 }
                 
-                // Apply movement
-                npc.x += npc.vx;
-                npc.z += npc.vz;
+                // Apply movement with block collision and bounce
+                const newNpcX = npc.x + npc.vx;
+                const newNpcZ = npc.z + npc.vz;
+                
+                // Check collision at feet and body height
+                const npcCheckYLow = Math.floor(npc.y);
+                const npcCheckYHigh = Math.floor(npc.y + 1);
+                
+                // X collision - only bounce off solid blocks (not air/null)
+                const blockAtNpcX1 = this.getBlock(Math.floor(newNpcX), npcCheckYLow, Math.floor(npc.z));
+                const blockAtNpcX2 = this.getBlock(Math.floor(newNpcX), npcCheckYHigh, Math.floor(npc.z));
+                const solidBlockX = (blockAtNpcX1 && !this.fluidBlocks.includes(blockAtNpcX1)) || 
+                                    (blockAtNpcX2 && !this.fluidBlocks.includes(blockAtNpcX2));
+                
+                if (solidBlockX) {
+                    npc.vx = -npc.vx * 0.5; // Bounce
+                } else {
+                    npc.x = newNpcX;
+                }
+                
+                // Z collision - only bounce off solid blocks
+                const blockAtNpcZ1 = this.getBlock(Math.floor(npc.x), npcCheckYLow, Math.floor(newNpcZ));
+                const blockAtNpcZ2 = this.getBlock(Math.floor(npc.x), npcCheckYHigh, Math.floor(newNpcZ));
+                const solidBlockZ = (blockAtNpcZ1 && !this.fluidBlocks.includes(blockAtNpcZ1)) || 
+                                    (blockAtNpcZ2 && !this.fluidBlocks.includes(blockAtNpcZ2));
+                
+                if (solidBlockZ) {
+                    npc.vz = -npc.vz * 0.5; // Bounce
+                } else {
+                    npc.z = newNpcZ;
+                }
+                
+                // Apply friction
+                npc.vx *= 0.92;
+                npc.vz *= 0.92;
                 
                 // Safety: If NPC fell into void, respawn it near player
                 if (npc.y < 0) {
@@ -3155,6 +3279,430 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 }
             },
             
+            // Mad Hermit (Unwise One) - evil rival wizard
+            spawnMadHermit() {
+                if (this.madHermit) return; // Only one at a time
+                
+                // Spawn away from player
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 25 + Math.random() * 20;
+                let spawnX = this.camera.x + Math.cos(angle) * dist;
+                let spawnZ = this.camera.z + Math.sin(angle) * dist;
+                
+                // Find valid ground
+                let spawnY = 0;
+                for (let attempt = 0; attempt < 50; attempt++) {
+                    const groundY = this.getGroundHeight(spawnX, spawnZ);
+                    if (groundY > 0) {
+                        spawnY = groundY + 1;
+                        break;
+                    }
+                    // Try different location
+                    const newAngle = Math.random() * Math.PI * 2;
+                    spawnX = this.camera.x + Math.cos(newAngle) * dist;
+                    spawnZ = this.camera.z + Math.sin(newAngle) * dist;
+                }
+                
+                if (spawnY <= 0) return;
+                
+                this.madHermit = {
+                    x: spawnX,
+                    y: spawnY,
+                    z: spawnZ,
+                    vx: 0,
+                    vy: 0,
+                    vz: 0,
+                    onGround: true,
+                    wanderTargetX: spawnX,
+                    wanderTargetZ: spawnZ,
+                    nextWanderTime: Date.now() + 2000,
+                    showPrompt: false,
+                    lastSpoke: 0,
+                    grumbleTime: 0,
+                    currentDialogue: null,
+                    dialogueEndTime: 0,
+                    lastSpellTime: 0,
+                    lastBirdAttackTime: 0
+                };
+                
+                this.debugLog('🧙 A Mad Hermit appeared in the distance...', 'warn');
+            },
+            
+            updateMadHermit() {
+                // Spawn occasionally (0.3% chance per update if none exists)
+                if (!this.madHermit) {
+                    if (Math.random() < 0.003) {
+                        this.spawnMadHermit();
+                    }
+                    return;
+                }
+                
+                const hermit = this.madHermit;
+                
+                // Check if hermit is in water
+                const hermitFeetBlock = this.getBlock(Math.floor(hermit.x), Math.floor(hermit.y), Math.floor(hermit.z));
+                const hermitBodyBlock = this.getBlock(Math.floor(hermit.x), Math.floor(hermit.y + 1), Math.floor(hermit.z));
+                const hermitInWater = hermitFeetBlock === 'water' || hermitFeetBlock === 'lava' || 
+                                      hermitBodyBlock === 'water' || hermitBodyBlock === 'lava';
+                
+                // Track swimming state for animation
+                hermit.swimming = hermitInWater;
+                
+                if (hermitInWater) {
+                    // Find water surface level - scan upward to find air
+                    let waterSurfaceY = Math.floor(hermit.y);
+                    for (let checkY = Math.floor(hermit.y); checkY < Math.floor(hermit.y) + 10; checkY++) {
+                        const blockAbove = this.getBlock(Math.floor(hermit.x), checkY + 1, Math.floor(hermit.z));
+                        if (blockAbove !== 'water' && blockAbove !== 'lava') {
+                            waterSurfaceY = checkY;
+                            break;
+                        }
+                    }
+                    
+                    // Target Y is at water surface level (body mostly submerged, head above)
+                    const targetY = waterSurfaceY + 0.3;
+                    
+                    // Smoothly move toward water surface
+                    if (hermit.y < targetY - 0.1) {
+                        hermit.vy += 0.02; // Buoyancy up
+                    } else if (hermit.y > targetY + 0.1) {
+                        hermit.vy -= 0.01; // Sink down
+                    } else {
+                        hermit.vy *= 0.5; // Stabilize at surface
+                    }
+                    
+                    // Water drag
+                    hermit.vy *= 0.9;
+                    hermit.vx *= 0.85;
+                    hermit.vz *= 0.85;
+                    
+                    // Clamp vertical speed in water
+                    hermit.vy = Math.max(-0.15, Math.min(0.15, hermit.vy));
+                    
+                    // Update swim animation phase
+                    hermit.swimPhase = (hermit.swimPhase || 0) + 0.15;
+                } else {
+                    // Normal gravity when not in water
+                    hermit.vy -= 0.03;
+                    hermit.swimming = false;
+                }
+                hermit.y += hermit.vy;
+                
+                const groundY = this.getGroundHeightBelow(hermit.x, hermit.z, hermit.y, 0);
+                if (hermit.y <= groundY) {
+                    hermit.y = groundY;
+                    hermit.vy = 0;
+                    hermit.onGround = true;
+                } else {
+                    hermit.onGround = false;
+                }
+                
+                // Check distance to gunsmith for wizard battle
+                if (this.repairNPC) {
+                    const dxGun = this.repairNPC.x - hermit.x;
+                    const dzGun = this.repairNPC.z - hermit.z;
+                    const distToGunsmith = Math.sqrt(dxGun * dxGun + dzGun * dzGun);
+                    
+                    // Wizards can sense each other from far away (50 blocks)
+                    if (distToGunsmith < 50) {
+                        this.wizardBattleActive = true;
+                        
+                        // Always move toward each other when in battle mode
+                        const approachSpeed = 0.04;
+                        const normX = dxGun / distToGunsmith;
+                        const normZ = dzGun / distToGunsmith;
+                        
+                        // Hermit approaches gunsmith
+                        hermit.vx += normX * approachSpeed;
+                        hermit.vz += normZ * approachSpeed;
+                        
+                        // Gunsmith approaches hermit
+                        this.repairNPC.vx += -normX * approachSpeed;
+                        this.repairNPC.vz += -normZ * approachSpeed;
+                        
+                        // IMMEDIATE ATTACK when within 2 blocks - coin flip decides attacker
+                        if (distToGunsmith < 2) {
+                            // Trigger immediate attack the moment they enter close combat range
+                            this.lastWizardSpellTime = Date.now();
+                            
+                            // Coin flip: 50/50 chance which wizard attacks first
+                            const hermitAttacksFirst = Math.random() < 0.5;
+                            
+                            // Knockback tiers:
+                            // - Normal: base knockback
+                            // - Super (1/15): strong knockback that can push out of battle
+                            // - Ultra (1/30): 50% stronger than super - massive knockback!
+                            const knockbackRoll = Math.random();
+                            const ultraKnockback = knockbackRoll < (1/30);  // ~3.3% chance
+                            const superKnockback = !ultraKnockback && knockbackRoll < (1/15);  // ~3.3% more chance
+                            
+                            let knockbackForce, verticalForce, knockbackType;
+                            if (ultraKnockback) {
+                                knockbackForce = 5.25;  // 50% more than super (3.5 * 1.5)
+                                verticalForce = 1.2;
+                                knockbackType = 'ultra';
+                            } else if (superKnockback) {
+                                knockbackForce = 3.5;
+                                verticalForce = 0.8;
+                                knockbackType = 'super';
+                            } else {
+                                knockbackForce = 0.6;
+                                verticalForce = 0.4;
+                                knockbackType = 'normal';
+                            }
+                            
+                            if (hermitAttacksFirst) {
+                                // Hermit strikes first - pushes gunsmith away
+                                this.repairNPC.vx += normX * knockbackForce;
+                                this.repairNPC.vz += normZ * knockbackForce;
+                                this.repairNPC.vy = verticalForce;
+                                hermit.currentDialogue = ultraKnockback ? "ULTIMATE DESTRUCTION!!!" : "TASTE MY POWER!";
+                                hermit.dialogueEndTime = Date.now() + 1500;
+                                if (ultraKnockback) {
+                                    this.repairNPC.currentDialogue = "IMPOSSIBLE!!!";
+                                    this.repairNPC.dialogueEndTime = Date.now() + 2500;
+                                } else if (superKnockback) {
+                                    this.repairNPC.currentDialogue = "WAAAAHHHH!!!";
+                                    this.repairNPC.dialogueEndTime = Date.now() + 2000;
+                                }
+                            } else {
+                                // Gunsmith strikes first - pushes hermit away
+                                hermit.vx += -normX * knockbackForce;
+                                hermit.vz += -normZ * knockbackForce;
+                                hermit.vy = verticalForce;
+                                this.repairNPC.currentDialogue = ultraKnockback ? "BEGONE FOREVER!!!" : "BACK, FIEND!";
+                                this.repairNPC.dialogueEndTime = Date.now() + 1500;
+                                if (ultraKnockback) {
+                                    hermit.currentDialogue = "THIS CANNOT BE!!!";
+                                    hermit.dialogueEndTime = Date.now() + 2500;
+                                } else if (superKnockback) {
+                                    hermit.currentDialogue = "NOOOOOO!!!";
+                                    hermit.dialogueEndTime = Date.now() + 2000;
+                                }
+                            }
+                            
+                            // Create intense spell particles for close-range combat
+                            const particleCount = ultraKnockback ? 50 : (superKnockback ? 30 : 20);
+                            const attackerX = hermitAttacksFirst ? hermit.x : this.repairNPC.x;
+                            const attackerY = hermitAttacksFirst ? hermit.y : this.repairNPC.y;
+                            const attackerZ = hermitAttacksFirst ? hermit.z : this.repairNPC.z;
+                            const attackerColor = hermitAttacksFirst ? '#ff3333' : '#3333ff';
+                            
+                            for (let i = 0; i < particleCount; i++) {
+                                this.particles.push({
+                                    type: 'spell',
+                                    x: attackerX + (Math.random() - 0.5),
+                                    y: attackerY + 1 + Math.random(),
+                                    z: attackerZ + (Math.random() - 0.5),
+                                    vx: (hermitAttacksFirst ? normX : -normX) * 0.4 + (Math.random() - 0.5) * 0.2,
+                                    vy: Math.random() * 0.2,
+                                    vz: (hermitAttacksFirst ? normZ : -normZ) * 0.4 + (Math.random() - 0.5) * 0.2,
+                                    life: ultraKnockback ? 70 : (superKnockback ? 50 : 35),
+                                    color: ultraKnockback ? '#ffff00' : attackerColor  // Yellow for ultra!
+                                });
+                            }
+                        }
+                        // Regular spell casting at medium range
+                        else if (distToGunsmith < 12 && Date.now() - this.lastWizardSpellTime > 1000) {
+                            // WIZARD BATTLE - CAST SPELLS!
+                            this.lastWizardSpellTime = Date.now();
+                            
+                            // Both wizards cast knockback spells (gentler to keep them in range)
+                            const knockbackForce = 0.4;
+                            
+                            // Hermit pushes gunsmith away
+                            this.repairNPC.vx += normX * knockbackForce;
+                            this.repairNPC.vz += normZ * knockbackForce;
+                            this.repairNPC.vy = 0.35;
+                            
+                            // Gunsmith pushes hermit away
+                            hermit.vx += -normX * knockbackForce;
+                            hermit.vz += -normZ * knockbackForce;
+                            hermit.vy = 0.35;
+                            
+                            // Create spell particles
+                            for (let i = 0; i < 15; i++) {
+                                this.particles.push({
+                                    type: 'spell',
+                                    x: hermit.x + (Math.random() - 0.5),
+                                    y: hermit.y + 1 + Math.random(),
+                                    z: hermit.z + (Math.random() - 0.5),
+                                    vx: normX * 0.2 + (Math.random() - 0.5) * 0.1,
+                                    vy: Math.random() * 0.1,
+                                    vz: normZ * 0.2 + (Math.random() - 0.5) * 0.1,
+                                    life: 30,
+                                    color: '#ff3333'
+                                });
+                                this.particles.push({
+                                    type: 'spell',
+                                    x: this.repairNPC.x + (Math.random() - 0.5),
+                                    y: this.repairNPC.y + 1 + Math.random(),
+                                    z: this.repairNPC.z + (Math.random() - 0.5),
+                                    vx: -normX * 0.2 + (Math.random() - 0.5) * 0.1,
+                                    vy: Math.random() * 0.1,
+                                    vz: -normZ * 0.2 + (Math.random() - 0.5) * 0.1,
+                                    life: 30,
+                                    color: '#3333ff'
+                                });
+                            }
+                            
+                            // Show battle dialogue
+                            if (Math.random() < 0.7) {
+                                hermit.currentDialogue = this.hermitBattleDialogues[Math.floor(Math.random() * this.hermitBattleDialogues.length)];
+                                hermit.dialogueEndTime = Date.now() + 2000;
+                                
+                                this.repairNPC.currentDialogue = this.gunsmithBattleDialogues[Math.floor(Math.random() * this.gunsmithBattleDialogues.length)];
+                                this.repairNPC.dialogueEndTime = Date.now() + 2000;
+                            }
+                        }
+                    } else {
+                        this.wizardBattleActive = false;
+                    }
+                } else {
+                    this.wizardBattleActive = false;
+                }
+                
+                // Attack nearby birds
+                if (Date.now() - hermit.lastBirdAttackTime > 2000) {
+                    const allBirds = [...(this.birds || []), ...(this.pestBirds || []), ...(this.blueBirds || [])];
+                    for (const bird of allBirds) {
+                        const dxBird = bird.x - hermit.x;
+                        const dyBird = bird.y - hermit.y;
+                        const dzBird = bird.z - hermit.z;
+                        const distToBird = Math.sqrt(dxBird * dxBird + dyBird * dyBird + dzBird * dzBird);
+                        
+                        if (distToBird < 8) {
+                            // Knock bird away
+                            hermit.lastBirdAttackTime = Date.now();
+                            const knockForce = 1.5;
+                            bird.vx = (dxBird / distToBird) * knockForce;
+                            bird.vy = 0.5;
+                            bird.vz = (dzBird / distToBird) * knockForce;
+                            
+                            // Spell particles
+                            for (let i = 0; i < 8; i++) {
+                                this.particles.push({
+                                    type: 'spell',
+                                    x: hermit.x + (Math.random() - 0.5),
+                                    y: hermit.y + 1.5,
+                                    z: hermit.z + (Math.random() - 0.5),
+                                    vx: (dxBird / distToBird) * 0.3,
+                                    vy: Math.random() * 0.2,
+                                    vz: (dzBird / distToBird) * 0.3,
+                                    life: 20,
+                                    color: '#ff6600'
+                                });
+                            }
+                            
+                            // Grumble at bird
+                            hermit.currentDialogue = "Grrrr... SHOO!";
+                            hermit.dialogueEndTime = Date.now() + 1000;
+                            break;
+                        }
+                    }
+                }
+                
+                // Check player proximity for grumbling
+                const distToPlayer = Math.sqrt(
+                    (hermit.x - this.camera.x) ** 2 + 
+                    (hermit.z - this.camera.z) ** 2
+                );
+                
+                if (distToPlayer < 5 && Date.now() - hermit.grumbleTime > 3000) {
+                    hermit.grumbleTime = Date.now();
+                    hermit.currentDialogue = this.hermitDialogues[Math.floor(Math.random() * this.hermitDialogues.length)];
+                    hermit.dialogueEndTime = Date.now() + 2000;
+                }
+                
+                // Clear expired dialogue
+                if (hermit.currentDialogue && Date.now() > hermit.dialogueEndTime) {
+                    hermit.currentDialogue = null;
+                }
+                if (this.repairNPC && this.repairNPC.currentDialogue && Date.now() > this.repairNPC.dialogueEndTime) {
+                    this.repairNPC.currentDialogue = null;
+                }
+                
+                // Check if in knockback state (high velocity = being knocked back)
+                const currentSpeed = Math.sqrt(hermit.vx * hermit.vx + hermit.vz * hermit.vz);
+                const inKnockback = currentSpeed > 0.1;
+                
+                // Wandering (if not in battle and not being knocked back)
+                if (!this.wizardBattleActive && !inKnockback && Date.now() > hermit.nextWanderTime) {
+                    const wanderAngle = Math.random() * Math.PI * 2;
+                    const wanderDist = 3 + Math.random() * 5;
+                    hermit.wanderTargetX = hermit.x + Math.cos(wanderAngle) * wanderDist;
+                    hermit.wanderTargetZ = hermit.z + Math.sin(wanderAngle) * wanderDist;
+                    hermit.nextWanderTime = Date.now() + 3000 + Math.random() * 4000;
+                }
+                
+                // Move toward wander target (only if not being knocked back)
+                if (!this.wizardBattleActive && !inKnockback && hermit.wanderTargetX !== null) {
+                    const dx = hermit.wanderTargetX - hermit.x;
+                    const dz = hermit.wanderTargetZ - hermit.z;
+                    const dist = Math.sqrt(dx * dx + dz * dz);
+                    
+                    if (dist > 0.5) {
+                        const speed = 0.03; // Slower than gunsmith
+                        hermit.vx = (dx / dist) * speed;
+                        hermit.vz = (dz / dist) * speed;
+                    } else {
+                        hermit.vx *= 0.9;
+                        hermit.vz *= 0.9;
+                    }
+                }
+                
+                // Apply movement with block collision and bounce
+                const newX = hermit.x + hermit.vx;
+                const newZ = hermit.z + hermit.vz;
+                
+                // Check X collision - only solid blocks (not air/fluid)
+                const checkYLow = Math.floor(hermit.y);
+                const checkYHigh = Math.floor(hermit.y + 1);
+                const blockAtNewX1 = this.getBlock(Math.floor(newX), checkYLow, Math.floor(hermit.z));
+                const blockAtNewX2 = this.getBlock(Math.floor(newX), checkYHigh, Math.floor(hermit.z));
+                
+                // Only count as collision if it's a solid block (not null/air and not fluid)
+                const solidX1 = blockAtNewX1 && !this.fluidBlocks.includes(blockAtNewX1);
+                const solidX2 = blockAtNewX2 && !this.fluidBlocks.includes(blockAtNewX2);
+                
+                if (solidX1 || solidX2) {
+                    // Bounce off X wall
+                    hermit.vx = -hermit.vx * 0.5;
+                } else {
+                    hermit.x = newX;
+                }
+                
+                // Check Z collision - only solid blocks
+                const blockAtNewZ1 = this.getBlock(Math.floor(hermit.x), checkYLow, Math.floor(newZ));
+                const blockAtNewZ2 = this.getBlock(Math.floor(hermit.x), checkYHigh, Math.floor(newZ));
+                
+                const solidZ1 = blockAtNewZ1 && !this.fluidBlocks.includes(blockAtNewZ1);
+                const solidZ2 = blockAtNewZ2 && !this.fluidBlocks.includes(blockAtNewZ2);
+                
+                if (solidZ1 || solidZ2) {
+                    // Bounce off Z wall
+                    hermit.vz = -hermit.vz * 0.5;
+                } else {
+                    hermit.z = newZ;
+                }
+                
+                // Apply friction
+                hermit.vx *= 0.92;
+                hermit.vz *= 0.92;
+                
+                // Safety: respawn if fell into void
+                if (hermit.y < 0) {
+                    this.debugLog('⚠️ Mad Hermit fell into void! Respawning...', 'warn');
+                    this.madHermit = null;
+                }
+                
+                // Despawn if too far
+                if (distToPlayer > 80) {
+                    this.madHermit = null;
+                    this.debugLog('The Mad Hermit vanished into the mist...', 'info');
+                }
+            },
+            
             // Creepers stalk and explode
             updateCreepers() {
                 if (!this.creepers) this.creepers = [];
@@ -3203,8 +3751,19 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     creeper.vx *= 0.9;
                     creeper.vz *= 0.9;
                     
-                    // Gravity
-                    creeper.vy -= 0.02;
+                    // Check if creeper is in water
+                    const creeperBlock = this.getBlock(Math.floor(creeper.x), Math.floor(creeper.y), Math.floor(creeper.z));
+                    const creeperInWater = creeperBlock === 'water' || creeperBlock === 'lava';
+                    
+                    if (creeperInWater) {
+                        // Swimming physics - creepers swim!
+                        creeper.vy += 0.035; // Buoyancy
+                        creeper.vy *= 0.85; // Water drag
+                        creeper.vy = Math.max(-0.08, Math.min(0.08, creeper.vy));
+                    } else {
+                        // Normal gravity
+                        creeper.vy -= 0.02;
+                    }
                     creeper.y += creeper.vy;
                     
                     const groundY = Math.floor(creeper.y);
@@ -4688,6 +5247,47 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                 });
                             }
                             this.particles.splice(i, 1);
+                        }
+                        
+                        // Check for Mad Hermit collision - KA-69 knocks him back!
+                        if (this.madHermit) {
+                            const hx = this.madHermit.x - p.x;
+                            const hy = (this.madHermit.y + 1) - p.y; // Center of hermit
+                            const hz = this.madHermit.z - p.z;
+                            const distToHermit = Math.sqrt(hx * hx + hy * hy + hz * hz);
+                            
+                            if (distToHermit < 1.2) {
+                                // Hit the hermit! Use bullet's actual trajectory for knockback direction
+                                const bulletSpeed = Math.sqrt(p.vx * p.vx + p.vy * p.vy + p.vz * p.vz);
+                                
+                                if (bulletSpeed > 0.01) {
+                                    // Knockback in direction bullet was traveling
+                                    const knockbackForce = 0.5;
+                                    this.madHermit.vx = (p.vx / bulletSpeed) * knockbackForce;
+                                    this.madHermit.vz = (p.vz / bulletSpeed) * knockbackForce;
+                                    this.madHermit.vy = 0.45; // Higher launch to clear blocks
+                                }
+                                
+                                // Hermit reacts with dialogue
+                                this.madHermit.currentDialogue = "GYAAAHHHH!!!";
+                                this.madHermit.dialogueEndTime = Date.now() + 1500;
+                                
+                                // Impact sparks
+                                for (let j = 0; j < 10; j++) {
+                                    this.particles.push({
+                                        type: 'spell',
+                                        x: p.x, y: p.y, z: p.z,
+                                        vx: (Math.random() - 0.5) * 0.4,
+                                        vy: Math.random() * 0.3,
+                                        vz: (Math.random() - 0.5) * 0.4,
+                                        life: 25,
+                                        color: '#ff3333'
+                                    });
+                                }
+                                
+                                this.particles.splice(i, 1);
+                                this.debugLog('💥 KA-69 hit the Mad Hermit!', 'success');
+                            }
                         }
                     } else if (p.type === 'ricochet' || p.type === 'spark') {
                         p.vy -= 0.008; // Gravity
@@ -6817,12 +7417,13 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         this.debugLog('  coords - Toggle coordinate display', 'info');
                         this.debugLog('  tp <x> <y> <z> - Teleport to position', 'info');
                         this.debugLog('  tp <landmark> - Teleport to landmark', 'info');
-                        this.debugLog('    landmarks: ritual, gunsmith, spawn', 'info');
+                        this.debugLog('    landmarks: ritual, gunsmith, hermit, spawn', 'info');
                         this.debugLog('  give <item> [count] - Give item', 'info');
                         this.debugLog('  spawn <mob> [count] - Spawn mobs', 'info');
-                        this.debugLog('    mobs: bird, fish, cat, creeper, bluebird, gunsmith', 'info');
+                        this.debugLog('    mobs: bird, fish, cat, creeper, bluebird, gunsmith, hermit', 'info');
                         this.debugLog('  time <ms> - Set bird event timer', 'info');
                         this.debugLog('  kill - Kill all mobs', 'info');
+                        this.debugLog('  battle - Teleport hermit to gunsmith (wizard fight!)', 'info');
                         this.debugLog('  clear - Clear console', 'info');
                         this.debugLog('  pos - Show current position', 'info');
                         this.debugLog('  fly - Toggle flight mode', 'info');
@@ -6900,6 +7501,17 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                 } else {
                                     this.debugLog('Gunsmith NPC not found (not spawned yet)', 'error');
                                 }
+                            } else if (landmark === 'hermit' || landmark === 'mad' || landmark === 'wizard') {
+                                // Teleport to Mad Hermit
+                                if (this.madHermit) {
+                                    this.camera.x = this.madHermit.x;
+                                    this.camera.y = this.madHermit.y + 2;
+                                    this.camera.z = this.madHermit.z;
+                                    this.velocity = { x: 0, y: 0, z: 0 };
+                                    this.debugLog('Teleported to Mad Hermit', 'success');
+                                } else {
+                                    this.debugLog('Mad Hermit not found (not spawned yet)', 'error');
+                                }
                             } else if (landmark === 'spawn' || landmark === 'home') {
                                 // Teleport to spawn
                                 this.camera.x = 0;
@@ -6923,11 +7535,11 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                 }
                             } else {
                                 this.debugLog('Usage: tp <x> <y> <z> OR tp <landmark>', 'error');
-                                this.debugLog('Landmarks: ritual, gunsmith, spawn', 'info');
+                                this.debugLog('Landmarks: ritual, gunsmith, hermit, spawn', 'info');
                             }
                         } else {
                             this.debugLog('Usage: tp <x> <y> <z> OR tp <landmark>', 'error');
-                            this.debugLog('Landmarks: ritual, gunsmith, spawn', 'info');
+                            this.debugLog('Landmarks: ritual, gunsmith, hermit, spawn', 'info');
                         }
                         break;
                         
@@ -6967,7 +7579,7 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                     case 'spawn':
                         const mobType = args[0];
                         const spawnCount = args.length >= 2 ? parseInt(args[1]) : 1;
-                        const validMobs = ['bird', 'pest', 'fish', 'cat', 'creeper', 'bluebird', 'gunsmith'];
+                        const validMobs = ['bird', 'pest', 'fish', 'cat', 'creeper', 'bluebird', 'gunsmith', 'hermit'];
                         
                         if (mobType === 'bird' || mobType === 'pest') {
                             for (let i = 0; i < spawnCount; i++) this.spawnPestBird();
@@ -6987,6 +7599,9 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         } else if (mobType === 'gunsmith' || mobType === 'npc' || mobType === 'repair') {
                             this.spawnRepairNPC();
                             this.debugLog('Spawned gunsmith NPC', 'success');
+                        } else if (mobType === 'hermit' || mobType === 'mad' || mobType === 'wizard') {
+                            this.spawnMadHermit();
+                            this.debugLog('Spawned Mad Hermit', 'success');
                         } else {
                             this.debugLog('Usage: spawn <mob> [count]', 'error');
                             this.debugLog('Mobs: ' + validMobs.join(', '), 'info');
@@ -7002,6 +7617,29 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         this.blueBirds = [];
                         this.creepers = [];
                         this.debugLog(`Killed ${totalKilled} mobs`, 'success');
+                        break;
+                    
+                    case 'battle':
+                    case 'wizardfight':
+                        // Teleport hermit to gunsmith to trigger wizard battle
+                        if (!this.repairNPC) {
+                            this.spawnRepairNPC();
+                            this.debugLog('Spawned Gunsmith', 'info');
+                        }
+                        if (!this.madHermit) {
+                            this.spawnMadHermit();
+                            this.debugLog('Spawned Mad Hermit', 'info');
+                        }
+                        if (this.repairNPC && this.madHermit) {
+                            // Teleport hermit right next to gunsmith
+                            this.madHermit.x = this.repairNPC.x + 3;
+                            this.madHermit.y = this.repairNPC.y;
+                            this.madHermit.z = this.repairNPC.z + 3;
+                            this.madHermit.vx = 0;
+                            this.madHermit.vy = 0;
+                            this.madHermit.vz = 0;
+                            this.debugLog('⚔️ Wizard battle initiated! Hermit teleported to Gunsmith.', 'success');
+                        }
                         break;
                         
                     case 'time':
@@ -8814,6 +9452,34 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 const playerRadius = 0.25; // Slightly smaller for tighter spaces
                 const playerHeight = 1.8;
                 
+                // Helper to check if position has a "gap" scenario (solid above AND below but air in middle)
+                // This prevents climbing through 1-block gaps in walls
+                const hasGapAt = (x, z) => {
+                    const feetY = Math.floor(this.camera.y - this.playerEyeHeight);
+                    const headY = Math.floor(this.camera.y - this.playerEyeHeight + playerHeight);
+                    const bx = Math.floor(x);
+                    const bz = Math.floor(z);
+                    
+                    // Check if there's solid below feet and solid above head with air in between
+                    const blockBelow = this.getBlock(bx, feetY - 1, bz);
+                    const blockAbove = this.getBlock(bx, headY + 1, bz);
+                    
+                    if (blockBelow && !this.fluidBlocks.includes(blockBelow) &&
+                        blockAbove && !this.fluidBlocks.includes(blockAbove)) {
+                        // Check if there's air in the middle (the "gap")
+                        let hasAirGap = false;
+                        for (let y = feetY; y <= headY; y++) {
+                            const block = this.getBlock(bx, y, bz);
+                            if (!block || this.fluidBlocks.includes(block)) {
+                                hasAirGap = true;
+                                break;
+                            }
+                        }
+                        return hasAirGap; // It's a gap if there's air between solid above and below
+                    }
+                    return false;
+                };
+                
                 // First, check if we're currently stuck and need to escape
                 if (this.collidesAt(this.camera.x, this.camera.y, this.camera.z, playerRadius, playerHeight)) {
                     // EMERGENCY UNSTUCK - aggressive push out
@@ -8831,11 +9497,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                                 break;
                             }
                         }
-                        // Also try pushing up
-                        if (!escaped && !this.collidesAt(this.camera.x, this.camera.y + pushDist, this.camera.z, playerRadius, playerHeight)) {
-                            this.camera.y += pushDist;
-                            escaped = true;
-                        }
+                        // Don't push up - this causes climbing through gaps
+                        // Only push horizontally to escape
                     }
                 }
                 
@@ -8851,31 +9514,32 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 for (let i = 0; i < steps; i++) {
                     // Try X movement with slight margin
                     const testX = finalX + stepX;
-                    if (!this.collidesAt(testX, this.camera.y, finalZ, playerRadius, playerHeight)) {
+                    // Block movement if collision OR if it would put us in a gap
+                    if (!this.collidesAt(testX, this.camera.y, finalZ, playerRadius, playerHeight) && !hasGapAt(testX, finalZ)) {
                         finalX = testX;
                     } else {
                         // Try to slide along the wall with reduced speed
                         const slideX = stepX * 0.5;
-                        if (!this.collidesAt(finalX + slideX, this.camera.y, finalZ, playerRadius, playerHeight)) {
+                        if (!this.collidesAt(finalX + slideX, this.camera.y, finalZ, playerRadius, playerHeight) && !hasGapAt(finalX + slideX, finalZ)) {
                             finalX += slideX;
                         }
                     }
                     
                     // Try Z movement with slight margin
                     const testZ = finalZ + stepZ;
-                    if (!this.collidesAt(finalX, this.camera.y, testZ, playerRadius, playerHeight)) {
+                    if (!this.collidesAt(finalX, this.camera.y, testZ, playerRadius, playerHeight) && !hasGapAt(finalX, testZ)) {
                         finalZ = testZ;
                     } else {
                         // Try to slide along the wall with reduced speed
                         const slideZ = stepZ * 0.5;
-                        if (!this.collidesAt(finalX, this.camera.y, finalZ + slideZ, playerRadius, playerHeight)) {
+                        if (!this.collidesAt(finalX, this.camera.y, finalZ + slideZ, playerRadius, playerHeight) && !hasGapAt(finalX, finalZ + slideZ)) {
                             finalZ += slideZ;
                         }
                     }
                 }
                 
                 // Final safety check - if still stuck, try small adjustments
-                if (this.collidesAt(finalX, this.camera.y, finalZ, playerRadius, playerHeight)) {
+                if (this.collidesAt(finalX, this.camera.y, finalZ, playerRadius, playerHeight) || hasGapAt(finalX, finalZ)) {
                     // Don't move at all if we'd get stuck
                     finalX = this.camera.x;
                     finalZ = this.camera.z;
@@ -9058,8 +9722,8 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                 for (const point of checkPoints) {
                     const bx = Math.floor(point.x);
                     const bz = Math.floor(point.z);
-                    // Check at feet, middle, and head level
-                    for (let checkY = Math.floor(feetY); checkY < Math.floor(feetY + height); checkY++) {
+                    // Check at feet, middle, and head level - use <= to include top block
+                    for (let checkY = Math.floor(feetY); checkY <= Math.floor(feetY + height); checkY++) {
                         const block = this.getBlock(bx, checkY, bz);
                         // Fluids don't block movement - player can walk/swim through them
                         if (block && !this.fluidBlocks.includes(block)) {
@@ -11654,49 +12318,142 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         // Clamp to reasonable screen bounds (not too small when far, not too huge when close)
                         const clampedSize = Math.min(400, Math.max(20, screenSize));
                         
-                        // Body - blue robes
-                        ctx.fillStyle = '#4169e1';
-                        ctx.fillRect(center.x - clampedSize * 0.175, center.y - clampedSize * 0.15, clampedSize * 0.35, clampedSize * 0.4);
+                        // Check if swimming
+                        if (npc.swimming) {
+                            // SWIMMING POSE - horizontal body with arm strokes
+                            const swimPhase = npc.swimPhase || 0;
+                            const armSwing = Math.sin(swimPhase) * 0.3;
+                            const bodyBob = Math.sin(swimPhase * 0.5) * clampedSize * 0.05;
+                            
+                            ctx.save();
+                            ctx.translate(center.x, center.y + bodyBob);
+                            
+                            // Tilted body (swimming horizontally) - only upper portion visible
+                            ctx.fillStyle = '#4169e1';
+                            ctx.beginPath();
+                            ctx.ellipse(0, 0, clampedSize * 0.25, clampedSize * 0.12, 0, 0, Math.PI * 2);
+                            ctx.fill();
+                            
+                            // Swimming arms
+                            ctx.strokeStyle = '#d2b48c';
+                            ctx.lineWidth = clampedSize * 0.06;
+                            ctx.lineCap = 'round';
+                            
+                            // Left arm stroke
+                            ctx.beginPath();
+                            ctx.moveTo(-clampedSize * 0.15, 0);
+                            ctx.lineTo(-clampedSize * 0.35 - armSwing * clampedSize * 0.3, -clampedSize * 0.1 + Math.abs(armSwing) * clampedSize * 0.15);
+                            ctx.stroke();
+                            
+                            // Right arm stroke (opposite phase)
+                            ctx.beginPath();
+                            ctx.moveTo(clampedSize * 0.15, 0);
+                            ctx.lineTo(clampedSize * 0.35 + armSwing * clampedSize * 0.3, -clampedSize * 0.1 + Math.abs(armSwing) * clampedSize * 0.15);
+                            ctx.stroke();
+                            
+                            // Head poking above water
+                            ctx.fillStyle = '#d2b48c';
+                            ctx.beginPath();
+                            ctx.arc(0, -clampedSize * 0.15, clampedSize * 0.12, 0, Math.PI * 2);
+                            ctx.fill();
+                            
+                            // Wet wizard hat (droopy)
+                            ctx.fillStyle = '#191970';
+                            ctx.beginPath();
+                            ctx.moveTo(-clampedSize * 0.12, -clampedSize * 0.22);
+                            ctx.lineTo(clampedSize * 0.05, -clampedSize * 0.4);
+                            ctx.lineTo(clampedSize * 0.12, -clampedSize * 0.22);
+                            ctx.closePath();
+                            ctx.fill();
+                            
+                            // Beard floating on water
+                            ctx.fillStyle = '#ddd';
+                            ctx.beginPath();
+                            ctx.moveTo(-clampedSize * 0.08, -clampedSize * 0.08);
+                            ctx.quadraticCurveTo(0, -clampedSize * 0.02, clampedSize * 0.08, -clampedSize * 0.08);
+                            ctx.lineTo(clampedSize * 0.06, -clampedSize * 0.12);
+                            ctx.lineTo(-clampedSize * 0.06, -clampedSize * 0.12);
+                            ctx.closePath();
+                            ctx.fill();
+                            
+                            // Eyes
+                            ctx.fillStyle = '#000';
+                            ctx.beginPath();
+                            ctx.arc(-clampedSize * 0.04, -clampedSize * 0.17, clampedSize * 0.018, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.beginPath();
+                            ctx.arc(clampedSize * 0.04, -clampedSize * 0.17, clampedSize * 0.018, 0, Math.PI * 2);
+                            ctx.fill();
+                            
+                            // Water splash particles around
+                            ctx.fillStyle = 'rgba(150, 200, 255, 0.5)';
+                            for (let i = 0; i < 3; i++) {
+                                const splashX = Math.sin(swimPhase + i * 2) * clampedSize * 0.3;
+                                const splashY = Math.cos(swimPhase * 1.5 + i) * clampedSize * 0.05;
+                                ctx.beginPath();
+                                ctx.arc(splashX, splashY, clampedSize * 0.03, 0, Math.PI * 2);
+                                ctx.fill();
+                            }
+                            
+                            ctx.restore();
+                        } else {
+                            // NORMAL STANDING POSE
+                            // Body - blue robes
+                            ctx.fillStyle = '#4169e1';
+                            ctx.fillRect(center.x - clampedSize * 0.175, center.y - clampedSize * 0.15, clampedSize * 0.35, clampedSize * 0.4);
+                            
+                            // Head - tan/beige
+                            ctx.fillStyle = '#d2b48c';
+                            ctx.beginPath();
+                            ctx.arc(center.x, center.y - clampedSize * 0.3, clampedSize * 0.15, 0, Math.PI * 2);
+                            ctx.fill();
+                            
+                            // Wizard hat - dark blue
+                            ctx.fillStyle = '#191970';
+                            ctx.beginPath();
+                            ctx.moveTo(center.x - clampedSize * 0.175, center.y - clampedSize * 0.4);
+                            ctx.lineTo(center.x, center.y - clampedSize * 0.65);
+                            ctx.lineTo(center.x + clampedSize * 0.175, center.y - clampedSize * 0.4);
+                            ctx.closePath();
+                            ctx.fill();
+                            
+                            // Hat brim
+                            ctx.fillRect(center.x - clampedSize * 0.2, center.y - clampedSize * 0.425, clampedSize * 0.4, clampedSize * 0.05);
+                            
+                            // Beard - white/gray
+                            ctx.fillStyle = '#ddd';
+                            ctx.beginPath();
+                            ctx.moveTo(center.x - clampedSize * 0.1, center.y - clampedSize * 0.25);
+                            ctx.lineTo(center.x - clampedSize * 0.075, center.y - clampedSize * 0.1);
+                            ctx.lineTo(center.x + clampedSize * 0.075, center.y - clampedSize * 0.1);
+                            ctx.lineTo(center.x + clampedSize * 0.1, center.y - clampedSize * 0.25);
+                            ctx.closePath();
+                            ctx.fill();
+                            
+                            // Eyes - wise expression
+                            ctx.fillStyle = '#000';
+                            ctx.beginPath();
+                            ctx.arc(center.x - clampedSize * 0.06, center.y - clampedSize * 0.325, clampedSize * 0.025, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.beginPath();
+                            ctx.arc(center.x + clampedSize * 0.06, center.y - clampedSize * 0.325, clampedSize * 0.025, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
                         
-                        // Head - tan/beige
-                        ctx.fillStyle = '#d2b48c';
-                        ctx.beginPath();
-                        ctx.arc(center.x, center.y - clampedSize * 0.3, clampedSize * 0.15, 0, Math.PI * 2);
-                        ctx.fill();
+                        // Store dialogue info for later stacked rendering
+                        if (npc.currentDialogue) {
+                            this._gunsmithDialogueInfo = {
+                                text: npc.currentDialogue,
+                                x: center.x,
+                                y: center.y - clampedSize * 0.75 - 25,
+                                clampedSize: clampedSize
+                            };
+                        } else {
+                            this._gunsmithDialogueInfo = null;
+                        }
                         
-                        // Wizard hat - dark blue
-                        ctx.fillStyle = '#191970';
-                        ctx.beginPath();
-                        ctx.moveTo(center.x - clampedSize * 0.175, center.y - clampedSize * 0.4);
-                        ctx.lineTo(center.x, center.y - clampedSize * 0.65);
-                        ctx.lineTo(center.x + clampedSize * 0.175, center.y - clampedSize * 0.4);
-                        ctx.closePath();
-                        ctx.fill();
-                        
-                        // Hat brim
-                        ctx.fillRect(center.x - clampedSize * 0.2, center.y - clampedSize * 0.425, clampedSize * 0.4, clampedSize * 0.05);
-                        
-                        // Beard - white/gray
-                        ctx.fillStyle = '#ddd';
-                        ctx.beginPath();
-                        ctx.moveTo(center.x - clampedSize * 0.1, center.y - clampedSize * 0.25);
-                        ctx.lineTo(center.x - clampedSize * 0.075, center.y - clampedSize * 0.1);
-                        ctx.lineTo(center.x + clampedSize * 0.075, center.y - clampedSize * 0.1);
-                        ctx.lineTo(center.x + clampedSize * 0.1, center.y - clampedSize * 0.25);
-                        ctx.closePath();
-                        ctx.fill();
-                        
-                        // Eyes - wise expression
-                        ctx.fillStyle = '#000';
-                        ctx.beginPath();
-                        ctx.arc(center.x - clampedSize * 0.06, center.y - clampedSize * 0.325, clampedSize * 0.025, 0, Math.PI * 2);
-                        ctx.fill();
-                        ctx.beginPath();
-                        ctx.arc(center.x + clampedSize * 0.06, center.y - clampedSize * 0.325, clampedSize * 0.025, 0, Math.PI * 2);
-                        ctx.fill();
-                        
-                        // Interaction prompt if close
-                        if (npc.showPrompt) {
+                        // Interaction prompt if close (not during battle dialogue)
+                        if (!npc.currentDialogue && npc.showPrompt) {
                             ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
                             ctx.fillRect(center.x - 80, center.y - clampedSize * 0.5 - 40, 160, 30);
                             ctx.fillStyle = '#ffd700';
@@ -11705,6 +12462,240 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                             ctx.fillText('[E] Talk to Gunsmith', center.x, center.y - clampedSize * 0.5 - 22);
                         }
                     }
+                }
+                
+                // Render Mad Hermit (Unwise One) - red-robed evil wizard
+                if (this.madHermit) {
+                    const hermit = this.madHermit;
+                    const center = project(hermit.x, hermit.y + 1.2, hermit.z);
+                    if (center) {
+                        const npcWorldHeight = 2.0;
+                        const screenSize = (npcWorldHeight * fov) / center.z;
+                        const clampedSize = Math.min(400, Math.max(20, screenSize));
+                        
+                        // Check if swimming
+                        if (hermit.swimming) {
+                            // SWIMMING POSE - horizontal body with frantic arm strokes
+                            const swimPhase = hermit.swimPhase || 0;
+                            const armSwing = Math.sin(swimPhase * 1.3) * 0.35;  // Faster, more frantic than gunsmith
+                            const bodyBob = Math.sin(swimPhase * 0.7) * clampedSize * 0.06;
+                            
+                            ctx.save();
+                            ctx.translate(center.x, center.y + bodyBob);
+                            
+                            // Tilted body (swimming horizontally) - tattered robes visible
+                            ctx.fillStyle = '#8b0000';
+                            ctx.beginPath();
+                            ctx.ellipse(0, 0, clampedSize * 0.25, clampedSize * 0.12, 0, 0, Math.PI * 2);
+                            ctx.fill();
+                            
+                            // Tattered robe bits floating
+                            ctx.fillStyle = '#5c0000';
+                            for (let i = 0; i < 3; i++) {
+                                const tatX = Math.sin(swimPhase + i * 1.5) * clampedSize * 0.15;
+                                ctx.fillRect(tatX - clampedSize * 0.02, clampedSize * 0.08, clampedSize * 0.04, clampedSize * 0.06);
+                            }
+                            
+                            // Swimming arms - pale/sickly color, more frantic
+                            ctx.strokeStyle = '#c9b896';
+                            ctx.lineWidth = clampedSize * 0.055;
+                            ctx.lineCap = 'round';
+                            
+                            // Left arm stroke - wild splashing
+                            ctx.beginPath();
+                            ctx.moveTo(-clampedSize * 0.15, 0);
+                            ctx.lineTo(-clampedSize * 0.38 - armSwing * clampedSize * 0.35, -clampedSize * 0.12 + Math.abs(armSwing) * clampedSize * 0.2);
+                            ctx.stroke();
+                            
+                            // Right arm stroke (opposite phase) - wild splashing
+                            ctx.beginPath();
+                            ctx.moveTo(clampedSize * 0.15, 0);
+                            ctx.lineTo(clampedSize * 0.38 + armSwing * clampedSize * 0.35, -clampedSize * 0.12 + Math.abs(armSwing) * clampedSize * 0.2);
+                            ctx.stroke();
+                            
+                            // Head poking above water - pale/sickly
+                            ctx.fillStyle = '#c9b896';
+                            ctx.beginPath();
+                            ctx.arc(0, -clampedSize * 0.15, clampedSize * 0.12, 0, Math.PI * 2);
+                            ctx.fill();
+                            
+                            // Wet crooked wizard hat (very droopy and crooked)
+                            ctx.fillStyle = '#2a0000';
+                            ctx.beginPath();
+                            ctx.moveTo(-clampedSize * 0.12, -clampedSize * 0.22);
+                            ctx.lineTo(clampedSize * 0.08, -clampedSize * 0.38);  // Crooked
+                            ctx.lineTo(clampedSize * 0.1, -clampedSize * 0.2);
+                            ctx.closePath();
+                            ctx.fill();
+                            
+                            // Scraggly beard floating on water
+                            ctx.fillStyle = '#888';
+                            ctx.beginPath();
+                            ctx.moveTo(-clampedSize * 0.1, -clampedSize * 0.06);
+                            ctx.lineTo(-clampedSize * 0.08, clampedSize * 0.02);
+                            ctx.lineTo(clampedSize * 0.02, -clampedSize * 0.04);
+                            ctx.lineTo(clampedSize * 0.08, clampedSize * 0.01);
+                            ctx.lineTo(clampedSize * 0.1, -clampedSize * 0.08);
+                            ctx.closePath();
+                            ctx.fill();
+                            
+                            // Crazed eyes - still asymmetric
+                            ctx.fillStyle = '#ff0';
+                            ctx.beginPath();
+                            ctx.arc(-clampedSize * 0.04, -clampedSize * 0.17, clampedSize * 0.025, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.beginPath();
+                            ctx.arc(clampedSize * 0.045, -clampedSize * 0.165, clampedSize * 0.018, 0, Math.PI * 2);
+                            ctx.fill();
+                            
+                            // Red pupils
+                            ctx.fillStyle = '#f00';
+                            ctx.beginPath();
+                            ctx.arc(-clampedSize * 0.04, -clampedSize * 0.17, clampedSize * 0.01, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.beginPath();
+                            ctx.arc(clampedSize * 0.045, -clampedSize * 0.165, clampedSize * 0.008, 0, Math.PI * 2);
+                            ctx.fill();
+                            
+                            // Angry water splash particles
+                            ctx.fillStyle = 'rgba(180, 150, 150, 0.6)';  // Slightly reddish
+                            for (let i = 0; i < 4; i++) {
+                                const splashX = Math.sin(swimPhase * 1.3 + i * 1.8) * clampedSize * 0.35;
+                                const splashY = Math.cos(swimPhase * 1.7 + i) * clampedSize * 0.06;
+                                ctx.beginPath();
+                                ctx.arc(splashX, splashY, clampedSize * 0.025, 0, Math.PI * 2);
+                                ctx.fill();
+                            }
+                            
+                            ctx.restore();
+                        } else {
+                            // NORMAL STANDING POSE
+                            // Body - dark red robes
+                            ctx.fillStyle = '#8b0000';
+                            ctx.fillRect(center.x - clampedSize * 0.175, center.y - clampedSize * 0.15, clampedSize * 0.35, clampedSize * 0.4);
+                            
+                            // Tattered robe edges
+                            ctx.fillStyle = '#5c0000';
+                            for (let i = 0; i < 5; i++) {
+                                const x = center.x - clampedSize * 0.15 + (i * clampedSize * 0.075);
+                                ctx.fillRect(x, center.y + clampedSize * 0.2, clampedSize * 0.05, clampedSize * 0.08);
+                            }
+                            
+                            // Head - pale/sickly
+                            ctx.fillStyle = '#c9b896';
+                            ctx.beginPath();
+                            ctx.arc(center.x, center.y - clampedSize * 0.3, clampedSize * 0.15, 0, Math.PI * 2);
+                            ctx.fill();
+                            
+                            // Wizard hat - dark red/black
+                            ctx.fillStyle = '#2a0000';
+                            ctx.beginPath();
+                            ctx.moveTo(center.x - clampedSize * 0.175, center.y - clampedSize * 0.4);
+                            ctx.lineTo(center.x, center.y - clampedSize * 0.7); // Taller, more crooked
+                            ctx.lineTo(center.x + clampedSize * 0.15, center.y - clampedSize * 0.38); // Asymmetric
+                            ctx.closePath();
+                            ctx.fill();
+                            
+                            // Hat brim - worn
+                            ctx.fillRect(center.x - clampedSize * 0.22, center.y - clampedSize * 0.42, clampedSize * 0.42, clampedSize * 0.04);
+                            
+                            // Scraggly beard - gray/dirty
+                            ctx.fillStyle = '#888';
+                            ctx.beginPath();
+                            ctx.moveTo(center.x - clampedSize * 0.12, center.y - clampedSize * 0.22);
+                            ctx.lineTo(center.x - clampedSize * 0.1, center.y - clampedSize * 0.05);
+                            ctx.lineTo(center.x - clampedSize * 0.02, center.y - clampedSize * 0.12);
+                            ctx.lineTo(center.x + clampedSize * 0.02, center.y - clampedSize * 0.05);
+                            ctx.lineTo(center.x + clampedSize * 0.1, center.y - clampedSize * 0.08);
+                            ctx.lineTo(center.x + clampedSize * 0.12, center.y - clampedSize * 0.22);
+                            ctx.closePath();
+                            ctx.fill();
+                            
+                            // Eyes - crazed, one bigger than the other
+                            ctx.fillStyle = '#ff0';
+                            ctx.beginPath();
+                            ctx.arc(center.x - clampedSize * 0.06, center.y - clampedSize * 0.325, clampedSize * 0.035, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.beginPath();
+                            ctx.arc(center.x + clampedSize * 0.065, center.y - clampedSize * 0.32, clampedSize * 0.025, 0, Math.PI * 2);
+                            ctx.fill();
+                            
+                            // Red pupils
+                            ctx.fillStyle = '#f00';
+                            ctx.beginPath();
+                            ctx.arc(center.x - clampedSize * 0.06, center.y - clampedSize * 0.325, clampedSize * 0.015, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.beginPath();
+                            ctx.arc(center.x + clampedSize * 0.065, center.y - clampedSize * 0.32, clampedSize * 0.012, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        
+                        // Store dialogue info for later stacked rendering
+                        if (hermit.currentDialogue) {
+                            this._hermitDialogueInfo = {
+                                text: hermit.currentDialogue,
+                                x: center.x,
+                                y: center.y - clampedSize * 0.8 - 25,
+                                clampedSize: clampedSize
+                            };
+                        } else {
+                            this._hermitDialogueInfo = null;
+                        }
+                    }
+                }
+                
+                // Render stacked wizard dialogues to prevent overlap
+                const gunsmithDialogue = this._gunsmithDialogueInfo;
+                const hermitDialogue = this._hermitDialogueInfo;
+                
+                if (gunsmithDialogue || hermitDialogue) {
+                    ctx.font = 'bold 13px Arial';
+                    ctx.textAlign = 'center';
+                    
+                    // Check if dialogues would overlap (both exist and screen positions are close)
+                    let dialoguesOverlap = false;
+                    if (gunsmithDialogue && hermitDialogue) {
+                        const xDist = Math.abs(gunsmithDialogue.x - hermitDialogue.x);
+                        const yDist = Math.abs(gunsmithDialogue.y - hermitDialogue.y);
+                        // Consider overlapping if within 200px horizontally and 60px vertically
+                        dialoguesOverlap = xDist < 200 && yDist < 60;
+                    }
+                    
+                    // Calculate vertical offset for stacking
+                    const stackOffset = dialoguesOverlap ? 35 : 0;
+                    
+                    // Render gunsmith dialogue (blue - bottom when stacked)
+                    if (gunsmithDialogue) {
+                        const textWidth = ctx.measureText(gunsmithDialogue.text).width + 20;
+                        const yPos = gunsmithDialogue.y;
+                        
+                        ctx.fillStyle = 'rgba(0, 0, 100, 0.85)';
+                        ctx.fillRect(gunsmithDialogue.x - textWidth/2, yPos, textWidth, 24);
+                        ctx.strokeStyle = '#4169e1';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(gunsmithDialogue.x - textWidth/2, yPos, textWidth, 24);
+                        ctx.fillStyle = '#88ccff';
+                        ctx.fillText(gunsmithDialogue.text, gunsmithDialogue.x, yPos + 17);
+                    }
+                    
+                    // Render hermit dialogue (red - top when stacked)
+                    if (hermitDialogue) {
+                        const textWidth = ctx.measureText(hermitDialogue.text).width + 20;
+                        // Stack above gunsmith dialogue if overlapping
+                        const yPos = hermitDialogue.y - stackOffset;
+                        
+                        ctx.fillStyle = 'rgba(80, 0, 0, 0.9)';
+                        ctx.fillRect(hermitDialogue.x - textWidth/2, yPos, textWidth, 24);
+                        ctx.strokeStyle = '#ff4444';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(hermitDialogue.x - textWidth/2, yPos, textWidth, 24);
+                        ctx.fillStyle = '#ffaa88';
+                        ctx.fillText(hermitDialogue.text, hermitDialogue.x, yPos + 17);
+                    }
+                    
+                    // Clear stored info
+                    this._gunsmithDialogueInfo = null;
+                    this._hermitDialogueInfo = null;
                 }
                 
                 // Render particles (only those in front of visible blocks)
@@ -11815,6 +12806,43 @@ export const minecraftGame: ISakuraCraftEngine & Record<string, any> = {
                         ctx.fillStyle = `rgba(255, 255, ${Math.random() * 100}, ${alpha * 0.8})`;
                         ctx.beginPath();
                         ctx.arc(center.x, center.y, size * 0.4, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else if (p.type === 'spell') {
+                        // Wizard spell particles - colored based on caster
+                        const size = Math.max(3, (p.size || 4) * 20 / center.z);
+                        const alpha = Math.min(1, p.life / 20);
+                        const sparkle = Math.sin(p.life * 0.5) * 0.3 + 0.7;
+                        
+                        // Get color from particle (red for hermit, blue for gunsmith)
+                        const color = p.color || '#ff6600';
+                        
+                        // Outer magical glow
+                        ctx.fillStyle = color.replace(')', `, ${alpha * 0.3})`).replace('rgb', 'rgba').replace('#', '');
+                        if (color.startsWith('#')) {
+                            const r = parseInt(color.slice(1, 3), 16);
+                            const g = parseInt(color.slice(3, 5), 16);
+                            const b = parseInt(color.slice(5, 7), 16);
+                            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha * 0.4})`;
+                        }
+                        ctx.beginPath();
+                        ctx.arc(center.x, center.y, size * 1.5, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Inner spell core
+                        if (color.startsWith('#')) {
+                            const r = parseInt(color.slice(1, 3), 16);
+                            const g = parseInt(color.slice(3, 5), 16);
+                            const b = parseInt(color.slice(5, 7), 16);
+                            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha * sparkle})`;
+                        }
+                        ctx.beginPath();
+                        ctx.arc(center.x, center.y, size, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Bright center
+                        ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
+                        ctx.beginPath();
+                        ctx.arc(center.x, center.y, size * 0.3, 0, Math.PI * 2);
                         ctx.fill();
                     } else if (p.type === 'feather') {
                         const size = Math.max(2, 15 / center.z);
